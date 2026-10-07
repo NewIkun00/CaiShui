@@ -1,0 +1,8 @@
+import{describe,expect,it}from'vitest';
+import{BusinessEventStatus,BusinessEventType,createBusinessEvent,createInvoice,createSettlement,InvoiceColor,InvoiceDirection,InvoiceKind,InvoiceStatus}from'../src/index.js';
+const invoice={...createInvoice({direction:InvoiceDirection.Output,kind:InvoiceKind.Ordinary,color:InvoiceColor.Blue,invoiceNumber:'12345678',issuedOn:'2026-10-08',counterpartyId:'party',amountExcludingTax:'100',taxAmount:'6',totalAmount:'106'}),status:InvoiceStatus.Confirmed,version:2};
+const payment={...createBusinessEvent({type:BusinessEventType.MoneyReceived,occurredOn:'2026-10-09',amount:'80',counterpartyId:'party',description:'收款'}),status:BusinessEventStatus.Confirmed,version:2};
+describe('reconciliation',()=>{
+  it('allows a partial allocation within both remaining balances',()=>{expect(createSettlement({invoiceId:'i',paymentEventId:'p',amount:'60',invoice,paymentEvent:payment,invoiceAllocated:'20',paymentAllocated:'0'}).amount.toString()).toBe('60.00')});
+  it('rejects direction, counterparty and over-allocation conflicts',()=>{expect(()=>createSettlement({invoiceId:'i',paymentEventId:'p',amount:'81',invoice,paymentEvent:payment,invoiceAllocated:'0',paymentAllocated:'0'})).toThrow('payment');expect(()=>createSettlement({invoiceId:'i',paymentEventId:'p',amount:'1',invoice,paymentEvent:{...payment,counterpartyId:'other'},invoiceAllocated:'0',paymentAllocated:'0'})).toThrow('counterparty');expect(()=>createSettlement({invoiceId:'i',paymentEventId:'p',amount:'1',invoice,paymentEvent:{...payment,type:BusinessEventType.MoneyPaid},invoiceAllocated:'0',paymentAllocated:'0'})).toThrow('direction')});
+});

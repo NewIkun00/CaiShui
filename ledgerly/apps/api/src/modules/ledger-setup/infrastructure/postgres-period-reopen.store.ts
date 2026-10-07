@@ -1,0 +1,14 @@
+import{Inject,Injectable}from'@nestjs/common';
+import{and,desc,eq}from'drizzle-orm';
+import{randomUUID}from'node:crypto';
+import{DATABASE,type Database}from'../../../infrastructure/database/database.provider.js';
+import{auditEvents,outboxEvents,periodReopenRequests}from'../../../infrastructure/database/schema.js';
+import type{PeriodReopenRequest,PeriodReopenStore,SavePeriodReopenRequestRecord}from'../application/period-reopen-store.js';
+
+@Injectable()
+export class PostgresPeriodReopenStore implements PeriodReopenStore{
+  constructor(@Inject(DATABASE)private readonly db:Database){}
+  async save(record:SavePeriodReopenRequestRecord):Promise<{request:PeriodReopenRequest;created:boolean}>{const result=await this.db.transaction(async tx=>{const[inserted]=await tx.insert(periodReopenRequests).values({id:record.id,tenantId:record.tenantId,companyId:record.companyId,periodId:record.periodId,periodStart:record.periodStart,periodEnd:record.periodEnd,reason:record.reason,status:'pending',requestedAt:record.requestedAt,requestedBy:record.actorId,createdAt:record.requestedAt,createdBy:record.actorId,updatedAt:record.requestedAt,updatedBy:record.actorId}).onConflictDoNothing().returning();if(!inserted)return null;await tx.insert(auditEvents).values({id:randomUUID(),tenantId:record.tenantId,actorId:record.actorId,action:'accounting_period.reopen.request',resourceType:'accounting_period',resourceId:record.periodId,outcome:'success',traceId:record.traceId,metadata:{requestId:record.id,reason:record.reason}});await tx.insert(outboxEvents).values({id:randomUUID(),tenantId:record.tenantId,eventType:'accounting_period.reopen_requested.v1',aggregateType:'accounting_period',aggregateId:record.periodId,payload:{requestId:record.id,companyId:record.companyId,reason:record.reason},occurredAt:record.requestedAt});return this.present(inserted);});if(result)return{request:result,created:true};const[existing]=await this.db.select().from(periodReopenRequests).where(and(eq(periodReopenRequests.tenantId,record.tenantId),eq(periodReopenRequests.companyId,record.companyId),eq(periodReopenRequests.periodId,record.periodId),eq(periodReopenRequests.status,'pending'))).limit(1);if(!existing)throw new Error('Period reopen request conflict');return{request:this.present(existing),created:false};}
+  async list(tenantId:string,companyId:string):Promise<readonly PeriodReopenRequest[]>{const rows=await this.db.select().from(periodReopenRequests).where(and(eq(periodReopenRequests.tenantId,tenantId),eq(periodReopenRequests.companyId,companyId))).orderBy(desc(periodReopenRequests.requestedAt));return rows.map(row=>this.present(row));}
+  private present(row:typeof periodReopenRequests.$inferSelect):PeriodReopenRequest{return{id:row.id,companyId:row.companyId,periodId:row.periodId,periodStart:row.periodStart,periodEnd:row.periodEnd,reason:row.reason,status:'pending',version:row.version,requestedAt:row.requestedAt,requestedBy:row.requestedBy};}
+}

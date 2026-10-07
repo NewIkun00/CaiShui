@@ -1,0 +1,17 @@
+import{describe,expect,it}from'vitest';
+import{OrganizationService}from'../src/modules/organization/application/organization.service.js';
+import{MemoryOrganizationStore}from'../src/modules/organization/infrastructure/memory-organization.store.js';
+import{ProfileScopeService}from'../src/modules/profile-scope/application/profile-scope.service.js';
+import{MemoryScopeStore}from'../src/modules/profile-scope/infrastructure/memory-scope.store.js';
+import{LedgerSetupService}from'../src/modules/ledger-setup/application/ledger-setup.service.js';
+import{MemoryLedgerSetupStore}from'../src/modules/ledger-setup/infrastructure/memory-ledger-setup.store.js';
+import{MemoryPeriodReopenStore}from'../src/modules/ledger-setup/infrastructure/memory-period-reopen.store.js';
+import{PeriodReopenService}from'../src/modules/ledger-setup/application/period-reopen.service.js';
+
+const actorId='10000000-0000-4000-8000-000000000001';
+async function fixture(){const organizations=new MemoryOrganizationStore(),scopes=new MemoryScopeStore(),setups=new MemoryLedgerSetupStore();const created=await new OrganizationService(organizations).bootstrap({tenantName:'测试',company:{name:'常州市测试科技有限公司',unifiedSocialCreditCode:'913204001234567890',provinceCode:'32',cityCode:'3204'}},{actorId,traceId:'create'}),context={actorId,tenantId:created.tenantId,traceId:'test'};await new ProfileScopeService(organizations,scopes).evaluate(created.company.id,{entityType:'one_person_llc',vatTaxpayerStatus:'small_scale',vatFilingCycle:'quarterly',incomeTaxCollection:'audit',industry:'modern_service',hasInventory:false,hasBranches:false,hasImportExport:false,hasForeignCurrency:false,hasSpecialVatFivePercent:false,hasDifferenceTax:false,hasCrossRegionPrepayment:false,hasComplexPayroll:false,hasShareholderTransactions:false,hasComplexTaxAdjustments:false,sourceDocumentsComplete:true},context);await new LedgerSetupService(organizations,scopes,setups).create(created.company.id,{accountName:'基本户',accountType:'bank',bankName:'招商银行',accountNumberLast4:'1234',openingBalance:'0',openingBalanceSource:'none',openingBalanceAsOf:'2026-09-30',periodStart:'2026-10-01',periodEnd:'2026-10-31'},context);return{created,context,setups,service:new PeriodReopenService(setups,new MemoryPeriodReopenStore())};}
+
+describe('PeriodReopenService',()=>{
+  it('only accepts requests for a locked period',async()=>{const{created,context,service}=await fixture();await expect(service.request(created.company.id,{reason:'需要修正遗漏的银行流水'},context)).rejects.toMatchObject({status:409,response:{code:'ACCOUNTING_PERIOD_NOT_LOCKED'}});});
+  it('creates one auditable pending request and is idempotent',async()=>{const{created,context,setups,service}=await fixture();await setups.lockCurrentPeriod({tenantId:context.tenantId,companyId:created.company.id,actorId,traceId:'lock',lockedAt:new Date()});const first=await service.request(created.company.id,{reason:'需要修正遗漏的银行流水'},context),second=await service.request(created.company.id,{reason:'重复点击不应新增'},context);expect(first.created).toBe(true);expect(second.created).toBe(false);expect(second.request.id).toBe(first.request.id);expect(await service.list(created.company.id,context)).toHaveLength(1);});
+});

@@ -1,0 +1,38 @@
+name: ledgerly-local
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ledgerly
+      POSTGRES_USER: ledgerly
+      POSTGRES_PASSWORD: ledgerly
+    ports: ["5432:5432"]
+    volumes: ["ledgerly-postgres:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ledgerly -d ledgerly"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    volumes: ["ledgerly-redis:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ledgerly
+      MINIO_ROOT_PASSWORD: change-me-in-local-env
+    ports: ["9000:9000", "9001:9001"]
+    volumes: ["ledgerly-minio:/data"]
+
+volumes:
+  ledgerly-postgres:
+  ledgerly-redis:
+  ledgerly-minio:

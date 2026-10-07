@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一人公司记账报税平台 · 产品蓝图 V1.1</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2310324f'/%3E%3Crect x='8' y='7' width='16' height='18' rx='2' fill='none' stroke='%23e8a368' stroke-width='1.8'/%3E%3Cline x1='11.5' y1='12.5' x2='20.5' y2='12.5' stroke='%23eef4f8' stroke-width='1.6'/%3E%3Cline x1='11.5' y1='16.5' x2='20.5' y2='16.5' stroke='%23eef4f8' stroke-width='1.6'/%3E%3Cline x1='11.5' y1='20.5' x2='16.5' y2='20.5' stroke='%23eef4f8' stroke-width='1.6'/%3E%3C/svg%3E">
+<style>
+:root{
+  --ink:#1e2630;
+  --navy:#10324f;
+  --steel:#2e6e8e;
+  --mist:#e5edf2;
+  --paper:#f6f8f9;
+  --card:#ffffff;
+  --amber:#c46a28;
+  --amber-bg:#f7ece2;
+  --red:#b23a2e;
+  --red-bg:#f6e7e5;
+  --green:#2f6d4f;
+  --green-bg:#e7f0ea;
+  --line:#d3dde4;
+  --muted:#5d6b78;
+  --code-bg:#13242f;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans SC",sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.75;font-size:15px;
+  -webkit-font-smoothing:antialiased;
+}
+code,pre,.mono{font-family:"JetBrains Mono","Source Code Pro","Consolas","Menlo",monospace;}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px;}
+
+/* ---------- 封面 ---------- */
+.cover{
+  background:linear-gradient(160deg,#0c2840 0%,#10324f 55%,#163f60 100%);
+  color:#eef4f8;padding:88px 0 72px;position:relative;overflow:hidden;
+}
+.cover::before{
+  content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:34px 34px;
+}
+.cover .wrap{position:relative;}
+.cover .tag{
+  display:inline-block;font-size:12.5px;letter-spacing:3px;color:#9fc2d8;
+  border:1px solid rgba(159,194,216,.5);border-radius:3px;padding:5px 14px;margin-bottom:30px;
+}
+.cover h1{font-size:42px;line-height:1.3;font-weight:800;letter-spacing:1px;margin-bottom:18px;}
+.cover h1 .hl{color:#e8a368;}
+.cover .sub{font-size:17px;color:#c4d6e3;max-width:680px;line-height:1.9;}
+.cover .meta{margin-top:40px;font-size:13px;color:#8fafc4;display:flex;gap:26px;flex-wrap:wrap;}
+.cover .meta b{color:#cfe0ec;font-weight:600;}
+
+/* ---------- 目录 ---------- */
+.toc{background:var(--card);border-bottom:1px solid var(--line);padding:30px 0;}
+.toc .wrap{display:flex;flex-wrap:wrap;gap:10px 26px;}
+.toc a{
+  color:var(--navy);text-decoration:none;font-size:13.5px;font-weight:600;
+  padding:4px 0;white-space:nowrap;
+}
+.toc a span{color:var(--amber);margin-right:7px;font-family:"JetBrains Mono",monospace;}
+.toc a:hover{color:var(--amber);}
+
+/* ---------- 章节 ---------- */
+section{padding:64px 0 20px;}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:10px;}
+.sec-no{
+  font-family:"JetBrains Mono",monospace;font-size:15px;font-weight:700;color:#fff;
+  background:var(--navy);border-radius:4px;padding:3px 10px;flex-shrink:0;
+}
+.sec-head h2{font-size:27px;font-weight:800;color:var(--navy);letter-spacing:.5px;}
+.sec-lead{color:var(--muted);font-size:15px;margin:6px 0 34px 4px;max-width:820px;}
+h3{
+  font-size:18px;font-weight:700;color:var(--navy);margin:42px 0 16px;
+  padding-left:12px;border-left:4px solid var(--steel);
+}
+h4{font-size:15.5px;font-weight:700;margin:26px 0 10px;color:var(--ink);}
+p{margin-bottom:12px;}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:24px 26px;margin:18px 0;
+}
+.note{
+  border-radius:8px;padding:14px 18px;margin:18px 0;font-size:14px;line-height:1.8;
+}
+.note.amber{background:var(--amber-bg);border-left:4px solid var(--amber);}
+.note.red{background:var(--red-bg);border-left:4px solid var(--red);}
+.note.green{background:var(--green-bg);border-left:4px solid var(--green);}
+.note b{font-weight:700;}
+
+/* ---------- 痛点三卡 ---------- */
+.pains{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:22px 0;}
+.pain{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px;
+  border-top:3px solid var(--red);
+}
+.pain .ico{font-size:22px;font-weight:800;color:var(--red);font-family:"JetBrains Mono",monospace;}
+.pain h4{margin:8px 0 8px;color:var(--navy);}
+.pain p{font-size:13.5px;color:var(--muted);margin:0;}
+
+/* ---------- 竞品表 ---------- */
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:13.8px;background:var(--card);
+  border-radius:8px;overflow:hidden;border:1px solid var(--line);}
+th{background:var(--navy);color:#fff;font-weight:600;padding:11px 14px;text-align:left;font-size:13px;}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top;}
+tr:nth-child(even) td{background:#fafcfd;}
+td .yes{color:var(--green);font-weight:700;}
+td .no{color:var(--red);}
+td .mid{color:var(--amber);font-weight:700;}
+
+/* 定位条 */
+.position{
+  background:linear-gradient(135deg,#10324f,#1d4d72);color:#fff;border-radius:12px;
+  padding:30px 34px;margin:26px 0;
+}
+.position .lab{font-size:12.5px;letter-spacing:3px;color:#9fc2d8;margin-bottom:12px;}
+.position .big{font-size:21px;font-weight:800;line-height:1.6;}
+.position .big .hl{color:#e8a368;}
+.position .small{margin-top:12px;color:#c4d6e3;font-size:14px;}
+
+/* ---------- 架构分层 ---------- */
+.arch{margin:26px 0;}
+.layer{
+  border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid var(--line);
+  display:grid;grid-template-columns:190px 1fr;
+}
+.layer .lname{
+  padding:18px 16px;color:#fff;display:flex;flex-direction:column;justify-content:center;
+}
+.layer .lname .t{font-size:15px;font-weight:800;}
+.layer .lname .d{font-size:11.5px;opacity:.82;margin-top:4px;line-height:1.6;}
+.layer .lbody{background:var(--card);padding:14px 16px;display:flex;flex-wrap:wrap;gap:9px;align-items:center;}
+.mod{
+  border:1px solid var(--line);border-radius:7px;padding:8px 13px;font-size:13px;
+  background:#fbfcfd;color:var(--ink);white-space:nowrap;
+}
+.mod b{color:var(--navy);}
+.layer.l1 .lname{background:#3a5a72;}
+.layer.l2 .lname{background:#2e6e8e;}
+.layer.l3 .lname{background:#10324f;}
+.layer.l4 .lname{background:#1b4a6b;}
+.layer.l5 .lname{background:#2e6e8e;}
+.layer.l6 .lname{background:#3a5a72;}
+.layer.l3{border:2px solid var(--amber);box-shadow:0 0 0 3px var(--amber-bg);}
+.layer.l4{border:2px solid var(--amber);box-shadow:0 0 0 3px var(--amber-bg);}
+.flow-arrow{text-align:center;color:var(--muted);font-size:18px;margin:-4px 0 6px;}
+
+/* ---------- 业务时间线 ---------- */
+.timeline{margin:28px 0;position:relative;}
+.tl-row{display:grid;grid-template-columns:repeat(5,1fr);gap:0;}
+.tl-step{padding:0 10px;position:relative;}
+.tl-step:not(:last-child)::after{
+  content:"→";position:absolute;right:-7px;top:26px;color:var(--amber);font-size:18px;font-weight:700;z-index:2;
+}
+.tl-dot{
+  width:52px;height:52px;border-radius:50%;background:var(--navy);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;
+  margin:0 auto 12px;border:3px solid var(--mist);
+}
+.tl-step:nth-child(4) .tl-dot,.tl-step:nth-child(5) .tl-dot{background:var(--amber);border-color:var(--amber-bg);}
+.tl-step h4{text-align:center;margin:0 0 6px;font-size:14.5px;color:var(--navy);}
+.tl-step .when{text-align:center;font-size:11.5px;color:var(--amber);font-weight:700;margin-bottom:8px;}
+.tl-step ul{list-style:none;font-size:12.3px;color:var(--muted);line-height:1.85;}
+.tl-step ul li{padding-left:12px;position:relative;margin-bottom:3px;}
+.tl-step ul li::before{content:"·";position:absolute;left:2px;color:var(--steel);font-weight:800;}
+
+/* 数据流 */
+.dataflow{display:flex;align-items:stretch;gap:0;margin:24px 0;flex-wrap:wrap;}
+.df-node{
+  flex:1;min-width:120px;background:var(--card);border:1px solid var(--line);border-radius:9px;
+  padding:14px 10px;text-align:center;font-size:13px;font-weight:700;color:var(--navy);
+  display:flex;flex-direction:column;justify-content:center;
+}
+.df-node .sub{font-weight:400;font-size:11.5px;color:var(--muted);margin-top:4px;}
+.df-arrow{display:flex;align-items:center;color:var(--amber);font-size:20px;padding:0 6px;font-weight:800;}
+
+/* ---------- 代码块 ---------- */
+pre.code{
+  background:var(--code-bg);color:#d7e4ec;border-radius:10px;padding:20px 22px;margin:16px 0;
+  overflow-x:auto;font-size:12.8px;line-height:1.75;
+}
+pre.code .cm{color:#6f8fa0;}
+pre.code .kw{color:#e8a368;}
+pre.code .st{color:#9ec9a7;}
+pre.code .fn{color:#7fb6d6;}
+pre.code .num{color:#d19a8f;}
+.code-cap{
+  font-size:12px;color:var(--muted);font-family:"JetBrains Mono",monospace;margin:14px 0 -6px;letter-spacing:.5px;
+}
+.rulemap td:first-child{font-weight:700;color:var(--navy);white-space:nowrap;}
+.rulemap .entry{color:var(--green);font-family:"JetBrains Mono",monospace;font-size:12px;white-space:nowrap;}
+.rulemap .entry .dr{color:var(--amber);}
+ul.tight{margin:10px 0 10px 4px;list-style:none;}
+ul.tight li{padding-left:16px;position:relative;margin-bottom:6px;font-size:14px;}
+ul.tight li::before{content:"•";position:absolute;left:2px;color:var(--amber);}
+
+/* ---------- ER 图 ---------- */
+.er-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:24px 0;}
+.er{
+  background:var(--card);border:1px solid var(--line);border-radius:9px;overflow:hidden;
+}
+.er .erh{
+  background:var(--navy);color:#fff;font-size:13.5px;font-weight:700;padding:8px 14px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.er .erh .en{font-size:10.5px;color:#9fc2d8;font-family:"JetBrains Mono",monospace;font-weight:400;}
+.er ul{list-style:none;padding:10px 14px;font-size:12.3px;color:var(--muted);line-height:1.95;}
+.er ul b{color:var(--ink);font-weight:600;}
+.er ul .pk{color:var(--amber);font-family:"JetBrains Mono",monospace;font-size:11px;}
+.er.core{border:2px solid var(--amber);}
+.er.core .erh{background:var(--amber);}
+.rel-table td{font-size:13px;}
+.rel-table td:first-child{font-weight:700;color:var(--navy);white-space:nowrap;}
+.rel-table .cardin{font-family:"JetBrains Mono",monospace;color:var(--steel);font-size:12px;}
+
+/* ---------- SOP ---------- */
+.platforms{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0;}
+.plat{
+  border-radius:10px;padding:20px;color:#fff;
+}
+.plat .pn{font-size:16px;font-weight:800;margin-bottom:6px;}
+.plat .pu{font-size:12px;opacity:.85;margin-bottom:12px;line-height:1.7;}
+.plat ul{list-style:none;font-size:12.5px;line-height:2;}
+.plat ul li::before{content:"· ";}
+.plat.a{background:linear-gradient(140deg,#10324f,#1d4d72);}
+.plat.b{background:linear-gradient(140deg,#2e6e8e,#3f86a5);}
+.plat.c{background:linear-gradient(140deg,#3a5a72,#4d6f88);}
+.sop{
+  background:var(--card);border:1px solid var(--line);border-radius:11px;margin:20px 0;overflow:hidden;
+}
+.sop .sop-h{
+  padding:16px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  border-bottom:1px solid var(--line);background:#fafcfd;
+}
+.sop .sop-h .stitle{font-size:16px;font-weight:800;color:var(--navy);}
+.badge{font-size:11.5px;font-weight:700;border-radius:20px;padding:3px 11px;white-space:nowrap;}
+.badge.eta{background:var(--navy);color:#fff;}
+.badge.q{background:var(--amber-bg);color:var(--amber);}
+.badge.m{background:var(--mist);color:var(--navy);}
+.badge.y{background:var(--green-bg);color:var(--green);}
+.sop .sop-b{padding:18px 22px 8px;}
+.sop ol{list-style:none;counter-reset:s;}
+.sop ol li{
+  counter-increment:s;position:relative;padding:0 0 12px 38px;font-size:14px;line-height:1.75;
+}
+.sop ol li::before{
+  content:counter(s);position:absolute;left:0;top:2px;width:25px;height:25px;border-radius:50%;
+  background:var(--mist);color:var(--navy);font-size:12.5px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono",monospace;
+}
+.sop ol li b{color:var(--navy);}
+.sop .src{
+  margin:6px 22px 18px;background:var(--green-bg);border-radius:8px;padding:11px 16px;font-size:13px;color:var(--green);
+}
+.sop .src b{font-weight:700;}
+.sop .done{margin:0 22px 18px;font-size:13px;color:var(--muted);}
+.sop .done b{color:var(--amber);}
+.path{
+  background:var(--mist);border-radius:5px;padding:2px 9px;font-size:12.5px;color:var(--navy);
+  font-weight:600;white-space:nowrap;
+}
+
+/* ---------- Roadmap ---------- */
+.road{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:24px 0;}
+.phase{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;
+}
+.phase .ph-h{padding:14px 18px;color:#fff;}
+.phase.p1 .ph-h{background:var(--amber);}
+.phase.p2 .ph-h{background:var(--steel);}
+.phase.p3 .ph-h{background:var(--navy);}
+.phase .ph-h .pn{font-size:15.5px;font-weight:800;}
+.phase .ph-h .pt{font-size:11.5px;opacity:.85;margin-top:3px;}
+.phase .ph-b{padding:14px 18px;}
+.phase .ph-b ul{list-style:none;font-size:12.8px;color:var(--muted);line-height:2;}
+.phase .ph-b ul li::before{content:"✓ ";color:var(--green);font-weight:700;}
+.phase .ph-b .goal{
+  font-size:12px;background:var(--mist);border-radius:7px;padding:9px 12px;margin-top:12px;color:var(--navy);line-height:1.7;
+}
+.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0;}
+.price{
+  background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px;text-align:center;
+}
+.price.hot{border:2px solid var(--amber);position:relative;}
+.price .tier{font-size:14px;font-weight:800;color:var(--navy);}
+.price .amt{font-size:28px;font-weight:800;color:var(--ink);margin:10px 0 2px;font-family:"JetBrains Mono",monospace;}
+.price .amt small{font-size:13px;color:var(--muted);font-weight:400;}
+.price ul{list-style:none;font-size:12.5px;color:var(--muted);margin-top:12px;text-align:left;line-height:2;}
+.price ul li::before{content:"· ";color:var(--steel);font-weight:800;}
+.compliance li{margin-bottom:14px;}
+.compliance .tagline{
+  display:inline-block;font-size:11.5px;font-weight:800;border-radius:5px;padding:2px 9px;margin-right:8px;
+}
+.tagline.no{background:var(--red-bg);color:var(--red);}
+.tagline.yes{background:var(--green-bg);color:var(--green);}
+.tagline.warn{background:var(--amber-bg);color:var(--amber);}
+footer{
+  margin-top:60px;background:var(--navy);color:#9fc2d8;padding:34px 0;font-size:12.5px;text-align:center;
+}
+footer b{color:#cfe0ec;}
+
+/* ============ 响应式 ============ */
+@media (max-width:880px){
+  body{font-size:15px;}
+  .wrap{padding:0 18px;}
+  .cover{padding:60px 0 54px;}
+  .cover h1{font-size:30px;}
+  .cover .sub{font-size:15px;}
+  section{padding:48px 0 14px;}
+  .sec-head h2{font-size:22px;}
+  .pains,.platforms,.er-grid,.road,.pricing{grid-template-columns:1fr;}
+  .card{padding:20px 18px;}
+  /* 架构层：上下排列 */
+  .layer{grid-template-columns:1fr;}
+  .layer .lname{padding:14px 16px;}
+  /* 时间线：竖排，箭头朝下 */
+  .tl-row{grid-template-columns:1fr;}
+  .tl-step{padding:0 0 8px;}
+  .tl-step:not(:last-child)::after{
+    content:"↓";position:static;display:block;text-align:center;margin:12px 0 14px;
+  }
+  /* 数据流竖排 */
+  .dataflow{flex-direction:column;}
+  .df-arrow{transform:rotate(90deg);padding:4px 0;}
+  /* 路径标签允许换行 */
+  .path{white-space:normal;display:inline-block;}
+  /* 表格：横向滚动，宽表设最小宽度 */
+  table{display:block;width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table.wide tbody{display:table;min-width:600px;width:100%;border-collapse:collapse;}
+  /* 目录触控区 */
+  .toc a{min-height:44px;display:inline-flex;align-items:center;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 封面 ============ -->
+<header class="cover">
+  <div class="wrap">
+    <span class="tag">PRODUCT BLUEPRINT · V1.1</span>
+    <h1>一人公司<span class="hl">记账报税平台</span><br>产品蓝图与算法设计</h1>
+    <p class="sub">
+      面向「江苏省、现代服务业、查账征收的一人有限责任公司」的自助财税工具：
+      用户只需记录真实业务与资金变化，平台在明确的适用边界内生成记账草稿、税费试算、报表和申报引导；
+      不确定或高风险业务自动转人工复核，最终申报仍由用户在官方平台确认完成。
+    </p>
+    <div class="meta">
+      <span>首版 ICP：<b>一人有限公司 · 小规模 · 查账征收</b></span>
+      <span>首版地域：<b>江苏省</b></span>
+      <span>文档日期：<b>2026-10-07</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 目录 ============ -->
+<nav class="toc">
+  <div class="wrap">
+    <a href="#s1"><span>01</span>产品机会与定位</a>
+    <a href="#s2"><span>02</span>平台总体架构</a>
+    <a href="#s3"><span>03</span>核心业务闭环</a>
+    <a href="#s4"><span>04</span>核心算法与规则引擎</a>
+    <a href="#s5"><span>05</span>数据模型</a>
+    <a href="#s6"><span>06</span>报税操作 SOP 中心</a>
+    <a href="#s7"><span>07</span>MVP 与 Roadmap</a>
+    <a href="#s8"><span>08</span>合规边界与风险</a>
+    <a href="#s9"><span>09</span>适用边界与例外</a>
+    <a href="#s10"><span>10</span>规则治理与质量保障</a>
+    <a href="#s11"><span>11</span>商业验证与指标</a>
+  </div>
+</nav>
+
+<!-- ============ 01 产品机会 ============ -->
+<section id="s1">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">01</span><h2>产品机会与定位</h2></div>
+    <p class="sec-lead">先回答「为谁解决什么问题、现有方案为什么不够、我们凭什么赢」。</p>
+
+    <h3>1.1 目标用户画像</h3>
+    <p>首版核心人群是<b>江苏省一人有限责任公司的老板</b>：公司是增值税小规模纳税人、企业所得税查账征收，主营设计、开发、咨询等现代服务，无存货、无分支机构、无进出口，每月业务笔数较少。他们的共同特征是「三不懂 + 一没有」：</p>
+    <div class="pains">
+      <div class="pain">
+        <div class="ico">× 01</div>
+        <h4>不懂借贷</h4>
+        <p>听到「借方差、贷方科目、结转」就头大，只会说「我花了一笔钱 / 我收了一笔钱」。</p>
+      </div>
+      <div class="pain">
+        <div class="ico">× 02</div>
+        <h4>不懂税种</h4>
+        <p>分不清增值税、企业所得税、个税、附加税、印花税，不知道自己能享受什么减免。</p>
+      </div>
+      <div class="pain">
+        <div class="ico">× 03</div>
+        <h4>不懂平台</h4>
+        <p>不知道电子税务局和自然人电子税务局是两个地方，登录后面对几十个菜单不敢点。</p>
+      </div>
+    </div>
+    <p>同时他们<b>没有全职会计</b>，找代账公司时又容易感到过程不透明；自己处理则担心漏报、错报和公私混同。本产品不试图覆盖所有小微企业，而是先在低复杂度场景中建立「看得懂、可追溯、有人兜底」的信任。</p>
+    <div class="note red"><b>首版不适用：</b>一般纳税人、个体户/个人独资企业、核定征收、建筑与不动产、电商多平台、进出口、差额征税、多员工复杂薪酬、股权交易等场景。详见第 09 章。</div>
+
+    <h3>1.2 用户要完成的任务（Jobs To Be Done）</h3>
+    <div class="card">
+      <p>① <b>日常</b>：花 1 分钟把每笔收支记下来，单据随手存档，不丢凭证。</p>
+      <p>② <b>随时</b>：能看明白「公司现在有多少钱、别人欠我多少、我今年赚了多少、要交多少税」。</p>
+      <p>③ <b>到期</b>：被明确告知「该报什么税、去哪个网站、点哪里、填什么数」，照着做就能完成。</p>
+      <p>④ <b>年度</b>：汇算清缴、工商年报不漏不错；想从公司拿钱时知道怎么拿最合规、最省税。</p>
+    </div>
+
+    <h3>1.3 竞品格局</h3>
+    <table class="wide">
+      <tr>
+        <th style="width:15%">方案</th><th style="width:18%">本质</th><th>小白能用吗</th><th style="width:26%">关键缺口</th>
+      </tr>
+      <tr>
+        <td><b>柠檬云</b><br>金蝶精斗云<br>用友好会计</td>
+        <td>专业财务软件（会计视角）</td>
+        <td><span class="mid">部分</span>：仍需理解凭证、科目、借贷，AI 凭证降低了门槛但报表与申报仍需财务常识</td>
+        <td>为「有会计的小企业」设计，不是为「没有会计的一个人」设计</td>
+      </tr>
+      <tr>
+        <td><b>自记账 App</b></td>
+        <td>录资料 → 自动记账 → 人工审账 → 自动申报</td>
+        <td><span class="yes">较好</span>：录入对账单/发票/工资单即可，后台财务审账并申报</td>
+        <td>偏「资料提交器」，过程黑盒、实时反馈弱；看不到「为什么这么算」；教学与风险预警浅</td>
+      </tr>
+      <tr>
+        <td><b>慧算账</b><br>悟空财税等</td>
+        <td>代账服务（工具 + 人工）</td>
+        <td><span class="yes">能</span>：花钱买服务，基本不用自己动手</td>
+        <td>年费数千元起，对生意不多的一人公司不划算；服务质量参差、账在别人手里</td>
+      </tr>
+      <tr>
+        <td><b>Excel / 飞书表格</b><br>自己记流水</td>
+        <td>手工台账</td>
+        <td><span class="mid">勉强</span>：记流水简单，但算税、出两表、申报口径全靠自己</td>
+        <td>没有规则引擎，政策一变就错；没有申报引导，容易漏报</td>
+      </tr>
+      <tr>
+        <td><b>不处理</b></td>
+        <td>放任</td>
+        <td><span class="no">不能</span>：逾期未申报、公私混同，罚款与连带责任风险</td>
+        <td>—</td>
+      </tr>
+    </table>
+
+    <h3>1.4 产品定位与差异化</h3>
+    <div class="position">
+      <div class="lab">POSITIONING</div>
+      <div class="big">
+        一个<span class="hl">「会聊天的口袋会计」</span>——<br>
+        你只管说人话（收了谁的钱、花了什么钱），记账、算税、出表、教你申报，全部交给它。
+      </div>
+      <div class="small">
+        不做「给会计用的专业软件」，也不做「黑盒代账」；做「让老板用一张任务清单完成一个季度，异常情况可随时转人工」的引导式财税产品。
+      </div>
+    </div>
+    <p>四个差异化支点：</p>
+    <table class="wide">
+      <tr><th style="width:22%">支点</th><th>具体做法</th><th style="width:30%">对应竞品缺口</th></tr>
+      <tr><td><b>流水式 / 对话式记账</b></td><td>没有借贷、没有凭证界面；一句话或一个表单录入，系统在后台自动生成分录并可「展开看原理」</td><td>柠檬云/金蝶的会计门槛</td></tr>
+      <tr><td><b>实时家底看板</b></td><td>每记一笔，现金、应收、利润、本季预计税额实时联动，像理财 App 一样直观</td><td>自记账的黑盒感</td></tr>
+      <tr><td><b>申报任务引导</b></td><td>申报季自动生成任务卡：去哪个平台（附直达链接）、点哪个菜单、填哪一格（数字已算好）、完成后打勾</td><td>所有工具类产品的「最后一公里」</td></tr>
+      <tr><td><b>风险体检 + 大白话解释</b></td><td>公私混同、股东借款长期挂账、无票支出、招待超标自动预警，每条都讲清「为什么、怎么办」</td><td>重核算、轻风控与教育</td></tr>
+    </table>
+    <div class="note amber">
+      <b>命名候选（工作名待定）：</b>「账房」「一本账」「口袋账房」「账小白」「Solo 账」。建议主推 <b>「账房」</b>——两个字、人人都懂、天然带「一人公司的账房先生」联想；英文工作名 <b>Ledgerly</b>。本文以下统称「本平台」。
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 平台总体架构 ============ -->
+<section id="s2">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">02</span><h2>平台总体架构</h2></div>
+    <p class="sec-lead">六层架构：上层负责「接触用户、采集数据」，中层是「规则与引擎大脑」，下层负责「引导申报与交付结果」。事实沿处理链路流动，修改以更正事件回写，各层通过版本化接口解耦。</p>
+
+    <div class="arch">
+      <div class="layer l1">
+        <div class="lname"><div class="t">① 接入层</div><div class="d">用户在哪些终端上使用</div></div>
+        <div class="lbody">
+          <span class="mod"><b>移动端 App</b>（主力，随手记）</span>
+          <span class="mod"><b>Web 端</b>（申报季大屏操作）</span>
+          <span class="mod"><b>微信小程序</b>（轻量入口/提醒）</span>
+          <span class="mod"><b>浏览器插件</b>（电子税务局页面辅助）</span>
+        </div>
+      </div>
+      <div class="flow-arrow">▼</div>
+      <div class="layer l2">
+        <div class="lname"><div class="t">② 采集层</div><div class="d">把现实业务变成平台里的原始数据</div></div>
+        <div class="lbody">
+          <span class="mod">手工流水（一句话记账）</span>
+          <span class="mod">票据拍照 <b>OCR</b></span>
+          <span class="mod">数电票 PDF / 邮件抓取</span>
+          <span class="mod">银行对账单导入</span>
+          <span class="mod">开票数据同步（税务数字账户）</span>
+          <span class="mod">微信/支付宝账单导入</span>
+        </div>
+      </div>
+      <div class="flow-arrow">▼</div>
+      <div class="layer l3">
+        <div class="lname"><div class="t">③ 规则底座</div><div class="d">平台大脑的「法律与会计知识库」，参数化、可热更新</div></div>
+        <div class="lbody">
+          <span class="mod"><b>主体画像</b>（公司类型/纳税人身份/地区）</span>
+          <span class="mod"><b>政策规则库</b>（税率/减免/征期，含生效日期）</span>
+          <span class="mod"><b>科目体系</b>（小企业会计准则）</span>
+          <span class="mod"><b>申报表模板库</b>（栏次映射）</span>
+        </div>
+      </div>
+      <div class="flow-arrow">▼</div>
+      <div class="layer l4">
+        <div class="lname"><div class="t">④ 引擎层</div><div class="d">所有自动化的核心，第 04 章展开算法</div></div>
+        <div class="lbody">
+          <span class="mod"><b>记账规则引擎</b>（交易→分录）</span>
+          <span class="mod"><b>税务计算引擎</b>（各税种算税）</span>
+          <span class="mod"><b>报表引擎</b>（两表自动生成）</span>
+          <span class="mod"><b>风险检查引擎</b>（体检/预警）</span>
+          <span class="mod"><b>勾稽校验引擎</b>（账平不平）</span>
+        </div>
+      </div>
+      <div class="flow-arrow">▼</div>
+      <div class="layer l5">
+        <div class="lname"><div class="t">⑤ 任务与申报层</div><div class="d">把「该做什么」组织成可跟踪的任务</div></div>
+        <div class="lbody">
+          <span class="mod"><b>申报日历</b>（自动排期+顺延）</span>
+          <span class="mod"><b>申报数据预填包</b>（照抄即可）</span>
+          <span class="mod"><b>SOP 引导</b>（平台×步骤）</span>
+          <span class="mod"><b>申报状态机</b>（待办→已报→已缴）</span>
+        </div>
+      </div>
+      <div class="flow-arrow">▼</div>
+      <div class="layer l6">
+        <div class="lname"><div class="t">⑥ 呈现层</div><div class="d">用户最终看到与留存的东西</div></div>
+        <div class="lbody">
+          <span class="mod">家底看板（现金/应收/利润/税额）</span>
+          <span class="mod">利润表 / 资产负债表</span>
+          <span class="mod">电子凭证档案库</span>
+          <span class="mod">消息与征期提醒</span>
+          <span class="mod">大白话财税问答</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note amber">
+      <b>设计原则：</b>③规则底座与④引擎严格分离——政策每年都在变（如现行 1% 征收率、小微 5% 税负均优惠至 2027-12-31），
+      所有税率、阈值、征期都是<b>带生效日期的参数</b>，政策更新只改规则库、不动代码；引擎只负责「读规则、做计算」。
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 核心业务闭环 ============ -->
+<section id="s3">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">03</span><h2>核心业务闭环</h2></div>
+    <p class="sec-lead">用户一年的使用路径：一次性建档 → 日常随手记 → 期末结账算税 → 申报季照着做 → 年度汇算。平台在每个阶段承担不同职责。</p>
+
+    <div class="timeline">
+      <div class="tl-row">
+        <div class="tl-step">
+          <div class="tl-dot">0</div>
+          <h4>开业建档</h4>
+          <div class="when">一次性 · 约 15 分钟</div>
+          <ul>
+            <li>引导问卷：公司类型、小规模/一般、行业、地区、会计准则</li>
+            <li>录入投资款、期初余额</li>
+            <li>生成税种认定清单与全年申报日历</li>
+          </ul>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot">1</div>
+          <h4>日常记账</h4>
+          <div class="when">随时 · 每笔 30 秒</div>
+          <ul>
+            <li>开票/收款/花钱/垫付，四种入口</li>
+            <li>引擎自动分类、生成分录</li>
+            <li>拍照存档，用户一键确认</li>
+          </ul>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot">2</div>
+          <h4>期末结账</h4>
+          <div class="when">季末后 1–3 天</div>
+          <ul>
+            <li>完整性检查：漏记的流水、未匹配的票据</li>
+            <li>计提工资、摊销会员费、核销往来</li>
+            <li>自动算税、生成两表与申报数据包</li>
+          </ul>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot">3</div>
+          <h4>申报缴款</h4>
+          <div class="when">1/4/7/10 月 15 日前</div>
+          <ul>
+            <li>任务卡：平台链接 + 点击路径 + 应填数字</li>
+            <li>用户在官方平台自行申报、扣款</li>
+            <li>回传申报截图，任务关闭、税额归零</li>
+          </ul>
+        </div>
+        <div class="tl-step">
+          <div class="tl-dot">4</div>
+          <h4>年度事项</h4>
+          <div class="when">次年 3–6 月</div>
+          <ul>
+            <li>企业所得税汇算清缴（5/31 前）</li>
+            <li>工商年报（6/30 前）</li>
+            <li>分红/利润分配的省税决策支持</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3>3.1 数据是怎么一步步变成报表的</h3>
+    <p>会计的本质是一条「流水线」，平台把每一步都自动化，用户只在第 1 步和第 5 步出现：</p>
+    <div class="dataflow">
+      <div class="df-node">原始单据<span class="sub">发票/回单/合同/工资表</span></div>
+      <div class="df-arrow">→</div>
+      <div class="df-node">交易记录<span class="sub">流水：时间/对象/金额/收支</span></div>
+      <div class="df-arrow">→</div>
+      <div class="df-node">记账凭证<span class="sub">引擎自动生成借贷分录</span></div>
+      <div class="df-arrow">→</div>
+      <div class="df-node">账簿<span class="sub">明细账/科目汇总</span></div>
+      <div class="df-arrow">→</div>
+      <div class="df-node">报表与申报表<span class="sub">两表 + 各税种申报数据</span></div>
+    </div>
+
+    <h3>3.2 三条必须守住的业务规则</h3>
+    <div class="card">
+      <p><b>规则一：公是公、私是私。</b>公司账户原则上只走公司业务；对股东、员工的每笔转账必须选择业务性质并关联证据，如工资、报销、借款、出资退回或分红。借款跨年或长期未清时只做风险预警，不自动定性为分红。</p>
+      <p><b>规则二：业务和钱分开记、用单据勾稽。</b>开票形成「应收」，收款核销「应收」；垫付形成「欠老板」，报销核销「欠老板」。不靠记忆，靠两笔记录自动配对。</p>
+      <p><b>规则三：会计入账与税前扣除分开判断。</b>支出先按真实经济业务入账；是否可税前扣除，再结合真实性、与经营的相关性、合理性、凭证类型和比例限制判断。「有发票」不等于必然可扣，「无发票」也不由系统直接下结论。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 核心算法 ============ -->
+<section id="s4">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">04</span><h2>核心算法与规则引擎</h2></div>
+    <p class="sec-lead">五大引擎的算法设计：主体画像决策、记账规则、税务计算、申报日历、勾稽校验。全部以「规则数据化 + 确定性计算」为主，机器学习只用于辅助分类且必须经用户确认。</p>
+
+    <h3>4.1 主体画像引擎：一切规则的总开关</h3>
+    <p>用户注册时通过 8–10 个大白话问题完成建档（如「你的营业执照上写的是有限公司还是个体户？」「你去税务局登记时是小规模还是一般纳税人？」），输出一个<b>规则参数包</b>，后续所有引擎都读它：</p>
+    <pre class="code"><span class="kw">function</span> <span class="fn">buildProfile</span>(answers):
+    profile = {}
+    <span class="cm">// ① 主体类型 → 决定交哪种「所得税」</span>
+    <span class="kw">if</span> answers.entity <span class="kw">in</span> [<span class="st">"一人有限公司"</span>, <span class="st">"有限责任公司"</span>]:
+        profile.incomeTax = <span class="st">"企业所得税"</span>          <span class="cm">// 25% 档，小微实际 5%</span>
+        profile.needTwoStatements = <span class="kw">true</span>             <span class="cm">// 必须出资产负债表+利润表</span>
+    <span class="kw">elif</span> answers.entity <span class="kw">in</span> [<span class="st">"个人独资"</span>, <span class="st">"个体户"</span>]:
+        profile.incomeTax = <span class="st">"经营所得个税"</span>          <span class="cm">// 5%–35% 五级累进</span>
+    <span class="cm">// ② 增值税身份 → 决定计税方法与发票</span>
+    profile.vatType = answers.vatType                    <span class="cm">// small / general</span>
+    <span class="kw">if</span> profile.vatType == <span class="st">"small"</span>:
+        profile.levyRate = <span class="num">0.01</span>                         <span class="cm">// 3% 减按 1%（至 2027-12-31）</span>
+        profile.period = <span class="st">"quarter"</span>; profile.vatThreshold = <span class="num">300000</span>
+    <span class="cm">// ③ 地区 → 决定电子税务局入口与地方规则</span>
+    profile.region = answers.region                     <span class="cm">// 精确到省/市/区县</span>
+    profile.etaxPortal = portalMap[answers.province]
+    <span class="cm">// ④ 准则与征收方式</span>
+    profile.accountingStandard = <span class="st">"小企业会计准则"</span>      <span class="cm">// 小白默认</span>
+    profile.collectionMethod = answers.collection      <span class="cm">// V1 仅支持查账</span>
+    profile.registeredTaxes = answers.taxRegistration  <span class="cm">// 以电子税务局税费种认定为准</span>
+    profile.scopeResult = evaluateScope(profile, answers.business)
+    <span class="kw">if</span> !profile.scopeResult.eligible: <span class="kw">return</span> handoffToHuman(profile.scopeResult.reasons)
+    <span class="kw">return</span> profile</pre>
+
+    <h3>4.2 记账规则引擎：把「人话」翻译成「借贷分录」</h3>
+    <p>用户永远看不到借贷。他录入的是一条<b>交易</b>（方向、对象、业务类型、金额、用哪个账户付、有没有单据），引擎用规则表把它翻译成一张记账凭证（可能多行分录）。核心映射规则：</p>
+    <table class="rulemap wide">
+      <tr><th style="width:20%">用户视角（人话）</th><th style="width:42%">系统自动生成的分录</th><th>触发条件</th></tr>
+      <tr><td>我给公司打了投资款</td><td><span class="entry"><span class="dr">借</span> 银行存款<br><span class="dr">贷</span> 实收资本</span></td><td>类型=投资款，方向=公司收到</td></tr>
+      <tr><td>我已完成服务并给客户开票，还没收到钱</td><td><span class="entry"><span class="dr">借</span> 应收账款<br><span class="dr">贷</span> 主营业务收入（不含税）<br><span class="dr">贷</span> 应交税费·增值税</span></td><td>同时确认「服务已履约」和「已开票」；若未履约则进合同负债/预收口径待复核</td></tr>
+      <tr><td>客户把钱打来了</td><td><span class="entry"><span class="dr">借</span> 银行存款<br><span class="dr">贷</span> 应收账款</span></td><td>收款核销对应发票</td></tr>
+      <tr><td>公司账户付了一笔费用</td><td><span class="entry"><span class="dr">借</span> 管理费用·明细科目<br><span class="dr">贷</span> 银行存款</span></td><td>支付方式=对公</td></tr>
+      <tr><td>我先个人垫付了</td><td><span class="entry"><span class="dr">借</span> 管理费用·明细<br><span class="dr">贷</span> 其他应付款·老板</span></td><td>支付方式=个人垫付</td></tr>
+      <tr><td>公司把垫付款还给我</td><td><span class="entry"><span class="dr">借</span> 其他应付款·老板<br><span class="dr">贷</span> 银行存款</span></td><td>报销，核销垫付记录</td></tr>
+      <tr><td>我（股东）临时向公司借钱</td><td><span class="entry"><span class="dr">借</span> 其他应收款·股东<br><span class="dr">贷</span> 银行存款</span></td><td>记录用途、借款协议和归还日；跨年未还时强预警并转人工判断</td></tr>
+      <tr><td>从对公提现做备用金</td><td><span class="entry"><span class="dr">借</span> 库存现金<br><span class="dr">贷</span> 银行存款</span></td><td>两个账户各记一行，自动配对</td></tr>
+      <tr><td>发工资</td><td><span class="entry"><span class="dr">借</span> 管理费用·工资<br><span class="dr">贷</span> 应付职工薪酬</span><br><span class="entry"><span class="dr">借</span> 应付职工薪酬<br><span class="dr">贷</span> 银行存款 / 应交税费·个税</span></td><td>计提与发放两步</td></tr>
+      <tr><td>年付会员（如 Figma 按年）</td><td><span class="entry"><span class="dr">借</span> 预付账款<br><span class="dr">贷</span> 银行存款</span><br><span class="entry">每月：<span class="dr">借</span> 管理费用 <span class="dr">贷</span> 预付账款</span></td><td>受益期跨月，系统建摊销计划，每月自动出分录</td></tr>
+      <tr><td>缴纳税款</td><td><span class="entry"><span class="dr">借</span> 应交税费·明细<br><span class="dr">贷</span> 银行存款</span></td><td>申报缴款后，应交税费归零</td></tr>
+      <tr><td>公司给我分红</td><td><span class="entry"><span class="dr">借</span> 利润分配·应付股利<br><span class="dr">贷</span> 应付股利</span><br><span class="entry"><span class="dr">借</span> 应付股利<br><span class="dr">贷</span> 银行存款 / 应交税费·个税(20%)</span></td><td>需先有税后利润、代扣 20%</td></tr>
+    </table>
+    <div class="note red"><b>识别原则：</b>「业务履约」、「开票」、「收付款」和「税务义务」是可能发生在不同日期的四类事件。系统不能把「已开票」简单等同于「已确认会计收入」，必须保留各自的日期和证据。</div>
+
+    <h4>业务类型怎么自动判断（分类算法）</h4>
+    <pre class="code"><span class="kw">function</span> <span class="fn">classify</span>(tx):
+    <span class="cm">// 第 1 优先级：用户显式选择（如录入时选了「外包协作」）</span>
+    <span class="kw">if</span> tx.userChoice: <span class="kw">return</span> tx.userChoice
+    <span class="cm">// 第 2 优先级：硬规则（票据类型/商户关键词/收支方向）</span>
+    hit = ruleTable.find(r =&gt; r.match(tx))
+    <span class="kw">if</span> hit: <span class="kw">return</span> hit.category
+    <span class="cm">// 第 3 优先级：该商户的历史习惯（同一收款方上次记成什么）</span>
+    <span class="kw">if</span> memory[tx.counterparty]: <span class="kw">return</span> memory[tx.counterparty]
+    <span class="cm">// 第 4 优先级：分类模型给出候选（只作建议，不直接入账）</span>
+    candidates = mlClassifier(tx)
+    <span class="kw">if</span> candidates.top.confidence &gt;= <span class="num">0.9</span>: <span class="kw">return</span> confirmWithUser(candidates.top)
+    <span class="cm">// 仍不确定 → 询问用户；用户的回答沉淀为新规则</span>
+    <span class="kw">return</span> askUser(tx, candidates)   <span class="cm">// 回答后写入 ruleTable / memory</span></pre>
+    <div class="note amber"><b>关键设计：</b>分类可以「猜」，但<b>首次入账必须用户确认</b>；只有在「同一对方 + 同一业务类型 + 同一税务属性」的规则经多次确认后，才可允许用户开启自动入账。金额、账户、往来对象等事实字段不由模型虚构，所有模型建议保留来源、置信度与确认人。</div>
+
+    <h3>4.3 税务计算引擎：每个税种怎么算</h3>
+
+    <h4>① 增值税（V1：小规模纳税人、按季、3% 征收率的现代服务）</h4>
+    <pre class="code"><span class="kw">function</span> <span class="fn">calcVAT</span>(taxEvents, profile, period, ruleVersion):
+    rules = policyStore.load(<span class="st">“VAT”</span>, profile.region, period, ruleVersion)
+    <span class="kw">assert</span> profile.vatType == <span class="st">“small”</span>
+    <span class="kw">assert</span> taxEvents.every(e =&gt; e.baseLevyRate == <span class="num">0.03</span>)
+    <span class="cm">// 红字发票、作废、未开票收入均作为独立税务事件，不以发票表直接求和</span>
+    normalized = normalizeTaxEvents(taxEvents, rules)
+    totalSales = sum(normalized, <span class="st">“assessmentSales”</span>)
+    threshold = rules.quarterlyExemptionThreshold
+    <span class="kw">if</span> totalSales &lt;= threshold:
+        taxable = sum(normalized.filter(e =&gt; !e.eligibleForSmallScaleExemption), <span class="st">“sales”</span>)
+        exempt = totalSales - taxable
+    <span class="kw">else</span>:
+        taxable = totalSales; exempt = <span class="num">0</span>
+    vat = sumByApplicableRate(taxable, normalized, rules) <span class="cm">// 减按 1% 或纳税人对某笔放弃减税时的适用率</span>
+    <span class="kw">return</span> resultWithTrace({vat, exempt, totalSales}, ruleVersion, normalized)</pre>
+    <ul class="tight">
+      <li>当前政策参数示例：按季申报的小规模纳税人，月销售额 10 万元免税标准换算为季度 30 万元；原适用 3% 征收率的应税销售收入现行减按 1% 至 2027-12-31。</li>
+      <li>V1 若识别到 5% 征收率业务、差额征税、不动产、跨地预缴或其他特殊业务，不继续自动计算，直接转人工。</li>
+      <li>免税、开具增值税专用发票、放弃减税与红字发票等情形必须分类计算，不能只按「普票/专票」两类硬编码。</li>
+    </ul>
+
+    <h4>② 附加税费（城建税 + 教育费附加 + 地方教育附加）</h4>
+    <pre class="code"><span class="kw">function</span> <span class="fn">calcSurcharges</span>(vatBasis, profile, period, ruleVersion):
+    rules = policyStore.load(<span class="st">“SURCHARGES”</span>, profile.region, period, ruleVersion)
+    cityRate = rules.cityMaintenanceRate  <span class="cm">// 市区 7%；县城/镇 5%；其他 1%</span>
+    education = rules.educationSurchargeRate
+    localEducation = rules.localEducationSurchargeRate
+    reduction = eligibility(profile, <span class="st">“sixTaxesTwoFees”</span>, period) ? rules.reductionFactor : <span class="num">1</span>
+    <span class="kw">return</span> round(vatBasis * (cityRate + education + localEducation) * reduction, <span class="num">2</span>)</pre>
+
+    <h4>③ 企业所得税（按季预缴，累计口径；次年汇算清缴）</h4>
+    <pre class="code"><span class="kw">function</span> <span class="fn">calcIncomeTax</span>(year, quarter, profile, ruleVersion):
+    <span class="cm">// 申报表填「年初至本季末」累计数，不是只填本季</span>
+    cumRevenue = sum(year.to(quarter), <span class="st">"不含税收入"</span>)
+    cumDeductible = sum(year.to(quarter), <span class="st">"可扣除成本费用"</span>)
+    cumSurcharge = sum(year.to(quarter), <span class="st">"附加税费"</span>)
+    accountingProfit = cumRevenue - cumDeductible - cumSurcharge
+    estimatedAdjustments = buildTaxAdjustmentEstimate(year.to(quarter))
+    taxableIncome = accountingProfit + estimatedAdjustments.increase - estimatedAdjustments.decrease
+    avgEmployees = averageByQuarter(year.to(quarter), <span class="st">“employees”</span>)
+    avgAssets = averageByQuarter(year.to(quarter), <span class="st">“totalAssets”</span>)
+    isSmallProfit = !profile.restrictedIndustry &amp;&amp; taxableIncome &lt;= <span class="num">3000000</span>
+                    &amp;&amp; avgEmployees &lt;= <span class="num">300</span> &amp;&amp; avgAssets &lt;= <span class="num">50000000</span>
+    rules = policyStore.load(<span class="st">“CIT”</span>, profile.region, quarter.end, ruleVersion)
+    cumTax = calcByPreferentialPolicy(taxableIncome, isSmallProfit, rules)
+    payableThisQuarter = cumTax - sum(year.earlierQuarters, <span class="st">"已预缴"</span>)
+    <span class="kw">return</span> max(<span class="num">0</span>, payableThisQuarter)</pre>
+    <div class="note red"><b>纳税调整：</b>业务招待费、广告费、捐赠、资产折旧、不合规凭证、个人消费和关联方往来等不能用一个布尔标记代替专业判断。平台在季度做「预计调整」，年度汇算前生成待复核清单，高风险项必须由用户或专业人员确认。</div>
+
+    <h4>④ 工资个税（累计预扣法，按月）</h4>
+    <pre class="code"><span class="kw">function</span> <span class="fn">calcPayrollTax</span>(person, month):
+    cumSalary  = sum(year.to(month), <span class="st">"工资"</span>)
+    deduction  = <span class="num">5000</span> * month                        <span class="cm">// 基本减除费用</span>
+    socialIns  = sum(year.to(month), <span class="st">"社保个人部分"</span>)
+    addlDeduct = sum(year.to(month), <span class="st">"专项附加扣除"</span>)  <span class="cm">// 子女教育/房贷/赡养老人等</span>
+    taxable = cumSalary - deduction - socialIns - addlDeduct
+    cumTax = lookup(BRACKETS, max(<span class="num">0</span>, taxable))       <span class="cm">// 查七级预扣率表</span>
+    <span class="kw">return</span> max(<span class="num">0</span>, cumTax - sum(year.earlierMonths, <span class="st">"已预扣"</span>))</pre>
+    <table>
+      <tr><th>累计应纳税所得额</th><th>预扣率</th><th>速算扣除数</th></tr>
+      <tr><td>不超过 36,000</td><td>3%</td><td>0</td></tr>
+      <tr><td>36,000 – 144,000</td><td>10%</td><td>2,520</td></tr>
+      <tr><td>144,000 – 300,000</td><td>20%</td><td>16,920</td></tr>
+      <tr><td>300,000 – 420,000</td><td>25%</td><td>31,920</td></tr>
+      <tr><td>420,000 – 660,000</td><td>30%</td><td>52,920</td></tr>
+      <tr><td>660,000 – 960,000</td><td>35%</td><td>85,920</td></tr>
+      <tr><td>超过 960,000</td><td>45%</td><td>181,920</td></tr>
+    </table>
+
+    <h4>⑤ 其他</h4>
+    <ul class="tight">
+      <li><b>分红个税</b>：税后利润分给个人，公司代扣 20%；这是一人公司「双层所得税」的第二层。</li>
+      <li><b>印花税</b>：现行法定税率中，营业账簿为实收资本（股本）与资本公积合计金额的万分之 2.5，技术合同为万分之 3；若主体符合现行「六税两费」减半条件，再按 50% 计算。税目、计税依据和纳税期限必须结合合同内容及税种认定判断。</li>
+    </ul>
+
+    <h3>4.4 申报日历引擎：自动排出「全年待办」</h3>
+    <pre class="code"><span class="kw">function</span> <span class="fn">buildCalendar</span>(profile, year):
+    tasks = []
+    <span class="kw">for</span> tax <span class="kw">in</span> profile.registeredTaxes:           <span class="cm">// 来自税种认定</span>
+        <span class="kw">for</span> period <span class="kw">in</span> periodsOf(tax, year):        <span class="cm">// 月/季/年</span>
+            deadline = statutoryDeadline(tax, period.end)
+            deadline = rollForward(deadline, holidayTable)  <span class="cm">// 遇节假日顺延</span>
+            tasks.push({tax, period, deadline,
+                        status: <span class="st">"pending"</span>, amount: <span class="kw">null</span>})
+    <span class="kw">return</span> tasks
+<span class="cm">// 不自行仅凭法定假日推算最终征期。
+// 系统以税务机关当年征期公告为主数据源，日历规则只做交叉校验；不一致时以官方公告为准并发出运营告警。</span></pre>
+    <p>任务之间有依赖关系，引擎按顺序解锁：<b>数据已结账 → 可申报 → 申报成功 → 生成缴款单 → 缴款成功 → 回传凭证 → 关闭</b>。即使当期没有任何业务，也会生成「零申报」任务——零申报不等于不申报。</p>
+
+    <h3>4.5 勾稽校验引擎：尽早发现并定位差异</h3>
+    <pre class="code"><span class="kw">const</span> CHECKS = [
+  () =&gt; moneyEq(bs.totalAssets, bs.totalLiabilities + bs.totalEquity), <span class="cm">// 会计恒等式，按货币精度比较</span>
+  () =&gt; vouchers.every(v =&gt; moneyEq(v.debit, v.credit)),              <span class="cm">// 每张凭证借贷平衡</span>
+  () =&gt; reconcileByAccount(bankLines, ledgerCashAccounts),            <span class="cm">// 每个资金账户分别对账</span>
+  () =&gt; subledgerEq(<span class="st">“AR”</span>, bs.accountsReceivable),             <span class="cm">// 应收明细=总账</span>
+  () =&gt; subledgerEq(<span class="st">“AP”</span>, bs.accountsPayable),                <span class="cm">// 应付明细=总账</span>
+  () =&gt; subledgerEq(<span class="st">“OTHER”</span>, bs.otherReceivables, bs.otherPayables),
+  () =&gt; taxEventReconciliation(vatReturn, invoices, unbilledSales, redInvoices),
+  () =&gt; filingSnapshot.ruleVersion != <span class="kw">null</span> &amp;&amp; filingSnapshot.inputHash != <span class="kw">null</span>
+]
+<span class="kw">function</span> <span class="fn">verify</span>():
+  failures = CHECKS.map(runAndExplain).filter(r =&gt; !r.passed)
+  <span class="kw">return</span> failures.map(locateSourceDocuments) <span class="cm">// 一次返回全部差异，不在第一个错误处停止</span></pre>
+    <div class="note green"><b>用户体验：</b>校验在录入、对账、结账和生成申报数据包时分层运行。系统不承诺「永远不错」，而是在申报前列出所有未解决差异、风险级别、源单据和修复建议；存在阻断级差异时不允许进入「可申报」状态。</div>
+  </div>
+</section>
+
+<!-- ============ 05 数据模型 ============ -->
+<section id="s5">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">05</span><h2>数据模型</h2></div>
+    <p class="sec-lead">以「交易」为中心组织数据：用户录入的事实集中在交易/发票/单据，凭证与分录由引擎派生，申报任务围绕税种与属期展开。</p>
+
+    <div class="er-grid">
+      <div class="er">
+        <div class="erh">公司/账套 <span class="en">Company</span></div>
+        <ul>
+          <li><span class="pk">PK</span> <b>company_id</b></li>
+          <li><b>名称 / 统一社会信用代码</b></li>
+          <li>成立日期、行业、地区</li>
+          <li>会计准则、征收方式</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">主体画像 <span class="en">Profile</span></div>
+        <ul>
+          <li><span class="pk">PK</span> profile_id</li>
+          <li><b>增值税身份</b>（小规模/一般）</li>
+          <li><b>所得税口径</b>、征收率</li>
+          <li>减免资格、电子税务局入口</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">资金账户 <span class="en">Account</span></div>
+        <ul>
+          <li><span class="pk">PK</span> account_id</li>
+          <li><b>类型</b>：对公/库存现金/微信支付宝</li>
+          <li>账号、开户行</li>
+          <li>期初余额</li>
+        </ul>
+      </div>
+      <div class="er core">
+        <div class="erh">业务事件（核心事实表） <span class="en">BusinessEvent</span></div>
+        <ul>
+          <li><span class="pk">PK</span> <b>event_id</b></li>
+          <li><b>类型</b>：履约/开票/收付款/计提/调整</li>
+          <li><b>业务日期、税务日期、账户、方向</b></li>
+          <li><b>金额、往来对象、业务类型</b></li>
+          <li>支付方式、可扣除标记、备注</li>
+          <li>关联发票、关联单据（N:N）</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">发票 <span class="en">Invoice</span></div>
+        <ul>
+          <li><span class="pk">PK</span> invoice_id</li>
+          <li><b>号码、票种（普/专）、方向</b></li>
+          <li>含税金额、不含税、税额</li>
+          <li>状态：已开/已收/已核销</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">单据档案 <span class="en">Document</span></div>
+        <ul>
+          <li><span class="pk">PK</span> doc_id</li>
+          <li><b>类型</b>：合同/回单/截图/发票</li>
+          <li>云盘 URL、文件名、月份</li>
+          <li>OCR 结构化结果</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">记账凭证 <span class="en">Voucher</span></div>
+        <ul>
+          <li><span class="pk">PK</span> voucher_id</li>
+          <li>凭证字号、日期、摘要</li>
+          <li>来源（自动/手工）、确认状态</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">分录行 <span class="en">Entry</span></div>
+        <ul>
+          <li><span class="pk">PK</span> entry_id</li>
+          <li><b>科目、方向（借/贷）、金额</b></li>
+          <li>FK → voucher_id</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">申报任务 <span class="en">FilingTask</span></div>
+        <ul>
+          <li><span class="pk">PK</span> task_id</li>
+          <li><b>税种、属期、截止日</b></li>
+          <li><b>状态</b>：待办/已申报/已缴款</li>
+          <li>应缴金额、申报表数据、凭证</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">会计期间 <span class="en">AccountingPeriod</span></div>
+        <ul>
+          <li><span class="pk">PK</span> period_id</li>
+          <li><b>年度、月度、开始/结束日</b></li>
+          <li>状态：开放/待复核/已结账/已申报</li>
+          <li>锁定人、锁定时间、反结账理由</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">税务规则版本 <span class="en">TaxRuleVersion</span></div>
+        <ul>
+          <li><span class="pk">PK</span> rule_version_id</li>
+          <li><b>税种、地区、适用场景</b></li>
+          <li>政策文号、官方链接、发布/生效/失效日</li>
+          <li>审核人、测试集、发布状态</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">计算执行记录 <span class="en">CalculationRun</span></div>
+        <ul>
+          <li><span class="pk">PK</span> run_id</li>
+          <li><b>输入快照、规则版本、输出结果</b></li>
+          <li>计算步骤与解释链路</li>
+          <li>执行时间、确认人、替代执行记录</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">银行流水 <span class="en">BankStatementLine</span></div>
+        <ul>
+          <li><span class="pk">PK</span> bank_line_id</li>
+          <li><b>交易日期、金额、对方、摘要</b></li>
+          <li>导入批次、原始行哈希、去重键</li>
+          <li>匹配状态、差异原因</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">审计事件 <span class="en">AuditEvent</span></div>
+        <ul>
+          <li><span class="pk">PK</span> audit_event_id</li>
+          <li><b>操作人、时间、对象、动作</b></li>
+          <li>变更前/后哈希、设备/IP</li>
+          <li>确认、驳回、冲销、重算原因</li>
+        </ul>
+      </div>
+      <div class="er">
+        <div class="erh">授权与同意 <span class="en">ConsentGrant</span></div>
+        <ul>
+          <li><span class="pk">PK</span> consent_id</li>
+          <li><b>数据类型、处理目的、授权范围</b></li>
+          <li>同意文本版本、单独同意记录</li>
+          <li>授权/撤回时间、数据接收方</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4>实体关系（基数）</h4>
+    <table class="rel-table wide">
+      <tr><th style="width:26%">关系</th><th style="width:12%">基数</th><th>说明</th></tr>
+      <tr><td>Company — Account / Counterparty</td><td class="cardin">1 : N</td><td>一个账套多个资金账户、多个往来对象（客户、供应商、股东）</td></tr>
+      <tr><td>Company — BusinessEvent</td><td class="cardin">1 : N</td><td>所有履约、开票、收付款、计提和调整事件均挂在账套下</td></tr>
+      <tr><td>BusinessEvent — Voucher</td><td class="cardin">N : N</td><td>履约、开票、收款、税务计提可在不同日期生成不同凭证；通过关联表保留分拆与合并关系</td></tr>
+      <tr><td>Voucher — Entry</td><td class="cardin">1 : N</td><td>一张凭证至少两行分录，借贷合计必须相等</td></tr>
+      <tr><td>BusinessEvent — Document</td><td class="cardin">N : N</td><td>一个事件可附多张单据，一张合同可对应多次履约与收款</td></tr>
+      <tr><td>Invoice — BusinessEvent（收款）</td><td class="cardin">N : N</td><td>一张发票可分次收款，一笔款也可能合并多张发票；核销后应收余额=0</td></tr>
+      <tr><td>TaxItem — FilingTask</td><td class="cardin">1 : N</td><td>每个认定税种按属期（月/季/年）生成一串任务</td></tr>
+      <tr><td>FilingTask — FilingForm</td><td class="cardin">1 : 1</td><td>任务携带一份已填好栏次的申报数据包，供用户照抄</td></tr>
+    </table>
+    <div class="note amber"><b>存储原则：</b>原始单据、银行流水和用户确认采用追加式版本记录，修改使用新版本或更正事件，不覆盖历史。未结账期间可按新规则重算；<b>已申报期间必须冻结输入、规则版本和结果</b>，后续只能通过更正凭证、重新申报或差异调整处理，不能静默改写历史。</div>
+  </div>
+</section>
+
+<!-- ============ 06 报税操作 SOP ============ -->
+<section id="s6">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">06</span><h2>报税操作 SOP 中心</h2></div>
+    <p class="sec-lead">税务小白版：先记住三个官方平台的分工，再按每张任务卡的步骤照做。平台里「申报引导中心」就是这些 SOP 的产品化形态——步骤内嵌入截图教学、数字预填、完成打勾。</p>
+
+    <h3>6.1 三个官方平台分工（先认门）</h3>
+    <div class="platforms">
+      <div class="plat a">
+        <div class="pn">① 电子税务局</div>
+        <div class="pu">网页端，以江苏为例：<br>etax.jiangsu.chinatax.gov.cn</div>
+        <ul>
+          <li>数电票开具</li>
+          <li>增值税及附加（按季）</li>
+          <li>企业所得税（按季/按年）</li>
+          <li>财务报表报送</li>
+          <li>印花税、税款缴纳</li>
+        </ul>
+      </div>
+      <div class="plat b">
+        <div class="pn">② 自然人电子税务局</div>
+        <div class="pu">工资个税专用；用「扣缴端」PC 客户端，也可用网页 WEB 端「单位办税」</div>
+        <ul>
+          <li>人员信息采集</li>
+          <li>工资薪金申报（按月）</li>
+          <li>个税税款计算与缴纳</li>
+        </ul>
+      </div>
+      <div class="plat c">
+        <div class="pn">③ 企业信用信息公示系统</div>
+        <div class="pu">网页端：<br>gsxt.gov.cn</div>
+        <ul>
+          <li>工商年度报告</li>
+          <li>每年 6 月 30 日前</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note amber"><b>登录准备（只做一次）：</b>电子税务局用「企业业务」入口，由法人（你本人）用<b>个人所得税 APP 扫码</b>或账号密码登录；第一次办税建议先在「我要办税 → 综合信息报告」确认<b>税种认定</b>（税务局给你核定了哪些税、按月还是按季），并签<b>三方（委托）扣款协议</b>（公司账户 → 税务局 → 银行），之后申报完一键扣款，不用跑银行。</div>
+    <div class="note red"><b>SOP 使用规则：</b>电子税务局菜单、登录方式和表单版本会变化，各地也可能不同。任务卡必须显示「适用地区 + 验证日期 + 官方来源」；若实际页面与 SOP 不同，用户应停止照抄数字并发起人工复核。</div>
+
+    <h3>6.2 日常：给客户开发票</h3>
+    <div class="sop">
+      <div class="sop-h">
+        <span class="stitle">数电票（普票/专票）开具与交付</span>
+        <span class="badge eta">电子税务局</span><span class="badge m">有业务时</span>
+      </div>
+      <div class="sop-b"><ol>
+        <li>登录电子税务局，进入 <span class="path">我要办税 → 开票业务 → 蓝字发票开具</span>（个别省份菜单名为「发票业务」）。</li>
+        <li>首次使用先做<b>项目信息维护</b>（如把「设计服务」「技术服务」维护好，开票时直接选）。</li>
+        <li>点<b>立即开票</b> → 选择「电子发票」+「普通发票」或「专用发票」→ 确定。</li>
+        <li>填<b>购买方信息</b>：名称、纳税人识别号（专票还需地址电话、开户行账号），可从已维护客户中选择。</li>
+        <li>选开票项目、填金额；小规模征收率选 <b>1%</b>（留意本季累计是否接近 30 万，接近时本平台会提醒）。</li>
+        <li><b>预览发票</b>核对无误 → 点「发票开具」→ 按提示用个税 APP / 江苏税务 APP 完成<b>身份认证</b>。</li>
+        <li>开具成功后选择<b>交付</b>：直接填客户邮箱/手机号推送，或下载 PDF/OFD 自行发送；发票号码由系统自动赋予。</li>
+      </ol></div>
+      <div class="src"><b>本平台同步：</b>开票数据可通过「税务数字账户」同步自动生成一行收入，用户确认即可；若暂未开通同步，手工新增一行并把发票 PDF 归档。</div>
+    </div>
+
+    <h3>6.3 季度申报（每年 1 / 4 / 7 / 10 月 15 日前，遇节假日顺延）</h3>
+
+    <div class="sop">
+      <div class="sop-h">
+        <span class="stitle">第一步：增值税及附加税费申报</span>
+        <span class="badge eta">电子税务局</span><span class="badge q">按季</span>
+      </div>
+      <div class="sop-b"><ol>
+        <li>进入 <span class="path">我要办税 → 税费申报及缴纳 → 增值税及附加税费申报（小规模纳税人）</span>。</li>
+        <li>系统按业务复杂度自动匹配模式：<b>确认式申报</b>会把数电票数据自动预填，逐屏核对即可；想自己填可点右上角「我要填表」切换<b>填表式</b>。</li>
+        <li>核对三类数：本季<b>不含税销售额</b>、普票对应的<b>免税销售额</b>（季销售额≤30 万部分）、专票对应的 <b>1% 税额</b>。</li>
+        <li><b>附加税费</b>随增值税申报表整合计算；城建税适用 7% / 5% / 1% 取决于纳税人所在地，再结合当期教育费附加、地方教育附加和减免资格计算。</li>
+        <li>核对无误 → <b>申报</b> → 确认提交。</li>
+        <li><b>立即缴款</b>：已签三方协议直接扣款；也可扫码缴款或打印银行端凭证去银行。</li>
+        <li>保存/截图<b>申报成功回执与完税凭证</b>。</li>
+      </ol></div>
+      <div class="src"><b>数字从哪来：</b>本平台「季度汇总」已算好：不含税销售额、专票税额、免税销售额、应缴增值税与附加，逐格与系统预填数核对，不一致先查漏开/漏记。</div>
+      <div class="done"><b>完成标志：</b>申报状态「已申报」、扣款状态「已缴款」，回传凭证后本平台任务打勾、应交税费归零。<b>全季没有收入也要零申报。</b></div>
+    </div>
+
+    <div class="sop">
+      <div class="sop-h">
+        <span class="stitle">第二步：企业所得税季度预缴（A 类）</span>
+        <span class="badge eta">电子税务局</span><span class="badge q">按季</span>
+      </div>
+      <div class="sop-b"><ol>
+        <li>进入 <span class="path">税费申报及缴纳 → 企业所得税月（季）度预缴纳税申报（A 类）</span>。</li>
+        <li>核对<b>本年累计</b>的营业收入、营业成本、利润总额及申报表当期要求的其他项目；申报表版本和填报口径以官方系统当期提示为准。</li>
+        <li>核对限制/禁止行业、截至本期的从业人数季度平均值、资产总额季度平均值和应纳税所得额，确认是否符合<b>小型微利企业</b>优惠。</li>
+        <li>「已预缴所得税」自动带出，本期只需补缴<b>差额</b>。</li>
+        <li>申报 → 缴款 → 保存凭证。</li>
+      </ol></div>
+      <div class="src"><b>数字从哪来：</b>营业收入/成本/利润总额来自已结账的利润表；预计纳税调整另列清单。若官方预填、平台试算和用户账簿三者不一致，不允许直接提交。</div>
+    </div>
+
+    <div class="sop">
+      <div class="sop-h">
+        <span class="stitle">第三步：财务报表报送</span>
+        <span class="badge eta">电子税务局</span><span class="badge q">按季</span>
+      </div>
+      <div class="sop-b"><ol>
+        <li>进入 <span class="path">我要办税 → 财务报表报送</span>（小企业会计准则，季报）。</li>
+        <li><b>资产负债表</b>：填季度末那一天的时点数。</li>
+        <li><b>利润表</b>：填「本期金额」（本季度）与「本年累计金额」（年初至季末）两栏。</li>
+        <li>核对校验关系（资产=负债+权益）后提交，无需缴款。</li>
+      </ol></div>
+      <div class="src"><b>数字从哪来：</b>直接抄本平台「资产负债表」「利润表」对应季度列与全年累计列。</div>
+    </div>
+
+    <div class="sop">
+      <div class="sop-h">
+        <span class="stitle">第四步：印花税（如当期有合同/投资到位）</span>
+        <span class="badge eta">电子税务局</span><span class="badge q">按季或按次</span>
+      </div>
+      <div class="sop-b"><ol>
+        <li>进入 <span class="path">税费申报及缴纳 → 财产和行为税合并纳税申报</span>。</li>
+        <li>找到<b>印花税 → 税源采集</b>，新增税源：选税目（如「技术合同」）、填合同金额、签订日期；投资到位时选「营业账簿」填实收资本金额。</li>
+        <li>保存后回到申报页，核对法定税率、计税依据和当期减免：技术合同法定税率为万分之 3，营业账簿法定税率为万分之 2.5；符合现行减半政策时再计算减免额。</li>
+        <li>申报 → 缴款 → 保存凭证。</li>
+      </ol></div>
+      <div class="src"><b>提示：</b>具体按月/季/按次申报看你的税种认定；本平台在你登记合同或投资款时自动提示是否产生印花税并算好金额。</div>
+    </div>
+
+    <h3>6.4 月度：工资薪金个税（次月 15 日前）</h3>
+    <div class="sop">
+      <div class="sop-h">
+        <span class="stitle">自然人电子税务局（扣缴端）申报工资个税</span>
+        <span class="badge q">自然人电子税务局</span><span class="badge m">按月</span>
+      </div>
+      <div class="sop-b"><ol>
+        <li>在自然人电子税务局官网<b>下载「扣缴端」PC 客户端</b>并安装（也可用网页端「单位办税 → 扣缴申报」）。</li>
+        <li>登录并选择本单位，进入 <b>人员信息采集</b>：添加人员（姓名、证件号、任职受雇日期、手机号）→ <b>报送</b> → 等待「验证通过」。</li>
+        <li>进入 <b>综合所得申报 → 正常工资薪金所得 → 填写</b>：录入本期收入、社保个人部分；人员稳定时可直接「复制上月数据」微调。</li>
+        <li>点 <b>预填专项附加扣除</b>（员工已在个税 APP 填报的子女教育、房贷、赡养老人等）。</li>
+        <li>进入 <b>税款计算</b>，系统按累计预扣法算税，与本平台工资测算核对。</li>
+        <li><b>申报表报送</b> → 确认申报成功。</li>
+        <li><b>税款缴纳</b>：三方协议扣款；当月无人达起征点则税额为 0，申报即可。</li>
+      </ol></div>
+      <div class="src"><b>数字从哪来：</b>本平台工资表已按累计预扣法算好每人应扣税额；老板若月工资 8,000 元、无社保以外扣除，月个税约 90 元（示例口径，以实际为准）。</div>
+      <div class="done"><b>注意：</b>即使没给任何人发工资，已采集人员的单位通常仍需按月做零申报；老板只在年底分红、平时不领工资的，工资个税可零申报。</div>
+    </div>
+
+    <h3>6.5 年度大事（次年上半年）</h3>
+    <div class="sop">
+      <div class="sop-h">
+        <span class="stitle">企业所得税汇算清缴 + 工商年报</span>
+        <span class="badge y">年度</span>
+      </div>
+      <div class="sop-b"><ol>
+        <li><b>企业所得税年度申报（次年 5/31 前）：</b>电子税务局进入年度申报，核对官方带出的预缴数据；按本平台「纳税调整待复核清单」逐项判断凭证合规性、限额费用、资产、关联方往来等项目，多退少补。</li>
+        <li><b>工商年报（次年 6/30 前）：</b>登录国家企业信用信息公示系统 → 企业信息填报 → 填报上年度经营情况、资产负债、股东出资、社保人数等并公示；逾期不报会列入经营异常名录。</li>
+        <li><b>个税扣缴手续费退付（次年 3/30 前，可选）：</b>扣缴端可申请按年代扣个税 2% 的手续费返还。</li>
+      </ol></div>
+      <div class="src"><b>平台支持：</b>年初自动生成「年度结账包」：纳税调整明细表、年报所需财务数据、工商年报填报清单，逐项照抄。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 MVP 与 Roadmap ============ -->
+<section id="s7">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">07</span><h2>MVP 与 Roadmap</h2></div>
+    <p class="sec-lead">路线图按风险递进：先做「影子试算」，再做「人工复核的真实申报」，最后才开放低风险自助流程。直连申报不是早期目标。</p>
+
+    <div class="road">
+      <div class="phase p1">
+        <div class="ph-h"><div class="pn">V0 · 规则验证</div><div class="pt">0–6 周 · 不用于真实申报</div></div>
+        <div class="ph-b">
+          <ul>
+            <li>20–30 位目标老板访谈与付费意愿测试</li>
+            <li>收集 50 套脱敏季度账，由税务师/会计建标准答案</li>
+            <li>建立政策来源、规则版本与黄金测试集</li>
+            <li>用真实历史数据做影子试算，不影响已申报结果</li>
+          </ul>
+          <div class="goal"><b>准入门槛：</b>黄金样本的关键税额错误为 0，所有结果可解释、可复算；明确有一批用户愿意为「透明试算 + 人工复核」付费。</div>
+        </div>
+      </div>
+      <div class="phase p2">
+        <div class="ph-h"><div class="pn">V1 · 受控试点</div><div class="pt">2–4 个月 · Web 优先</div></div>
+        <div class="ph-b">
+          <ul>
+            <li>建档问卷、适用性筛查与税种认定核对</li>
+            <li>银行 CSV/发票导入、手工业务事件与往来核销</li>
+            <li>自动分录草稿、两表、季度税费试算与差异解释</li>
+            <li>申报任务卡、数据包、回执归档与更正流程</li>
+            <li>每户申报前必须经合作专业人员复核</li>
+          </ul>
+          <div class="goal"><b>验收：</b>10–30 家符合 ICP 的公司完成一个真实季度；关键税额错误为 0，银行流水对账完整率 ≥ 99%，人工修改全部反馈回规则测试集。</div>
+        </div>
+      </div>
+      <div class="phase p3">
+        <div class="ph-h"><div class="pn">V2 · 低风险自助</div><div class="pt">5–12 个月</div></div>
+        <div class="ph-b">
+          <ul>
+            <li>OCR、银行流水去重与自动勾对</li>
+            <li>会员费摊销、有限范围的固定资产与工资流程</li>
+            <li>基于风险分级的「自助/必审/拒绝自动化」分流</li>
+            <li>合规合作机构工作台与服务记录</li>
+            <li>完成专项法务论证后，再评估官方授权数据连接</li>
+          </ul>
+          <div class="goal"><b>放量门槛：</b>连续两个季度无重大错误；高风险业务拦截率 100%；用户付费、续费、客服成本和专业复核成本达到单位经济目标。</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>7.1 商业模式</h3>
+    <p>定价必须同时验证用户愿付价格和服务成本。早期不宜用过低年费掩盖 OCR、存储、客服、政策维护、专业复核和潜在责任成本。下列为<b>待验证的价格假设</b>，不是最终定价：</p>
+    <div class="pricing">
+      <div class="price">
+        <div class="tier">体验版</div>
+        <div class="amt">¥0</div>
+        <ul>
+          <li>建档与适用性筛查</li>
+          <li>少量流水与单据导入</li>
+          <li>家底看板演示和申报日历</li>
+          <li>不生成可直接申报的税额结论</li>
+        </ul>
+      </div>
+      <div class="price hot">
+        <div class="tier">自助版（待验证）</div>
+        <div class="amt">¥499–699<small>/年</small></div>
+        <ul>
+          <li>自动试算 + 申报数据包</li>
+          <li>SOP 分步引导、两表自动生成</li>
+          <li>风险体检与纳税调整清单</li>
+          <li>OCR 识别、银行导入</li>
+        </ul>
+      </div>
+      <div class="price">
+        <div class="tier">受控试点版</div>
+        <div class="amt">¥999–1499<small>/年</small></div>
+        <ul>
+          <li>每季度申报前人工复核</li>
+          <li>差异调查和更正路径指导</li>
+          <li>年度汇算数据包（复杂业务另计）</li>
+          <li>由合作专业机构按合规边界交付</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note amber"><b>获客假设：</b>内容渠道用「一人公司记账报税教程」吸引需求，注册公司服务商、创业园区、小微企业社群和合作专业机构作为信任分发渠道。每个渠道必须分别测量线索成本、建档完成率、首季付费率、客服时长和年度续费率。</div>
+  </div>
+</section>
+
+<!-- ============ 08 合规边界 ============ -->
+<section id="s8">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">08</span><h2>合规边界与风险</h2></div>
+    <p class="sec-lead">财税是强监管领域，产品从第一天就要划清「什么能做、什么坚决不做」。合规不是限制，恰恰是这个产品的核心卖点。</p>
+
+    <div class="card compliance">
+      <p><span class="tagline no">红线 01</span><b>不索取、不保管用户的电子税务局登录密码和短信验证码。</b>登录与提交动作永远发生在官方平台、由用户本人完成；平台不做「把账号给我、我替你报」的黑盒服务。</p>
+      <p><span class="tagline no">红线 02</span><b>不混淆软件工具、代理记账与纳税申报代办。</b>代理记账按财政部门有关规定办理资格；纳税申报代办属涉税专业服务，需遵守机构/人员实名、业务委托信息报送、工作底稿和质量管理等要求。V1 仅提供试算、草稿和引导；任何人工复核或代办服务均由经专项法务审查的合规主体交付。</p>
+      <p><span class="tagline no">红线 03</span><b>不承诺「避税 / 保证少交税」。</b>只依法帮助用户落实应享尽享的优惠（小规模免税、小微 5%），不设计、不教唆虚假申报、虚开发票、个人消费入账等违规操作。</p>
+      <p><span class="tagline warn">约束 04</span><b>数据最小化与授权。</b>银行账户、流水、身份与工资信息按敏感信息管理：特定目的、最小必要、单独同意、权限隔离、传输与存储加密；第三方 OCR/AI 处理、模型训练与跨境传输必须单独评估和披露。平台不触碰资金划转权限。</p>
+      <p><span class="tagline warn">约束 05</span><b>规则必须可追溯、会过期。</b>每条税率/减免标注政策文号、来源与生效日期（现行 1% 征收率、小微 5% 等优惠执行至 2027-12-31）；到期前提醒复核，过期规则自动失效，绝不拿过期口径算税。</p>
+      <p><span class="tagline yes">责任 06</span><b>强制预警公私混同。</b>《公司法》规定，一人有限责任公司的股东不能证明公司财产独立于股东个人财产的，要对公司债务承担连带责任。平台不替混同「打掩护」，反而通过通道选择、借款年底清收、报表留痕帮助用户证明「财产独立」。</p>
+      <p><span class="tagline yes">责任 07</span><b>提供纠错路径。</b>申报错了可在电子税务局「申报更正/作废」后重报、多缴可申请退税；每个 SOP 都附异常处理分支，让小白敢下手、也能补救。</p>
+      <p><span class="tagline yes">责任 08</span><b>建立电子会计档案能力。</b>原始凭证、记账凭证、账簿、报表、银行对账单、申报表及回执按档案类型管理；保留原始文件、元数据、审签与防篡改记录，支持完整导出、备份恢复和到期鉴定。</p>
+      <p><span class="tagline warn">约束 09</span><b>错误责任不靠一句「仅供参考」解决。</b>用户协议需明确用户提供真实数据的义务、平台的计算与提醒责任、人工服务主体、错误通报时限、更正与赔付机制，并评估网络安全与职业责任保险。</p>
+    </div>
+
+    <div class="note red"><b>产品级风险提示：</b>V1 坚持「规则可追溯 + 专业人员复核 + 用户与官方系统核对 + 用户自主提交」。免责提示不代替质量控制；发现规则错误时必须能定位受影响账套，冻结相关计算，通知用户，生成差异报告和更正路径。</div>
+  </div>
+</section>
+
+<!-- ============ 09 适用边界 ============ -->
+<section id="s9">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">09</span><h2>适用边界与例外分流</h2></div>
+    <p class="sec-lead">财税产品的首要能力不是「什么都会算」，而是准确识别「哪些可以自动化、哪些必须停下来」。</p>
+
+    <h3>9.1 V1 准入条件</h3>
+    <table class="wide">
+      <tr><th style="width:22%">维度</th><th style="width:35%">可进入自助流程</th><th>不符合时</th></tr>
+      <tr><td><b>地区</b></td><td>江苏省，且已核对当地电子税务局与征期</td><td>其他省市暂不生成可申报数据包</td></tr>
+      <tr><td><b>主体</b></td><td>一人有限责任公司</td><td>个体户、个人独资、合伙企业转人工</td></tr>
+      <tr><td><b>增值税</b></td><td>小规模纳税人，按季，业务适用 3% 征收率的现代服务</td><td>一般纳税人、5% 项目、差额征税、预缴业务转人工</td></tr>
+      <tr><td><b>所得税</b></td><td>企业所得税查账征收，非限制/禁止行业</td><td>核定征收或复杂纳税调整转人工</td></tr>
+      <tr><td><b>经营复杂度</b></td><td>无存货、无分支机构、无进出口、无外币</td><td>命中任一项即终止自动试算</td></tr>
+      <tr><td><b>人员</b></td><td>无员工或仅股东/法人本人，薪酬场景单一</td><td>多员工、劳务报酬、股权激励或跨境人员转人工</td></tr>
+    </table>
+
+    <h3>9.2 三级风险分流</h3>
+    <div class="card">
+      <p><span class="tagline yes">绿色</span><b>自助可继续：</b>条件在规则覆盖范围内，数据完整，勾稽通过；显示计算过程后由用户确认。</p>
+      <p><span class="tagline warn">黄色</span><b>必须人工复核：</b>凭证不完整、金额异常、股东往来、跨期、纳税调整或官方预填差异；未复核前不生成「可申报」状态。</p>
+      <p><span class="tagline no">红色</span><b>拒绝自动化：</b>主体、税种或业务超出产品范围，疑似虚假业务、不当税务安排或数据重大缺失；只提供问题清单与合规求助入口。</p>
+    </div>
+
+    <h3>9.3 转人工时的交付包</h3>
+    <p>系统不只显示「无法处理」，而是生成结构化工单：主体画像、问题触发规则、原始单据、相关流水、已尝试的计算、差异和待确认问题。复核人的结论与理由回写系统，但不自动泛化为所有客户规则。</p>
+  </div>
+</section>
+
+<!-- ============ 10 规则治理与质量 ============ -->
+<section id="s10">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">10</span><h2>规则治理与质量保障</h2></div>
+    <p class="sec-lead">产品信任的核心是：每一个数字都有来源，每一条规则都有版本，每一次修改都能找到责任人和受影响用户。</p>
+
+    <h3>10.1 规则生命周期</h3>
+    <div class="dataflow">
+      <div class="df-node">政策收录<span class="sub">仅官方法律、公告、申报表与税务问答</span></div>
+      <div class="df-arrow">→</div>
+      <div class="df-node">双人审核<span class="sub">财税审核口径，产品/工程审核可执行性</span></div>
+      <div class="df-arrow">→</div>
+      <div class="df-node">测试集<span class="sub">正常、边界、跨期、红字、更正与异常样本</span></div>
+      <div class="df-arrow">→</div>
+      <div class="df-node">灰度发布<span class="sub">影子计算、新旧版本差异和审批</span></div>
+      <div class="df-arrow">→</div>
+      <div class="df-node">监控回溯<span class="sub">定位受影响账套、回滚、通知与更正</span></div>
+    </div>
+
+    <h3>10.2 最小规则记录</h3>
+    <table class="wide">
+      <tr><th>字段组</th><th>必须记录的内容</th></tr>
+      <tr><td><b>法律来源</b></td><td>政策文号、官方 URL、发布机关、原文摘要、收录时间</td></tr>
+      <tr><td><b>适用范围</b></td><td>税种、主体、纳税人身份、地区、行业、业务标签与排除条件</td></tr>
+      <tr><td><b>时间</b></td><td>发布日、生效日、失效日、申报表版本和验证日期</td></tr>
+      <tr><td><b>计算</b></td><td>输入字段、单位、含税/不含税口径、舍入规则、公式、输出栏次和解释文案</td></tr>
+      <tr><td><b>治理</b></td><td>编辑人、财税审核人、测试集、审批记录、发布批次和回滚版本</td></tr>
+    </table>
+
+    <h3>10.3 测试与上线门槛</h3>
+    <div class="card">
+      <p><b>单元测试：</b>每个公式的临界值、税率切换、生效/失效日、负数与舍入。</p>
+      <p><b>黄金样本：</b>由专业人员对真实脱敏账套给出标准结果，覆盖零申报、免税、超阈值、专票、红字票、季中开业、更正申报等场景。</p>
+      <p><b>勾稽测试：</b>银行、票据、往来、凭证、账簿、报表、申报表之间双向穿行和差异定位。</p>
+      <p><b>发布门槛：</b>关键税额样本必须 100% 通过；任一高风险情形未覆盖时，不得扩大自动化范围。</p>
+    </div>
+
+    <h3>10.4 现行政策基线（发布前必须再核验）</h3>
+    <table class="wide">
+      <tr><th style="width:24%">主题</th><th>官方来源</th><th style="width:28%">产品处理</th></tr>
+      <tr><td>小规模增值税</td><td><a href="https://fgk.chinatax.gov.cn/zcfgk/c102416/c5210457/content.html" target="_blank" rel="noopener">财政部 税务总局公告2023年第19号</a></td><td>参数有效期至 2027-12-31；仅对适用 3% 征收率的收入使用减按 1% 规则</td></tr>
+      <tr><td>小型微利企业判定</td><td><a href="https://fgk.chinatax.gov.cn/zcfgk/c100024/c5236888/content.html" target="_blank" rel="noopener">税务总局政策问答</a></td><td>使用应纳税所得额和截至本期季度平均值，不用期末单点值</td></tr>
+      <tr><td>城建税</td><td><a href="https://jiangsu.chinatax.gov.cn/art/2021/9/15/art_8353_362127.html" target="_blank" rel="noopener">江苏省税务局问答</a></td><td>按所在地使用 7% / 5% / 1%，不在全省固定为 7%</td></tr>
+      <tr><td>印花税与减半</td><td><a href="https://tianjin.chinatax.gov.cn/nsrxt/phone/11200000000/0500/050012/20250207161507617.shtml" target="_blank" rel="noopener">税务局营业账簿问答</a></td><td>法定税率与「六税两费」减免分开存储和展示</td></tr>
+      <tr><td>涉税专业服务</td><td><a href="https://fgk.chinatax.gov.cn/zcfgk/c100011/c5239044/content.html" target="_blank" rel="noopener">国家税务总局令第58号</a></td><td>人工复核、咨询与代办按服务类型法务定性，完整留存委托与工作底稿</td></tr>
+      <tr><td>电子会计档案</td><td><a href="https://www.mof.gov.cn/gp/xxgkml/tfs/201512/t20151214_2510365.htm" target="_blank" rel="noopener">财政部、国家档案局令第79号</a></td><td>支持原始性、完整性、可用性、安全性、防篡改、备份和长期导出</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 11 商业验证 ============ -->
+<section id="s11">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-no">11</span><h2>商业验证与核心指标</h2></div>
+    <p class="sec-lead">在扩大开发前，先验证「需求是否足够痛、用户是否信任、是否愿意付费、单户服务成本是否可控」。</p>
+
+    <h3>11.1 需要回答的四个商业问题</h3>
+    <div class="card">
+      <p><b>需求：</b>目标老板最想解决的是省钱、省时间、理解财务，还是降低漏报恐惧？每一项的付费意愿不同。</p>
+      <p><b>信任：</b>用户要看到哪些证据才愿意把银行流水和发票交给新平台？候选信任件包括合作机构背书、政策引用、逐数解释、安全白皮书和错误赔付。</p>
+      <p><b>付费：</b>对「纯工具」、「每季人工复核」、「年度汇算包」分别做价格测试，不只问意愿，要收定金或付费预约。</p>
+      <p><b>交付：</b>一户一季度需要多少分钟的人工支持？哪类业务产生最多客服和复核成本？这决定了定价和可扩展性。</p>
+    </div>
+
+    <h3>11.2 漏斗与单位经济指标</h3>
+    <table class="wide">
+      <tr><th style="width:25%">阶段</th><th>核心指标</th><th style="width:33%">目的</th></tr>
+      <tr><td>获客</td><td>线索成本、到访→注册率、渠道质量</td><td>验证内容、园区、注册代理和专业机构等渠道</td></tr>
+      <tr><td>激活</td><td>建档完成率、首个账户导入率、首次勾稽完成时间</td><td>判断用户是否在一次使用内获得价值</td></tr>
+      <tr><td>付费</td><td>试用→付费率、客单价、退款率、不同套餐选择</td><td>验证定价而非只追求注册量</td></tr>
+      <tr><td>交付</td><td>每户客服分钟、人工复核分钟、OCR/AI/短信/存储成本</td><td>计算真实毛利和自动化价值</td></tr>
+      <tr><td>留存</td><td>下季继续对账率、年度续费率、数据导出/注销率</td><td>避免季度低频产品只有一次性付费</td></tr>
+      <tr><td>风险</td><td>关键税额错误数、更正申报率、人工拦截率、投诉与赔付</td><td>把安全指标放在增长指标之前</td></tr>
+    </table>
+
+    <h3>11.3 第一阶段 Go / No-Go</h3>
+    <div class="note green"><b>Go：</b>至少 10 家符合 ICP 的付费试点客户；完成一个真实季度；关键税额错误为 0；银行对账完整率 ≥ 99%；单户每季人工复核与客服成本在价格可承受范围内；大多数用户愿意继续下一季度。</div>
+    <div class="note red"><b>No-Go / 重新定位：</b>用户只愿为人工代办付费而不使用自助工具；大量客户不符合窄 ICP；单户人工成本接近传统代账；或仍出现关键税额错误。此时应转向「专业机构工作台」或更窄的试算工具，而不是继续堆功能。</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>一人公司记账报税平台 · 产品蓝图 V1.1</b>　|　修订日期 2026-10-07<br>
+    本文档为产品、风险与验证方案，不替代针对具体纳税人的专业意见。实际计算与申报以当期有效政策、税种认定及官方系统为准。
+  </div>
+</footer>
+
+</body>
+</html>
+<!-- （注：内容由AI生成） -->
