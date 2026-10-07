@@ -1,0 +1,11 @@
+node_modules
+.turbo
+dist
+.next
+coverage
+.env
+.env.local
+*.log
+.DS_Store
+infrastructure/docker/data
+.data

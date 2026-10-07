@@ -1,0 +1,25 @@
+.DS_Store
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Dependencies and generated output
+node_modules
+.pnpm-store/
+.turbo/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Local runtime data
+.data/
+infrastructure/docker/data/
+ledgerly/infrastructure/docker/data/
