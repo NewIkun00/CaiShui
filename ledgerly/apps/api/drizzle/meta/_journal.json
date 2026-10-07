@@ -1,0 +1,19 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    { "idx": 0, "version": "7", "when": 1791388800000, "tag": "0000_initial", "breakpoints": true },
+    { "idx": 1, "version": "7", "when": 1791388801000, "tag": "0001_company_profile_scope", "breakpoints": true },
+    { "idx": 2, "version": "7", "when": 1791388802000, "tag": "0002_ledger_setup", "breakpoints": true },
+    { "idx": 3, "version": "7", "when": 1791388803000, "tag": "0003_counterparties", "breakpoints": true },
+    { "idx": 4, "version": "7", "when": 1791388804000, "tag": "0004_business_events", "breakpoints": true },
+    { "idx": 5, "version": "7", "when": 1791388805000, "tag": "0005_bank_csv_import", "breakpoints": true },
+    { "idx": 6, "version": "7", "when": 1791388806000, "tag": "0006_invoices", "breakpoints": true },
+    { "idx": 7, "version": "7", "when": 1791388807000, "tag": "0007_documents", "breakpoints": true },
+    { "idx": 8, "version": "7", "when": 1791388808000, "tag": "0008_accounting_vouchers", "breakpoints": true },
+    { "idx": 9, "version": "7", "when": 1791388809000, "tag": "0009_invoice_settlements", "breakpoints": true },
+    { "idx": 10, "version": "7", "when": 1791388810000, "tag": "0010_voucher_lifecycle", "breakpoints": true },
+    { "idx": 11, "version": "7", "when": 1791388811000, "tag": "0011_period_reopen_requests", "breakpoints": true },
+    { "idx": 12, "version": "7", "when": 1791388812000, "tag": "0012_opening_balance_entries", "breakpoints": true }
+  ]
+}
