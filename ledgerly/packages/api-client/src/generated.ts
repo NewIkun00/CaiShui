@@ -452,6 +452,57 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/companies/{companyId}/reconciliation/check-runs": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 冻结当前核销输入并一次返回全部未解决差异 */
+        readonly post: operations["ReconciliationController_runCheck"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/reconciliation/check-runs/{runId}/issues/{issueId}/triage": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 记录勾稽差异的人工调查状态；不会直接解除申报阻断 */
+        readonly post: operations["ReconciliationController_triage"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/reconciliation/check-runs/latest": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 读取最近一次不可变勾稽检查快照和处理状态 */
+        readonly get: operations["ReconciliationController_latestCheck"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/companies/{companyId}/reconciliation/settlements": {
         readonly parameters: {
             readonly query?: never;
@@ -2728,6 +2779,229 @@ export interface operations {
                             /** Format: uuid */
                             readonly paymentEventId: string;
                         }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly ReconciliationController_runCheck: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly blocksFiling: boolean;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** @enum {string} */
+                        readonly grade: "green" | "yellow" | "red";
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly inputHash: string;
+                        readonly inputSnapshot: {
+                            readonly invoices: readonly {
+                                /** Format: uuid */
+                                readonly invoiceId: string;
+                                readonly invoiceNumber: string;
+                                readonly outstandingAmount: string;
+                            }[];
+                            readonly payments: readonly {
+                                readonly description: string;
+                                /** Format: uuid */
+                                readonly paymentEventId: string;
+                                readonly unallocatedAmount: string;
+                            }[];
+                        };
+                        readonly issues: readonly {
+                            readonly amount: string;
+                            /** @enum {string} */
+                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED";
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly message: string;
+                            /** @enum {string} */
+                            readonly severity: "yellow" | "red";
+                            /** Format: uuid */
+                            readonly subjectId: string;
+                            /** @enum {string} */
+                            readonly subjectType: "invoice" | "payment";
+                            readonly suggestedAction: string;
+                            /** Format: date-time */
+                            readonly triagedAt?: string;
+                            /** Format: uuid */
+                            readonly triagedBy?: string;
+                            readonly triageNote?: string;
+                            /** @enum {string} */
+                            readonly triageStatus: "open" | "investigating" | "needs_documents" | "ready_for_recheck";
+                            readonly triageVersion: number;
+                        }[];
+                        /** Format: date */
+                        readonly periodEnd: string;
+                        /** Format: uuid */
+                        readonly periodId: string;
+                        /** Format: date */
+                        readonly periodStart: string;
+                        readonly redIssues: number;
+                        readonly totalIssues: number;
+                        readonly yellowIssues: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly ReconciliationController_triage: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly issueId: string;
+                readonly runId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly expectedVersion: number;
+                    readonly note: string;
+                    /** @enum {string} */
+                    readonly status: "investigating" | "needs_documents" | "ready_for_recheck";
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly amount: string;
+                        /** @enum {string} */
+                        readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED";
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly message: string;
+                        /** @enum {string} */
+                        readonly severity: "yellow" | "red";
+                        /** Format: uuid */
+                        readonly subjectId: string;
+                        /** @enum {string} */
+                        readonly subjectType: "invoice" | "payment";
+                        readonly suggestedAction: string;
+                        /** Format: date-time */
+                        readonly triagedAt?: string;
+                        /** Format: uuid */
+                        readonly triagedBy?: string;
+                        readonly triageNote?: string;
+                        /** @enum {string} */
+                        readonly triageStatus: "open" | "investigating" | "needs_documents" | "ready_for_recheck";
+                        readonly triageVersion: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly ReconciliationController_latestCheck: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly blocksFiling: boolean;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** @enum {string} */
+                        readonly grade: "green" | "yellow" | "red";
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly inputHash: string;
+                        readonly inputSnapshot: {
+                            readonly invoices: readonly {
+                                /** Format: uuid */
+                                readonly invoiceId: string;
+                                readonly invoiceNumber: string;
+                                readonly outstandingAmount: string;
+                            }[];
+                            readonly payments: readonly {
+                                readonly description: string;
+                                /** Format: uuid */
+                                readonly paymentEventId: string;
+                                readonly unallocatedAmount: string;
+                            }[];
+                        };
+                        readonly issues: readonly {
+                            readonly amount: string;
+                            /** @enum {string} */
+                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED";
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly message: string;
+                            /** @enum {string} */
+                            readonly severity: "yellow" | "red";
+                            /** Format: uuid */
+                            readonly subjectId: string;
+                            /** @enum {string} */
+                            readonly subjectType: "invoice" | "payment";
+                            readonly suggestedAction: string;
+                            /** Format: date-time */
+                            readonly triagedAt?: string;
+                            /** Format: uuid */
+                            readonly triagedBy?: string;
+                            readonly triageNote?: string;
+                            /** @enum {string} */
+                            readonly triageStatus: "open" | "investigating" | "needs_documents" | "ready_for_recheck";
+                            readonly triageVersion: number;
+                        }[];
+                        /** Format: date */
+                        readonly periodEnd: string;
+                        /** Format: uuid */
+                        readonly periodId: string;
+                        /** Format: date */
+                        readonly periodStart: string;
+                        readonly redIssues: number;
+                        readonly totalIssues: number;
+                        readonly yellowIssues: number;
                     };
                 };
             };

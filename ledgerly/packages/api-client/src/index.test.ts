@@ -144,4 +144,28 @@ describe('generated API client', () => {
     expect(evaluation.profile.vatTaxpayerStatus).toBe('small_scale');
     expect(evaluation.nextAction).toBe('continue_setup');
   });
+
+  it('infers reconciliation check snapshots and triage commands', async () => {
+    const runId = '20000000-0000-4000-8000-000000000002';
+    const issueId = '30000000-0000-4000-8000-000000000003';
+    const client = createApiClient({
+      baseUrl: 'https://api.example.test',
+      fetch: ((input) => {
+        const url = input instanceof Request ? input.url : input.toString();
+        const payload = url.endsWith('/triage')
+          ? { id: issueId, triageStatus: 'investigating', triageVersion: 2 }
+          : { id: runId, grade: 'yellow', blocksFiling: true, totalIssues: 1, issues: [] };
+        return Promise.resolve(new Response(JSON.stringify(payload), { headers: { 'content-type': 'application/json' } }));
+      }) as typeof fetch,
+    });
+    const path = { companyId: '10000000-0000-4000-8000-000000000001' };
+    const run = await client('/v1/companies/{companyId}/reconciliation/check-runs', { method: 'post', path });
+    const issue = await client('/v1/companies/{companyId}/reconciliation/check-runs/{runId}/issues/{issueId}/triage', {
+      method: 'post', path: { ...path, runId, issueId },
+      body: { status: 'investigating', note: '正在核对原始银行回单。', expectedVersion: 1 },
+    });
+
+    expect(run.blocksFiling).toBe(true);
+    expect(issue.triageStatus).toBe('investigating');
+  });
 });

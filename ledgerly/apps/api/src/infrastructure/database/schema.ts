@@ -440,6 +440,39 @@ export const invoiceSettlements = pgTable(
   ],
 );
 
+export const reconciliationCheckRuns=pgTable('reconciliation_check_runs',{
+  id:uuid('id').primaryKey(),tenantId:uuid('tenant_id').notNull().references(()=>tenants.id),
+  companyId:uuid('company_id').notNull().references(()=>companies.id),periodId:uuid('period_id').notNull().references(()=>accountingPeriods.id),
+  periodStart:date('period_start').notNull(),periodEnd:date('period_end').notNull(),inputSnapshot:jsonb('input_snapshot').notNull(),inputHash:text('input_hash').notNull(),
+  grade:text('grade').notNull(),blocksFiling:boolean('blocks_filing').notNull(),totalIssues:integer('total_issues').notNull(),
+  yellowIssues:integer('yellow_issues').notNull(),redIssues:integer('red_issues').notNull(),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull(),createdBy:uuid('created_by').notNull(),
+},(table)=>[
+  uniqueIndex('reconciliation_check_runs_input_unique').on(table.tenantId,table.companyId,table.periodId,table.inputHash),
+  index('reconciliation_check_runs_company_time_idx').on(table.tenantId,table.companyId,table.createdAt),
+]);
+
+export const reconciliationCheckIssues=pgTable('reconciliation_check_issues',{
+  id:uuid('id').primaryKey(),runId:uuid('run_id').notNull().references(()=>reconciliationCheckRuns.id),
+  code:text('code').notNull(),severity:text('severity').notNull(),subjectType:text('subject_type').notNull(),
+  subjectId:uuid('subject_id').notNull(),amount:numeric('amount',{precision:20,scale:2}).notNull(),message:text('message').notNull(),
+  suggestedAction:text('suggested_action').notNull(),triageStatus:text('triage_status').notNull().default('open'),
+  triageVersion:integer('triage_version').notNull().default(1),triageNote:text('triage_note'),triagedBy:uuid('triaged_by'),
+  triagedAt:timestamp('triaged_at',{withTimezone:true}),
+},(table)=>[
+  uniqueIndex('reconciliation_check_issues_subject_unique').on(table.runId,table.code,table.subjectId),
+  index('reconciliation_check_issues_run_idx').on(table.runId),
+]);
+
+export const reconciliationIssueTriageEvents=pgTable('reconciliation_issue_triage_events',{
+  id:uuid('id').primaryKey(),issueId:uuid('issue_id').notNull().references(()=>reconciliationCheckIssues.id),
+  fromStatus:text('from_status').notNull(),toStatus:text('to_status').notNull(),note:text('note').notNull(),
+  version:integer('version').notNull(),actorId:uuid('actor_id').notNull(),createdAt:timestamp('created_at',{withTimezone:true}).notNull(),
+},(table)=>[
+  uniqueIndex('reconciliation_issue_triage_events_version_unique').on(table.issueId,table.version),
+  index('reconciliation_issue_triage_events_issue_time_idx').on(table.issueId,table.createdAt),
+]);
+
 export const policySources = pgTable(
   'policy_sources',
   {

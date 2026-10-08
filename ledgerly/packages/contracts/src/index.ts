@@ -379,6 +379,33 @@ export const reconciliationOverviewSchema=z.object({
 });
 export type ReconciliationOverview=z.infer<typeof reconciliationOverviewSchema>;
 
+export const reconciliationIssueTriageStatusSchema=z.enum(['open','investigating','needs_documents','ready_for_recheck']);
+export const reconciliationCheckIssueSchema=z.object({
+  id:z.string().uuid(),code:z.enum(['INVOICE_OUTSTANDING','PAYMENT_UNALLOCATED']),severity:z.enum(['yellow','red']),
+  subjectType:z.enum(['invoice','payment']),subjectId:z.string().uuid(),amount:z.string(),message:z.string(),suggestedAction:z.string(),
+  triageStatus:reconciliationIssueTriageStatusSchema,triageVersion:z.number().int().positive(),triageNote:z.string().optional(),
+  triagedBy:z.string().uuid().optional(),triagedAt:z.string().datetime().optional(),
+}).strict();
+export const reconciliationCheckRunResponseSchema=z.object({
+  id:z.string().uuid(),companyId:z.string().uuid(),periodId:z.string().uuid(),periodStart:z.iso.date(),periodEnd:z.iso.date(),
+  inputSnapshot:z.object({
+    invoices:z.array(z.object({invoiceId:z.string().uuid(),invoiceNumber:z.string(),outstandingAmount:z.string()}).strict()),
+    payments:z.array(z.object({paymentEventId:z.string().uuid(),description:z.string(),unallocatedAmount:z.string()}).strict()),
+  }).strict(),
+  inputHash:z.string().regex(/^[0-9a-f]{64}$/),grade:z.enum(['green','yellow','red']),blocksFiling:z.boolean(),
+  totalIssues:z.number().int().nonnegative(),yellowIssues:z.number().int().nonnegative(),redIssues:z.number().int().nonnegative(),
+  issues:z.array(reconciliationCheckIssueSchema),createdAt:z.string().datetime(),createdBy:z.string().uuid(),
+}).strict().superRefine((value,context)=>{
+  const expectedGrade=value.redIssues>0?'red':value.yellowIssues>0?'yellow':'green';
+  if(value.totalIssues!==value.yellowIssues+value.redIssues||value.totalIssues!==value.issues.length){context.addIssue({code:'custom',message:'勾稽差异汇总与明细数量不一致'});}
+  if(value.grade!==expectedGrade||value.blocksFiling!==(value.totalIssues>0)){context.addIssue({code:'custom',message:'勾稽等级、阻断状态与差异数量不一致'});}
+});
+export type ReconciliationCheckRunResponse=z.infer<typeof reconciliationCheckRunResponseSchema>;
+export const reconciliationIssueTriageInputSchema=z.object({
+  status:reconciliationIssueTriageStatusSchema.exclude(['open']),note:z.string().trim().min(5).max(500),expectedVersion:z.number().int().positive(),
+}).strict();
+export type ReconciliationIssueTriageInput=z.infer<typeof reconciliationIssueTriageInputSchema>;
+
 const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
 const officialPolicyUrlSchema = z.url().refine((value) => {
   const url = new URL(value);

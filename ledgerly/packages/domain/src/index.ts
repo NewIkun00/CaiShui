@@ -86,8 +86,15 @@ export {
   type VoucherState,
 } from './accounting.js';
 export {
+  assertReconciliationTriageTransition,
   createSettlement,
+  runReconciliationChecks,
+  ReconciliationCheckGrade,
   ReconciliationError,
+  ReconciliationIssueTriageStatus,
+  type ReconciliationCheckIssue,
+  type ReconciliationCheckResult,
+  type ReconciliationIssueCode,
   type Settlement,
   type SettlementInput,
 } from './reconciliation.js';
