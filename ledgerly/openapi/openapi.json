@@ -12351,7 +12351,8 @@
                             "SCOPE_NOT_ELIGIBLE",
                             "NO_CONFIRMED_FACTS",
                             "NO_MATCHING_RULE",
-                            "MULTIPLE_MATCHING_RULES"
+                            "MULTIPLE_MATCHING_RULES",
+                            "IMPLEMENTATION_NOT_REGISTERED"
                           ]
                         },
                         "message": {
@@ -12388,7 +12389,8 @@
                             "enum": [
                               "scope_validation",
                               "fact_snapshot",
-                              "rule_selection"
+                              "rule_selection",
+                              "implementation_readiness"
                             ]
                           },
                           "category": {
@@ -12660,7 +12662,8 @@
                                   "SCOPE_NOT_ELIGIBLE",
                                   "NO_CONFIRMED_FACTS",
                                   "NO_MATCHING_RULE",
-                                  "MULTIPLE_MATCHING_RULES"
+                                  "MULTIPLE_MATCHING_RULES",
+                                  "IMPLEMENTATION_NOT_REGISTERED"
                                 ]
                               },
                               "message": {
@@ -12697,7 +12700,8 @@
                                   "enum": [
                                     "scope_validation",
                                     "fact_snapshot",
-                                    "rule_selection"
+                                    "rule_selection",
+                                    "implementation_readiness"
                                   ]
                                 },
                                 "category": {

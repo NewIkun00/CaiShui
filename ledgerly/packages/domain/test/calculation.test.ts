@@ -45,6 +45,7 @@ describe('calculation readiness', () => {
     const steps = buildCalculationReadinessSteps('eligible', context.confirmedFactIds, readiness);
     expect(steps.map((step) => `${step.sequence}:${step.key}:${step.status}`)).toEqual([
       '1:scope_validation:passed', '2:fact_snapshot:passed', '3:rule_selection:passed',
+      '4:implementation_readiness:passed',
     ]);
     const blocked = buildCalculationReadinessSteps('missing', [], selectRuleForCalculation({
       ...context, confirmedFactIds: [],

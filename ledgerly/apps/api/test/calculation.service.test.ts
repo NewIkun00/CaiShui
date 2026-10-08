@@ -9,6 +9,7 @@ import { MemoryBusinessEventStore } from '../src/modules/business-event/infrastr
 import { MemoryOrganizationStore } from '../src/modules/organization/infrastructure/memory-organization.store.js';
 import { MemoryPolicyRuleStore } from '../src/modules/policy-rule/infrastructure/memory-policy-rule.store.js';
 import { MemoryScopeStore } from '../src/modules/profile-scope/infrastructure/memory-scope.store.js';
+import type { RuleCalculationImplementation } from '../src/modules/policy-rule/application/rule-calculation-registry.js';
 
 describe('CalculationService', () => {
   it('freezes confirmed facts and blocks until exactly one active rule matches', async () => {
@@ -17,7 +18,8 @@ describe('CalculationService', () => {
     const events = new MemoryBusinessEventStore();
     const rules = new MemoryPolicyRuleStore();
     const runs = new MemoryCalculationStore();
-    const service = new CalculationService(organizations, scopes, events, rules, runs);
+    const implementations=new Map<string,RuleCalculationImplementation>();
+    const service = new CalculationService(organizations, scopes, events, rules, runs,{find:key=>implementations.get(key)??null});
     const actorId = '10000000-0000-4000-8000-000000000001';
     const tenantId = '20000000-0000-4000-8000-000000000002';
     const companyId = '30000000-0000-4000-8000-000000000003';
@@ -56,7 +58,7 @@ describe('CalculationService', () => {
       decision: { code: CalculationDecisionCode.NoMatchingRule },
     });
     expect(blocked.steps.map((step) => step.key)).toEqual([
-      'scope_validation', 'fact_snapshot', 'rule_selection',
+      'scope_validation', 'fact_snapshot', 'rule_selection','implementation_readiness',
     ]);
     expect(blocked.steps[2]).toMatchObject({ status: 'blocked' });
     const rulePackage = await rules.saveRulePackage({
@@ -76,6 +78,10 @@ describe('CalculationService', () => {
         explanation: '只验证确定性快照。', contentHash: 'a'.repeat(64), status: RuleVersionStatus.Active,
       },
     });
+    const implementationBlocked=await service.createRun(companyId,input,context);
+    expect(implementationBlocked).toMatchObject({status:CalculationRunStatus.DecisionRequired,decision:{code:CalculationDecisionCode.ImplementationNotRegistered,candidateRuleVersionIds:['90000000-0000-4000-8000-000000000009']}});
+    expect(implementationBlocked.steps.slice(2)).toEqual([expect.objectContaining({key:'rule_selection',status:'passed'}),expect.objectContaining({key:'implementation_readiness',status:'blocked'})]);
+    implementations.set('vat-snapshot-test-v1',{key:'vat-snapshot-test-v1',execute:()=>({output:{},steps:[]})});
     const ready = await service.createRun(companyId, input, context);
     expect(ready).toMatchObject({
       status: CalculationRunStatus.Ready, ruleVersionId: '90000000-0000-4000-8000-000000000009',

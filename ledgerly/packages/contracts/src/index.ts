@@ -622,13 +622,13 @@ export type CalculationRunInputRequest = z.infer<typeof calculationRunInputSchem
 const calculationStepValueSchema=z.union([z.string(),z.number(),z.array(z.string())]);
 const calculationExplanationStepSchema=z.object({
   sequence:z.number().int().positive(),
-  key:z.enum(['scope_validation','fact_snapshot','rule_selection']),
+  key:z.enum(['scope_validation','fact_snapshot','rule_selection','implementation_readiness']),
   category:z.enum(['validation','selection']),status:z.enum(['passed','blocked']),
   inputs:z.record(z.string(),calculationStepValueSchema),
   output:z.record(z.string(),calculationStepValueSchema),explanation:z.string(),
 }).strict();
 const calculationDecisionSchema=z.object({
-  code:z.enum(['SCOPE_PROFILE_MISSING','SCOPE_NOT_ELIGIBLE','NO_CONFIRMED_FACTS','NO_MATCHING_RULE','MULTIPLE_MATCHING_RULES']),
+  code:z.enum(['SCOPE_PROFILE_MISSING','SCOPE_NOT_ELIGIBLE','NO_CONFIRMED_FACTS','NO_MATCHING_RULE','MULTIPLE_MATCHING_RULES','IMPLEMENTATION_NOT_REGISTERED']),
   message:z.string(),candidateRuleVersionIds:z.array(z.string().uuid()),
 }).strict();
 export const calculationRunResponseSchema=z.object({

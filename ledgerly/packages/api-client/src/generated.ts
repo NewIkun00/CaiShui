@@ -1603,7 +1603,7 @@ export interface operations {
                             readonly decision?: {
                                 readonly candidateRuleVersionIds: readonly string[];
                                 /** @enum {string} */
-                                readonly code: "SCOPE_PROFILE_MISSING" | "SCOPE_NOT_ELIGIBLE" | "NO_CONFIRMED_FACTS" | "NO_MATCHING_RULE" | "MULTIPLE_MATCHING_RULES";
+                                readonly code: "SCOPE_PROFILE_MISSING" | "SCOPE_NOT_ELIGIBLE" | "NO_CONFIRMED_FACTS" | "NO_MATCHING_RULE" | "MULTIPLE_MATCHING_RULES" | "IMPLEMENTATION_NOT_REGISTERED";
                                 readonly message: string;
                             };
                             /** Format: uuid */
@@ -1645,7 +1645,7 @@ export interface operations {
                                     readonly [key: string]: string | number | readonly string[];
                                 };
                                 /** @enum {string} */
-                                readonly key: "scope_validation" | "fact_snapshot" | "rule_selection";
+                                readonly key: "scope_validation" | "fact_snapshot" | "rule_selection" | "implementation_readiness";
                                 readonly output: {
                                     readonly [key: string]: string | number | readonly string[];
                                 };
@@ -1703,7 +1703,7 @@ export interface operations {
                         readonly decision?: {
                             readonly candidateRuleVersionIds: readonly string[];
                             /** @enum {string} */
-                            readonly code: "SCOPE_PROFILE_MISSING" | "SCOPE_NOT_ELIGIBLE" | "NO_CONFIRMED_FACTS" | "NO_MATCHING_RULE" | "MULTIPLE_MATCHING_RULES";
+                            readonly code: "SCOPE_PROFILE_MISSING" | "SCOPE_NOT_ELIGIBLE" | "NO_CONFIRMED_FACTS" | "NO_MATCHING_RULE" | "MULTIPLE_MATCHING_RULES" | "IMPLEMENTATION_NOT_REGISTERED";
                             readonly message: string;
                         };
                         /** Format: uuid */
@@ -1745,7 +1745,7 @@ export interface operations {
                                 readonly [key: string]: string | number | readonly string[];
                             };
                             /** @enum {string} */
-                            readonly key: "scope_validation" | "fact_snapshot" | "rule_selection";
+                            readonly key: "scope_validation" | "fact_snapshot" | "rule_selection" | "implementation_readiness";
                             readonly output: {
                                 readonly [key: string]: string | number | readonly string[];
                             };

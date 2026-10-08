@@ -38,4 +38,6 @@ describe('calculation and accounting response contracts', () => {
       periodStart: '2026-01-01', periodEnd: '2026-12-31', status: 'locked',
     })).toMatchObject({ status: 'locked' });
   });
+
+  it('accepts an implementation registration blocker with an explicit readiness step',()=>{expect(calculationRunResponseSchema.parse({...baseRun,status:'decision_required',decision:{code:'IMPLEMENTATION_NOT_REGISTERED',message:'实现未注册。',candidateRuleVersionIds:['50000000-0000-4000-8000-000000000005']},steps:[...baseRun.steps,{sequence:4,key:'implementation_readiness',category:'validation',status:'blocked',inputs:{selectedRuleVersionId:'50000000-0000-4000-8000-000000000005'},output:{implementationRegistered:'false'},explanation:'实现未注册。'}]})).toMatchObject({decision:{code:'IMPLEMENTATION_NOT_REGISTERED'}})});
 });

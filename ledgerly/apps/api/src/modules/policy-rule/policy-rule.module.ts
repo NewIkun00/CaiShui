@@ -19,6 +19,6 @@ const storageProviders = process.env['STORAGE_MODE'] === 'memory'
     { provide: RULE_CALCULATION_REGISTRY, useExisting: EmptyRuleCalculationRegistry },
     PolicyRuleService,
   ],
-  exports: [POLICY_RULE_STORE],
+  exports: [POLICY_RULE_STORE,RULE_CALCULATION_REGISTRY],
 })
 export class PolicyRuleModule {}

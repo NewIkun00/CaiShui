@@ -11,6 +11,7 @@ export enum CalculationDecisionCode {
   NoConfirmedFacts = 'NO_CONFIRMED_FACTS',
   NoMatchingRule = 'NO_MATCHING_RULE',
   MultipleMatchingRules = 'MULTIPLE_MATCHING_RULES',
+  ImplementationNotRegistered = 'IMPLEMENTATION_NOT_REGISTERED',
 }
 
 export interface CalculationContext {
@@ -56,7 +57,7 @@ export type CalculationReadiness = CalculationDecisionRequired | CalculationRead
 
 export interface CalculationExplanationStep {
   readonly sequence: number;
-  readonly key: 'scope_validation' | 'fact_snapshot' | 'rule_selection';
+  readonly key: 'scope_validation' | 'fact_snapshot' | 'rule_selection' | 'implementation_readiness';
   readonly category: 'validation' | 'selection';
   readonly status: 'passed' | 'blocked';
   readonly inputs: Readonly<Record<string, string | number | readonly string[]>>;
@@ -72,6 +73,9 @@ export function buildCalculationReadinessSteps(
   const scopePassed = scopeState === 'eligible';
   const factsPassed = confirmedFactIds.length > 0;
   const rulePassed = readiness.status === CalculationRunStatus.Ready;
+  const implementationMissing=readiness.status===CalculationRunStatus.DecisionRequired&&readiness.decision.code===CalculationDecisionCode.ImplementationNotRegistered;
+  const ruleSelected=rulePassed||implementationMissing;
+  const selectedRuleVersionId=readiness.status===CalculationRunStatus.Ready?readiness.rule.ruleVersionId:implementationMissing?readiness.decision.candidateRuleVersionIds[0]??'':'';
   return Object.freeze([
     Object.freeze({
       sequence: 1, key: 'scope_validation', category: 'validation',
@@ -92,14 +96,18 @@ export function buildCalculationReadinessSteps(
     }),
     Object.freeze({
       sequence: 3, key: 'rule_selection', category: 'selection',
-      status: scopePassed && factsPassed && rulePassed ? 'passed' : 'blocked',
+      status: scopePassed && factsPassed && ruleSelected ? 'passed' : 'blocked',
       inputs: Object.freeze({ candidateRuleVersionIds: readiness.status === CalculationRunStatus.Ready
         ? [readiness.rule.ruleVersionId] : readiness.decision.candidateRuleVersionIds }),
-      output: Object.freeze({ selectedRuleVersionId: readiness.status === CalculationRunStatus.Ready
-        ? readiness.rule.ruleVersionId : '' }),
-      explanation: rulePassed ? '已锁定唯一活动规则版本及其内容哈希。'
+      output: Object.freeze({ selectedRuleVersionId }),
+      explanation: ruleSelected ? '已锁定唯一活动规则版本及其内容哈希。'
         : `规则选择未完成：${readiness.status === CalculationRunStatus.DecisionRequired
           ? readiness.decision.message : 'unknown'}`,
+    }),
+    Object.freeze({
+      sequence:4,key:'implementation_readiness',category:'validation',status:rulePassed?'passed':'blocked',
+      inputs:Object.freeze({selectedRuleVersionId}),output:Object.freeze({implementationRegistered:String(rulePassed)}),
+      explanation:implementationMissing?'活动规则引用的版本化计算实现未在当前部署注册，禁止生成税额。':rulePassed?'版本化计算实现已注册，可进入确定性计算。':'规则尚未唯一选定，无法校验计算实现。',
     }),
   ]);
 }

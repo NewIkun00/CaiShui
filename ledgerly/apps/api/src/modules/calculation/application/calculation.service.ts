@@ -11,6 +11,7 @@ import { BUSINESS_EVENT_STORE, type BusinessEventStore } from '../../business-ev
 import { ORGANIZATION_STORE, type OrganizationStore } from '../../organization/application/organization-store.js';
 import type { RequestContext } from '../../organization/application/organization.service.js';
 import { POLICY_RULE_STORE, type PolicyRuleStore } from '../../policy-rule/application/policy-rule-store.js';
+import { RULE_CALCULATION_REGISTRY,type RuleCalculationRegistry } from '../../policy-rule/application/rule-calculation-registry.js';
 import { SCOPE_STORE, type ScopeStore } from '../../profile-scope/application/scope-store.js';
 import { CALCULATION_STORE, type CalculationStore, type SavedCalculationRun } from './calculation-store.js';
 
@@ -22,6 +23,7 @@ export class CalculationService {
     @Inject(BUSINESS_EVENT_STORE) private readonly events: BusinessEventStore,
     @Inject(POLICY_RULE_STORE) private readonly rules: PolicyRuleStore,
     @Inject(CALCULATION_STORE) private readonly runs: CalculationStore,
+    @Inject(RULE_CALCULATION_REGISTRY)private readonly calculationRegistry:RuleCalculationRegistry,
   ) {}
 
   async createRun(
@@ -60,6 +62,9 @@ export class CalculationService {
         filingCycle: scope.profile.vatFilingCycle, industry: scope.profile.industry,
         tags: this.profileTags(scope.profile), confirmedFactIds: confirmedFacts.map((event) => event.id),
       }, await this.candidates(input.taxType as TaxType));
+      if(readiness.status===CalculationRunStatus.Ready&&!this.calculationRegistry.find(readiness.rule.calculationImplementation)){
+        readiness={status:CalculationRunStatus.DecisionRequired,decision:{code:CalculationDecisionCode.ImplementationNotRegistered,message:'The selected active rule references a calculation implementation that is not registered in this deployment',candidateRuleVersionIds:[readiness.rule.ruleVersionId]}};
+      }
     }
     const now = new Date();
     const scopeState = !scope ? 'missing' : scope.decision === ScopeDecision.Green ? 'eligible' : 'ineligible';
