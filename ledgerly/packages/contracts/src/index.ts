@@ -344,3 +344,120 @@ export const reconciliationOverviewSchema=z.object({
   settlements:z.array(settlementResponseSchema),
 });
 export type ReconciliationOverview=z.infer<typeof reconciliationOverviewSchema>;
+
+const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
+const officialPolicyUrlSchema = z.url().refine((value) => {
+  const url = new URL(value);
+  return url.protocol === 'https:' && (url.hostname === 'gov.cn' || url.hostname.endsWith('.gov.cn'));
+}, '必须使用 gov.cn 官方 HTTPS 链接');
+
+export const policySourceInputSchema = z.object({
+  documentNumber: z.string().trim().min(1).max(200),
+  title: z.string().trim().min(1).max(300),
+  officialUrl: officialPolicyUrlSchema,
+  issuingAuthority: z.string().trim().min(1).max(200),
+  publishedOn: z.iso.date(), effectiveFrom: z.iso.date(), effectiveTo: z.iso.date().optional(),
+  summary: z.string().trim().min(1).max(2000), contentHash: sha256Schema,
+  lastVerifiedOn: z.iso.date(),
+}).refine((value) => !value.effectiveTo || value.effectiveTo >= value.effectiveFrom, {
+  message: '失效日不得早于生效日', path: ['effectiveTo'],
+});
+export type PolicySourceInputRequest = z.infer<typeof policySourceInputSchema>;
+
+export const rulePackageInputSchema = z.object({
+  code: z.string().trim().regex(/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/),
+  name: z.string().trim().min(1).max(200),
+  taxType: z.enum(['vat', 'surcharge', 'corporate_income_tax', 'stamp_duty']),
+  jurisdictions: z.array(z.string().regex(/^CN(?:-[A-Z0-9]{2,6})?$/)).min(1).max(20),
+  description: z.string().trim().min(1).max(1000),
+});
+export type RulePackageInputRequest = z.infer<typeof rulePackageInputSchema>;
+
+const ruleApplicabilitySchema = z.object({
+  taxpayerStatuses: z.array(z.string().trim().min(1).max(100)).min(1).max(20),
+  filingCycles: z.array(z.string().trim().min(1).max(100)).min(1).max(20),
+  industries: z.array(z.string().trim().min(1).max(100)).min(1).max(50),
+  requiredTags: z.array(z.string().trim().min(1).max(100)).max(100),
+  excludedTags: z.array(z.string().trim().min(1).max(100)).max(100),
+});
+const ruleParameterValueSchema = z.union([
+  z.string().max(500), z.boolean(), z.array(z.string().max(100)).max(100),
+]);
+export const ruleVersionInputSchema = z.object({
+  versionTag: z.string().regex(/^\d{4}\.\d{2}\.\d{2}-\d+$/),
+  effectiveFrom: z.iso.date(), effectiveTo: z.iso.date().optional(),
+  sourceIds: z.array(z.string().uuid()).min(1).max(50), applicability: ruleApplicabilitySchema,
+  calculationImplementation: z.string().regex(/^[a-z][a-z0-9-]*-v\d+$/),
+  parameters: z.record(z.string().regex(/^[a-z][A-Za-z0-9]*$/), ruleParameterValueSchema),
+  explanation: z.string().trim().min(1).max(5000),
+}).refine((value) => !value.effectiveTo || value.effectiveTo >= value.effectiveFrom, {
+  message: '失效日不得早于生效日', path: ['effectiveTo'],
+});
+export type RuleVersionInputRequest = z.infer<typeof ruleVersionInputSchema>;
+
+export const ruleVersionReviewSchema = z.object({
+  kind: z.enum(['technical', 'tax']),
+  expectedVersion: z.number().int().positive(),
+  note: z.string().trim().min(5).max(2000),
+});
+export type RuleVersionReviewRequest = z.infer<typeof ruleVersionReviewSchema>;
+
+export const ruleTestEvidenceSchema = z.object({
+  expectedVersion: z.number().int().positive(),
+  fixtureSetVersion: z.string().regex(/^\d{4}\.\d{2}\.\d{2}-\d+$/),
+  totalFixtures: z.number().int().positive(),
+  passedFixtures: z.number().int().nonnegative(),
+  coveredScenarios: z.array(z.enum([
+    'normal', 'boundary', 'cross_period', 'red_invoice', 'correction', 'exception',
+  ])).min(1),
+  artifactHash: sha256Schema,
+  note: z.string().trim().min(5).max(2000),
+});
+export type RuleTestEvidenceRequest = z.infer<typeof ruleTestEvidenceSchema>;
+
+export const goldenFixtureSetInputSchema = z.object({
+  fixtureSetVersion: z.string().regex(/^\d{4}\.\d{2}\.\d{2}-\d+$/),
+  redactionAttested: z.literal(true),
+  professionalNote: z.string().trim().min(10).max(2000),
+  fixtures: z.array(z.object({
+    caseId: z.string().trim().regex(/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/),
+    scenario: z.enum(['normal', 'boundary', 'cross_period', 'red_invoice', 'correction', 'exception']),
+    input: z.record(z.string(), z.unknown()), expected: z.record(z.string(), z.unknown()),
+    explanation: z.string().trim().min(5).max(2000),
+  })).min(6).max(500),
+});
+export type GoldenFixtureSetInputRequest = z.infer<typeof goldenFixtureSetInputSchema>;
+
+export const ruleApprovalSchema = z.object({
+  expectedVersion: z.number().int().positive(),
+  note: z.string().trim().min(5).max(2000),
+});
+export type RuleApprovalRequest = z.infer<typeof ruleApprovalSchema>;
+
+export const ruleScheduleSchema = z.object({
+  expectedVersion: z.number().int().positive(),
+  activationAt: z.string().datetime({ offset: true }),
+  note: z.string().trim().min(5).max(2000),
+});
+export type RuleScheduleRequest = z.infer<typeof ruleScheduleSchema>;
+
+export const ruleActivationSchema = z.object({
+  expectedVersion: z.number().int().positive(),
+  note: z.string().trim().min(5).max(2000),
+});
+export type RuleActivationRequest = z.infer<typeof ruleActivationSchema>;
+
+export const ruleWithdrawalSchema = z.object({
+  expectedVersion: z.number().int().positive(),
+  note: z.string().trim().min(10).max(2000),
+});
+export type RuleWithdrawalRequest = z.infer<typeof ruleWithdrawalSchema>;
+
+export const calculationRunInputSchema = z.object({
+  taxType: z.enum(['vat', 'surcharge', 'corporate_income_tax', 'stamp_duty']),
+  periodStart: z.iso.date(),
+  periodEnd: z.iso.date(),
+}).refine((value) => value.periodEnd >= value.periodStart, {
+  message: '计算结束日期不得早于开始日期', path: ['periodEnd'],
+});
+export type CalculationRunInputRequest = z.infer<typeof calculationRunInputSchema>;

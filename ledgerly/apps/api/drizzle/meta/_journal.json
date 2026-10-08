@@ -14,6 +14,15 @@
     { "idx": 9, "version": "7", "when": 1791388809000, "tag": "0009_invoice_settlements", "breakpoints": true },
     { "idx": 10, "version": "7", "when": 1791388810000, "tag": "0010_voucher_lifecycle", "breakpoints": true },
     { "idx": 11, "version": "7", "when": 1791388811000, "tag": "0011_period_reopen_requests", "breakpoints": true },
-    { "idx": 12, "version": "7", "when": 1791388812000, "tag": "0012_opening_balance_entries", "breakpoints": true }
+    { "idx": 12, "version": "7", "when": 1791388812000, "tag": "0012_opening_balance_entries", "breakpoints": true },
+    { "idx": 13, "version": "7", "when": 1791475200000, "tag": "0013_policy_rule_foundation", "breakpoints": true },
+    { "idx": 14, "version": "7", "when": 1791475201000, "tag": "0014_rule_version_reviews", "breakpoints": true },
+    { "idx": 15, "version": "7", "when": 1791475202000, "tag": "0015_rule_test_evidence", "breakpoints": true },
+    { "idx": 16, "version": "7", "when": 1791475203000, "tag": "0016_rule_approval_schedule", "breakpoints": true },
+    { "idx": 17, "version": "7", "when": 1791475204000, "tag": "0017_rule_activation_withdrawal", "breakpoints": true },
+    { "idx": 18, "version": "7", "when": 1791475205000, "tag": "0018_calculation_run_snapshots", "breakpoints": true },
+    { "idx": 19, "version": "7", "when": 1791475206000, "tag": "0019_calculation_explanation_steps", "breakpoints": true },
+    { "idx": 20, "version": "7", "when": 1791475207000, "tag": "0020_signed_golden_fixtures", "breakpoints": true },
+    { "idx": 21, "version": "7", "when": 1791475208000, "tag": "0021_golden_fixture_executions", "breakpoints": true }
   ]
 }

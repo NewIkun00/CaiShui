@@ -8,7 +8,9 @@ export class MemoryScopeStore implements ScopeStore {
   save(record: SaveScopeRecord): Promise<SavedScopeEvaluation> {
     const saved: SavedScopeEvaluation = Object.freeze({
       id: record.id,
+      profileId: record.profileId,
       companyId: record.companyId,
+      profile: record.profile,
       decision: record.evaluation.decision,
       reasons: record.evaluation.reasons,
       nextAction: record.evaluation.nextAction,
