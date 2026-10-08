@@ -23,6 +23,7 @@
     { "idx": 18, "version": "7", "when": 1791475205000, "tag": "0018_calculation_run_snapshots", "breakpoints": true },
     { "idx": 19, "version": "7", "when": 1791475206000, "tag": "0019_calculation_explanation_steps", "breakpoints": true },
     { "idx": 20, "version": "7", "when": 1791475207000, "tag": "0020_signed_golden_fixtures", "breakpoints": true },
-    { "idx": 21, "version": "7", "when": 1791475208000, "tag": "0021_golden_fixture_executions", "breakpoints": true }
+    { "idx": 21, "version": "7", "when": 1791475208000, "tag": "0021_golden_fixture_executions", "breakpoints": true },
+    { "idx": 22, "version": "7", "when": 1791475209000, "tag": "0022_rule_shadow_runs", "breakpoints": true }
   ]
 }

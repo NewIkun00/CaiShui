@@ -11,6 +11,10 @@ import {
   ruleActivationSchema,
   ruleWithdrawalSchema,
   goldenFixtureSetInputSchema,
+  ruleShadowRunInputSchema,
+  ruleShadowRunCreationResponseSchema,
+  ruleShadowRunListResponseSchema,
+  ruleShadowRunResponseSchema,
   type PolicySourceInputRequest,
   type RulePackageInputRequest,
   type RuleVersionInputRequest,
@@ -21,11 +25,13 @@ import {
   type RuleActivationRequest,
   type RuleWithdrawalRequest,
   type GoldenFixtureSetInputRequest,
+  type RuleShadowRunInputRequest,
 } from '@ledgerly/contracts';
 import type { FastifyRequest } from 'fastify';
 import { requestContext } from '../../../shared/request-context.js';
 import { ZodValidationPipe } from '../../../shared/zod-validation.pipe.js';
 import { PolicyRuleService } from '../application/policy-rule.service.js';
+import type { SavedRuleShadowRun } from '../application/policy-rule-store.js';
 
 @ApiTags('policy-rules')
 @ApiHeader({ name: 'x-user-id', required: true })
@@ -146,6 +152,41 @@ export class PolicyRuleController {
     );
   }
 
+  @Post('rule-packages/:rulePackageId/shadow-runs')
+  @ApiOperation({ summary: '用同一签审样本对比基准与候选规则版本并固化差异证据' })
+  async executeRuleShadowRun(
+    @Param('rulePackageId', new ParseUUIDPipe()) rulePackageId: string,
+    @Body(new ZodValidationPipe(ruleShadowRunInputSchema)) input: RuleShadowRunInputRequest,
+    @Req() request: FastifyRequest,
+  ) {
+    const result=await this.service.executeRuleShadowRun(rulePackageId,input,requestContext(request,false));
+    return ruleShadowRunCreationResponseSchema.parse({run:this.presentShadowRun(result.run),created:result.created});
+  }
+
+  @Get('rule-packages/:rulePackageId/shadow-runs')
+  @ApiOperation({ summary: '列出规则包的不可变影子计算记录' })
+  async listRuleShadowRuns(
+    @Param('rulePackageId', new ParseUUIDPipe()) rulePackageId: string,
+    @Req() request: FastifyRequest,
+  ) {
+    requestContext(request,false);
+    const items=await this.service.listRuleShadowRuns(rulePackageId);
+    return ruleShadowRunListResponseSchema.parse({items:items.map((item)=>this.presentShadowRun(item))});
+  }
+
+  @Get('rule-packages/:rulePackageId/shadow-runs/:runId')
+  @ApiOperation({ summary: '读取影子计算逐样例差异和不可变证据哈希' })
+  async findRuleShadowRun(
+    @Param('rulePackageId', new ParseUUIDPipe()) rulePackageId: string,
+    @Param('runId', new ParseUUIDPipe()) runId: string,
+    @Req() request: FastifyRequest,
+  ) {
+    requestContext(request,false);
+    return ruleShadowRunResponseSchema.parse(this.presentShadowRun(
+      await this.service.findRuleShadowRun(rulePackageId,runId),
+    ));
+  }
+
   @Post('rule-packages/:rulePackageId/versions/:ruleVersionId/approval')
   @ApiOperation({ summary: '由独立审批人批准已通过测试的规则版本' })
   approveRuleVersion(
@@ -189,4 +230,8 @@ export class PolicyRuleController {
   ) {
     return this.service.withdrawRuleVersion(rulePackageId, ruleVersionId, input, requestContext(request, false));
   }
+
+  private presentShadowRun(run:SavedRuleShadowRun){return{
+    ...run,executedAt:run.executedAt.toISOString(),
+  };}
 }

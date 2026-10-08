@@ -451,6 +451,41 @@ export const goldenFixtureSetInputSchema = z.object({
 });
 export type GoldenFixtureSetInputRequest = z.infer<typeof goldenFixtureSetInputSchema>;
 
+export const ruleShadowRunInputSchema = z.object({
+  baselineRuleVersionId: z.string().uuid(),
+  candidateRuleVersionId: z.string().uuid(),
+  fixtureSetId: z.string().uuid(),
+}).refine((value) => value.baselineRuleVersionId !== value.candidateRuleVersionId, {
+  message: '基准版本和候选版本必须不同', path: ['candidateRuleVersionId'],
+});
+export type RuleShadowRunInputRequest = z.infer<typeof ruleShadowRunInputSchema>;
+
+const ruleShadowExecutionCaseSchema = z.object({
+  caseId:z.string(),output:z.record(z.string(),z.unknown()).optional(),
+  steps:z.array(z.record(z.string(),z.unknown())),error:z.string().optional(),
+}).strict().refine((value)=>Boolean(value.output)!==Boolean(value.error),{
+  message:'每个影子执行结果必须包含 output 或 error 之一',
+});
+const ruleShadowCaseDifferenceSchema = z.object({
+  caseId:z.string(),
+  status:z.enum(['identical','output_changed','steps_changed','output_and_steps_changed','baseline_failed','candidate_failed','both_failed']),
+  outputChanged:z.boolean(),stepsChanged:z.boolean(),
+  baseline:ruleShadowExecutionCaseSchema,candidate:ruleShadowExecutionCaseSchema,
+}).strict();
+export const ruleShadowRunResponseSchema = z.object({
+  id:z.string().uuid(),rulePackageId:z.string().uuid(),baselineRuleVersionId:z.string().uuid(),
+  candidateRuleVersionId:z.string().uuid(),fixtureSetId:z.string().uuid(),fixtureSetContentHash:sha256Schema,
+  baselineImplementationKey:z.string(),candidateImplementationKey:z.string(),
+  status:z.enum(['identical','differences_found','execution_failed']),
+  totalFixtures:z.number().int().positive(),identicalFixtures:z.number().int().nonnegative(),
+  changedFixtures:z.number().int().nonnegative(),failedFixtures:z.number().int().nonnegative(),
+  artifactHash:sha256Schema,differences:z.array(ruleShadowCaseDifferenceSchema),
+  executedBy:z.string().uuid(),executedAt:z.string().datetime(),
+}).strict();
+export type RuleShadowRunResponse = z.infer<typeof ruleShadowRunResponseSchema>;
+export const ruleShadowRunCreationResponseSchema=z.object({run:ruleShadowRunResponseSchema,created:z.boolean()}).strict();
+export const ruleShadowRunListResponseSchema=z.object({items:z.array(ruleShadowRunResponseSchema)}).strict();
+
 export const ruleApprovalSchema = z.object({
   expectedVersion: z.number().int().positive(),
   note: z.string().trim().min(5).max(2000),

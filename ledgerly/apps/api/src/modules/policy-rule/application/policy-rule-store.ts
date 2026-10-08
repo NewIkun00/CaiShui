@@ -1,6 +1,6 @@
 import type {
   GoldenFixtureSet, PolicySource, RulePackage, RuleReviewKind, RuleTestEvidenceInput,
-  RuleVersion, RuleVersionStatus,
+  RuleVersion, RuleVersionStatus, RuleShadowCaseDifference,
 } from '@ledgerly/domain';
 
 export interface SavedPolicySource extends PolicySource {
@@ -68,6 +68,26 @@ export interface SavedGoldenFixtureExecution {
   readonly executedAt: Date;
 }
 
+export interface SavedRuleShadowRun {
+  readonly id: string;
+  readonly rulePackageId: string;
+  readonly baselineRuleVersionId: string;
+  readonly candidateRuleVersionId: string;
+  readonly fixtureSetId: string;
+  readonly fixtureSetContentHash: string;
+  readonly baselineImplementationKey: string;
+  readonly candidateImplementationKey: string;
+  readonly status: 'identical' | 'differences_found' | 'execution_failed';
+  readonly totalFixtures: number;
+  readonly identicalFixtures: number;
+  readonly changedFixtures: number;
+  readonly failedFixtures: number;
+  readonly artifactHash: string;
+  readonly differences: readonly RuleShadowCaseDifference[];
+  readonly executedBy: string;
+  readonly executedAt: Date;
+}
+
 interface GovernedRecord {
   readonly id: string;
   readonly actorId: string;
@@ -123,6 +143,11 @@ export interface SaveGoldenFixtureExecutionRecord {
   readonly traceId: string;
 }
 
+export interface SaveRuleShadowRunRecord {
+  readonly run: SavedRuleShadowRun;
+  readonly traceId: string;
+}
+
 export interface ApproveRuleVersionRecord {
   readonly current: SavedRuleVersion;
   readonly expectedVersion: number;
@@ -165,6 +190,9 @@ export interface PolicyRuleStore {
   findSuccessfulGoldenFixtureExecution(
     ruleVersionId: string, fixtureSetId: string, artifactHash: string,
   ): Promise<SavedGoldenFixtureExecution | null>;
+  saveRuleShadowRun(record: SaveRuleShadowRunRecord): Promise<{readonly run:SavedRuleShadowRun;readonly created:boolean}>;
+  listRuleShadowRuns(rulePackageId: string): Promise<readonly SavedRuleShadowRun[]>;
+  findRuleShadowRun(rulePackageId: string, runId: string): Promise<SavedRuleShadowRun | null>;
   approveRuleVersion(record: ApproveRuleVersionRecord): Promise<SavedRuleVersion | null>;
   scheduleRuleVersion(record: ScheduleRuleVersionRecord): Promise<SavedRuleVersion | null>;
   activateRuleVersion(record: ActivateRuleVersionRecord): Promise<SavedRuleVersion | null>;

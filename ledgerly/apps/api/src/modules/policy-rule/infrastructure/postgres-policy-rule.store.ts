@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import { RuleReviewKind, RuleVersionStatus, TaxType, type RuleApplicability, type RuleParameterValue } from '@ledgerly/domain';
 import { randomUUID } from 'node:crypto';
 import { DATABASE, type Database } from '../../../infrastructure/database/database.provider.js';
@@ -16,6 +16,7 @@ import {
   goldenFixtureSets,
   goldenFixtures,
   goldenFixtureExecutions,
+  ruleShadowRuns,
   ruleVersions,
 } from '../../../infrastructure/database/schema.js';
 import type {
@@ -36,6 +37,8 @@ import type {
   SavedGoldenFixtureSet,
   SaveGoldenFixtureExecutionRecord,
   SavedGoldenFixtureExecution,
+  SaveRuleShadowRunRecord,
+  SavedRuleShadowRun,
 } from '../application/policy-rule-store.js';
 
 @Injectable()
@@ -388,6 +391,51 @@ export class PostgresPolicyRuleStore implements PolicyRuleStore {
     } : null;
   }
 
+  async saveRuleShadowRun(
+    record: SaveRuleShadowRunRecord,
+  ): Promise<{readonly run:SavedRuleShadowRun;readonly created:boolean}> {
+    const created=await this.db.transaction(async(tx)=>{
+      const [inserted]=await tx.insert(ruleShadowRuns).values({
+        id:record.run.id,rulePackageId:record.run.rulePackageId,
+        baselineRuleVersionId:record.run.baselineRuleVersionId,
+        candidateRuleVersionId:record.run.candidateRuleVersionId,fixtureSetId:record.run.fixtureSetId,
+        fixtureSetContentHash:record.run.fixtureSetContentHash,
+        baselineImplementationKey:record.run.baselineImplementationKey,
+        candidateImplementationKey:record.run.candidateImplementationKey,status:record.run.status,
+        totalFixtures:record.run.totalFixtures,identicalFixtures:record.run.identicalFixtures,
+        changedFixtures:record.run.changedFixtures,failedFixtures:record.run.failedFixtures,
+        artifactHash:record.run.artifactHash,differences:record.run.differences,
+        executedBy:record.run.executedBy,executedAt:record.run.executedAt,
+      }).onConflictDoNothing().returning({id:ruleShadowRuns.id});
+      if(!inserted)return false;
+      await this.audit(tx,record.run.executedBy,record.traceId,'rule_shadow_run.execute','rule_package',record.run.rulePackageId,{
+        shadowRunId:record.run.id,baselineRuleVersionId:record.run.baselineRuleVersionId,
+        candidateRuleVersionId:record.run.candidateRuleVersionId,fixtureSetId:record.run.fixtureSetId,
+        status:record.run.status,artifactHash:record.run.artifactHash,
+      });
+      return true;
+    });
+    if(created)return{run:record.run,created:true};
+    const [existing]=await this.db.select().from(ruleShadowRuns).where(and(
+      eq(ruleShadowRuns.rulePackageId,record.run.rulePackageId),eq(ruleShadowRuns.artifactHash,record.run.artifactHash),
+    )).limit(1);
+    if(!existing)throw new Error('Shadow run conflict did not return the existing record');
+    return{run:this.presentShadowRun(existing),created:false};
+  }
+
+  async listRuleShadowRuns(rulePackageId: string): Promise<readonly SavedRuleShadowRun[]> {
+    const rows=await this.db.select().from(ruleShadowRuns).where(eq(ruleShadowRuns.rulePackageId,rulePackageId))
+      .orderBy(desc(ruleShadowRuns.executedAt));
+    return rows.map((row)=>this.presentShadowRun(row));
+  }
+
+  async findRuleShadowRun(rulePackageId: string, runId: string): Promise<SavedRuleShadowRun | null> {
+    const [row]=await this.db.select().from(ruleShadowRuns).where(and(
+      eq(ruleShadowRuns.rulePackageId,rulePackageId),eq(ruleShadowRuns.id,runId),
+    )).limit(1);
+    return row?this.presentShadowRun(row):null;
+  }
+
   async approveRuleVersion(record: ApproveRuleVersionRecord): Promise<SavedRuleVersion | null> {
     const updated = await this.db.transaction(async (tx) => {
       const [row] = await tx.update(ruleVersions).set({
@@ -562,6 +610,20 @@ export class PostgresPolicyRuleStore implements PolicyRuleStore {
         explanation: fixture.explanation,
       })),
       signedOffBy: row.signedOffBy, signedOffAt: row.signedOffAt,
+    };
+  }
+
+  private presentShadowRun(row: typeof ruleShadowRuns.$inferSelect): SavedRuleShadowRun {
+    return{
+      id:row.id,rulePackageId:row.rulePackageId,baselineRuleVersionId:row.baselineRuleVersionId,
+      candidateRuleVersionId:row.candidateRuleVersionId,fixtureSetId:row.fixtureSetId,
+      fixtureSetContentHash:row.fixtureSetContentHash,baselineImplementationKey:row.baselineImplementationKey,
+      candidateImplementationKey:row.candidateImplementationKey,
+      status:row.status as SavedRuleShadowRun['status'],totalFixtures:row.totalFixtures,
+      identicalFixtures:row.identicalFixtures,changedFixtures:row.changedFixtures,
+      failedFixtures:row.failedFixtures,artifactHash:row.artifactHash,
+      differences:row.differences as SavedRuleShadowRun['differences'],
+      executedBy:row.executedBy,executedAt:row.executedAt,
     };
   }
 }

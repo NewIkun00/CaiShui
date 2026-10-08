@@ -10,6 +10,7 @@ import type {
   RuleActivationRequest,
   RuleWithdrawalRequest,
   GoldenFixtureSetInputRequest,
+  RuleShadowRunInputRequest,
 } from '@ledgerly/contracts';
 import {
   createPolicySource,
@@ -22,11 +23,13 @@ import {
   activateRuleVersion,
   withdrawRuleVersion,
   createGoldenFixtureSet,
+  compareRuleShadowExecutions,
   PolicyRuleError,
   RuleReviewKind,
   RuleVersionStatus,
   TaxType,
   type RuleParameterValue,
+  type RuleShadowExecutionCase,
 } from '@ledgerly/domain';
 import { createHash, randomUUID } from 'node:crypto';
 import type { RequestContext } from '../../organization/application/organization.service.js';
@@ -38,6 +41,7 @@ import {
   type SavedRuleVersion,
   type SavedGoldenFixtureSet,
   type SavedGoldenFixtureExecution,
+  type SavedRuleShadowRun,
 } from './policy-rule-store.js';
 import {
   EmptyRuleCalculationRegistry,
@@ -301,6 +305,77 @@ export class PolicyRuleService {
       throw new NotFoundException('Rule version not found');
     }
     return this.store.listGoldenFixtureSets(ruleVersionId);
+  }
+
+  async executeRuleShadowRun(
+    rulePackageId: string,
+    input: RuleShadowRunInputRequest,
+    context: RequestContext,
+  ): Promise<{readonly run:SavedRuleShadowRun;readonly created:boolean}> {
+    if (!await this.store.findRulePackage(rulePackageId)) throw new NotFoundException('Rule package not found');
+    const baseline=await this.store.findRuleVersion(rulePackageId,input.baselineRuleVersionId);
+    const candidate=await this.store.findRuleVersion(rulePackageId,input.candidateRuleVersionId);
+    if(!baseline||!candidate)throw new NotFoundException('Rule version not found');
+    if(baseline.id===candidate.id)throw new ConflictException({
+      code:'RULE_SHADOW_VERSIONS_MUST_DIFFER',message:'Baseline and candidate rule versions must differ',
+    });
+    const fixtureSet=await this.store.findGoldenFixtureSetById(baseline.id,input.fixtureSetId)??
+      await this.store.findGoldenFixtureSetById(candidate.id,input.fixtureSetId);
+    if(!fixtureSet||!fixtureSet.redactionAttested||!fixtureSet.signedOffBy)throw new ConflictException({
+      code:'SIGNED_GOLDEN_FIXTURE_REQUIRED',message:'A professionally signed immutable fixture set is required',
+    });
+    if(context.actorId!==fixtureSet.signedOffBy&&context.actorId!==baseline.taxReviewedBy&&
+        context.actorId!==candidate.taxReviewedBy)throw new ConflictException({
+      code:'RULE_SHADOW_EXECUTOR_REJECTED',message:'Shadow analysis requires a fixture signer or tax reviewer',
+    });
+    const baselineImplementation=this.calculationRegistry.find(baseline.calculationImplementation);
+    if(!baselineImplementation)throw new ConflictException({
+      code:'BASELINE_CALCULATION_IMPLEMENTATION_NOT_REGISTERED',
+      message:'The baseline calculation implementation is not registered',
+    });
+    const candidateImplementation=this.calculationRegistry.find(candidate.calculationImplementation);
+    if(!candidateImplementation)throw new ConflictException({
+      code:'CANDIDATE_CALCULATION_IMPLEMENTATION_NOT_REGISTERED',
+      message:'The candidate calculation implementation is not registered',
+    });
+    const execute=(implementation:NonNullable<ReturnType<RuleCalculationRegistry['find']>>):readonly RuleShadowExecutionCase[]=>
+      fixtureSet.fixtures.map((fixture)=>{
+        try{
+          const result=implementation.execute(fixture.input);
+          return Object.freeze({caseId:fixture.caseId,output:result.output,steps:result.steps});
+        }catch(error){
+          return Object.freeze({caseId:fixture.caseId,steps:[],error:error instanceof Error?error.message:'Unknown calculation error'});
+        }
+      });
+    const comparison=compareRuleShadowExecutions(execute(baselineImplementation),execute(candidateImplementation));
+    const artifactHash=sha256Canonical({
+      rulePackageId,baselineRuleVersionId:baseline.id,candidateRuleVersionId:candidate.id,
+      baselineRuleContentHash:baseline.contentHash,candidateRuleContentHash:candidate.contentHash,
+      fixtureSetId:fixtureSet.id,fixtureSetContentHash:fixtureSet.contentHash,
+      baselineImplementationKey:baselineImplementation.key,candidateImplementationKey:candidateImplementation.key,
+      comparison,
+    });
+    const run:SavedRuleShadowRun=Object.freeze({
+      id:randomUUID(),rulePackageId,baselineRuleVersionId:baseline.id,candidateRuleVersionId:candidate.id,
+      fixtureSetId:fixtureSet.id,fixtureSetContentHash:fixtureSet.contentHash,
+      baselineImplementationKey:baselineImplementation.key,candidateImplementationKey:candidateImplementation.key,
+      status:comparison.status,totalFixtures:comparison.totalFixtures,
+      identicalFixtures:comparison.identicalFixtures,changedFixtures:comparison.changedFixtures,
+      failedFixtures:comparison.failedFixtures,artifactHash,differences:comparison.differences,
+      executedBy:context.actorId,executedAt:this.clock(),
+    });
+    return this.store.saveRuleShadowRun({run,traceId:context.traceId});
+  }
+
+  async listRuleShadowRuns(rulePackageId:string):Promise<readonly SavedRuleShadowRun[]> {
+    if(!await this.store.findRulePackage(rulePackageId))throw new NotFoundException('Rule package not found');
+    return this.store.listRuleShadowRuns(rulePackageId);
+  }
+
+  async findRuleShadowRun(rulePackageId:string,runId:string):Promise<SavedRuleShadowRun> {
+    const run=await this.store.findRuleShadowRun(rulePackageId,runId);
+    if(!run)throw new NotFoundException('Rule shadow run not found');
+    return run;
   }
 
   async approveRuleVersion(

@@ -614,6 +614,34 @@ export const goldenFixtureExecutions = pgTable(
   ],
 );
 
+export const ruleShadowRuns = pgTable(
+  'rule_shadow_runs',
+  {
+    id: uuid('id').primaryKey(),
+    rulePackageId: uuid('rule_package_id').notNull().references(() => rulePackages.id),
+    baselineRuleVersionId: uuid('baseline_rule_version_id').notNull().references(() => ruleVersions.id),
+    candidateRuleVersionId: uuid('candidate_rule_version_id').notNull().references(() => ruleVersions.id),
+    fixtureSetId: uuid('fixture_set_id').notNull().references(() => goldenFixtureSets.id),
+    fixtureSetContentHash: text('fixture_set_content_hash').notNull(),
+    baselineImplementationKey: text('baseline_implementation_key').notNull(),
+    candidateImplementationKey: text('candidate_implementation_key').notNull(),
+    status: text('status').notNull(),
+    totalFixtures: integer('total_fixtures').notNull(),
+    identicalFixtures: integer('identical_fixtures').notNull(),
+    changedFixtures: integer('changed_fixtures').notNull(),
+    failedFixtures: integer('failed_fixtures').notNull(),
+    artifactHash: text('artifact_hash').notNull(),
+    differences: jsonb('differences').notNull(),
+    executedBy: uuid('executed_by').notNull(),
+    executedAt: timestamp('executed_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('rule_shadow_runs_artifact_unique').on(table.rulePackageId, table.artifactHash),
+    index('rule_shadow_runs_versions_idx').on(table.baselineRuleVersionId, table.candidateRuleVersionId),
+    index('rule_shadow_runs_package_time_idx').on(table.rulePackageId, table.executedAt),
+  ],
+);
+
 export const ruleVersionApprovals = pgTable(
   'rule_version_approvals',
   {

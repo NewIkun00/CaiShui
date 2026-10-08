@@ -124,6 +124,34 @@ export interface GoldenFixtureSet extends GoldenFixtureSetInput {
   readonly fixtures: readonly GoldenFixtureInput[];
 }
 
+export type RuleShadowCaseStatus = 'identical' | 'output_changed' | 'steps_changed' |
+  'output_and_steps_changed' | 'baseline_failed' | 'candidate_failed' | 'both_failed';
+
+export interface RuleShadowExecutionCase {
+  readonly caseId: string;
+  readonly output?: Readonly<Record<string, unknown>> | undefined;
+  readonly steps: readonly Readonly<Record<string, unknown>>[];
+  readonly error?: string | undefined;
+}
+
+export interface RuleShadowCaseDifference {
+  readonly caseId: string;
+  readonly status: RuleShadowCaseStatus;
+  readonly outputChanged: boolean;
+  readonly stepsChanged: boolean;
+  readonly baseline: RuleShadowExecutionCase;
+  readonly candidate: RuleShadowExecutionCase;
+}
+
+export interface RuleShadowComparison {
+  readonly status: 'identical' | 'differences_found' | 'execution_failed';
+  readonly totalFixtures: number;
+  readonly identicalFixtures: number;
+  readonly changedFixtures: number;
+  readonly failedFixtures: number;
+  readonly differences: readonly RuleShadowCaseDifference[];
+}
+
 export interface RuleApprovalState extends RuleReviewState {
   readonly testedBy?: string | undefined;
 }
@@ -325,6 +353,56 @@ export function createGoldenFixtureSet(input: GoldenFixtureSetInput): GoldenFixt
   return Object.freeze({ ...input, professionalNote: input.professionalNote.trim(), fixtures: Object.freeze(fixtures) });
 }
 
+export function compareRuleShadowExecutions(
+  baselineResults: readonly RuleShadowExecutionCase[],
+  candidateResults: readonly RuleShadowExecutionCase[],
+): RuleShadowComparison {
+  if (baselineResults.length === 0 || candidateResults.length === 0) {
+    throw new PolicyRuleError('Shadow analysis requires non-empty execution results');
+  }
+  const index = (items: readonly RuleShadowExecutionCase[], label: string) => {
+    const result = new Map<string, RuleShadowExecutionCase>();
+    for (const item of items) {
+      const caseId = item.caseId.trim();
+      if (!caseId || result.has(caseId)) throw new PolicyRuleError(`${label} case IDs must be unique`);
+      if ((!item.output && !item.error) || (item.output && item.error)) {
+        throw new PolicyRuleError(`${label} case ${caseId} must contain either output or error`);
+      }
+      result.set(caseId, Object.freeze({ ...item, caseId }));
+    }
+    return result;
+  };
+  const baseline = index(baselineResults, 'Baseline');
+  const candidate = index(candidateResults, 'Candidate');
+  const baselineIds = [...baseline.keys()].sort();
+  const candidateIds = [...candidate.keys()].sort();
+  if (JSON.stringify(baselineIds) !== JSON.stringify(candidateIds)) {
+    throw new PolicyRuleError('Baseline and candidate must execute the same fixture cases');
+  }
+  const differences = baselineIds.map((caseId): RuleShadowCaseDifference => {
+    const left = baseline.get(caseId)!;
+    const right = candidate.get(caseId)!;
+    if (left.error || right.error) {
+      const status: RuleShadowCaseStatus = left.error && right.error ? 'both_failed' :
+        left.error ? 'baseline_failed' : 'candidate_failed';
+      return Object.freeze({ caseId, status, outputChanged: false, stepsChanged: false, baseline:left, candidate:right });
+    }
+    const outputChanged = !jsonEqual(left.output, right.output);
+    const stepsChanged = !jsonEqual(left.steps, right.steps);
+    const status: RuleShadowCaseStatus = outputChanged && stepsChanged ? 'output_and_steps_changed' :
+      outputChanged ? 'output_changed' : stepsChanged ? 'steps_changed' : 'identical';
+    return Object.freeze({ caseId, status, outputChanged, stepsChanged, baseline:left, candidate:right });
+  });
+  const failedFixtures = differences.filter((item) => item.status.endsWith('failed')).length;
+  const identicalFixtures = differences.filter((item) => item.status === 'identical').length;
+  const changedFixtures = differences.length - identicalFixtures - failedFixtures;
+  return Object.freeze({
+    status: failedFixtures > 0 ? 'execution_failed' : changedFixtures > 0 ? 'differences_found' : 'identical',
+    totalFixtures: differences.length, identicalFixtures, changedFixtures, failedFixtures,
+    differences: Object.freeze(differences),
+  });
+}
+
 export function approveRuleVersion(
   current: RuleApprovalState,
   approverId: string,
@@ -438,4 +516,18 @@ function assertJsonRecord(value: Readonly<Record<string, unknown>>, label: strin
     (Array.isArray(item) && item.every(visit)) ||
     (typeof item === 'object' && item !== null && Object.values(item as Record<string, unknown>).every(visit));
   if (!visit(value)) throw new PolicyRuleError(`${label} must contain JSON-safe values`);
+}
+
+function jsonEqual(left: unknown, right: unknown): boolean {
+  return JSON.stringify(canonicalizeJson(left)) === JSON.stringify(canonicalizeJson(right));
+}
+
+function canonicalizeJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalizeJson);
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => [key, canonicalizeJson(item)]));
+  }
+  return value;
 }

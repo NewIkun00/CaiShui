@@ -18,6 +18,8 @@ import type {
   SavedGoldenFixtureSet,
   SaveGoldenFixtureExecutionRecord,
   SavedGoldenFixtureExecution,
+  SaveRuleShadowRunRecord,
+  SavedRuleShadowRun,
 } from '../application/policy-rule-store.js';
 
 @Injectable()
@@ -27,6 +29,7 @@ export class MemoryPolicyRuleStore implements PolicyRuleStore {
   private readonly versions: SavedRuleVersion[] = [];
   private readonly fixtureSets: SavedGoldenFixtureSet[] = [];
   private readonly fixtureExecutions: SavedGoldenFixtureExecution[] = [];
+  private readonly shadowRuns: SavedRuleShadowRun[] = [];
 
   savePolicySource(record: SavePolicySourceRecord): Promise<SavedPolicySource> {
     const saved = Object.freeze({
@@ -163,6 +166,22 @@ export class MemoryPolicyRuleStore implements PolicyRuleStore {
     return Promise.resolve([...this.fixtureExecutions].reverse().find((item) =>
       item.ruleVersionId === ruleVersionId && item.fixtureSetId === fixtureSetId &&
       item.artifactHash === artifactHash && item.status === 'passed') ?? null);
+  }
+
+  saveRuleShadowRun(record: SaveRuleShadowRunRecord): Promise<{readonly run:SavedRuleShadowRun;readonly created:boolean}> {
+    const existing=this.shadowRuns.find((item)=>item.rulePackageId===record.run.rulePackageId&&item.artifactHash===record.run.artifactHash);
+    if(existing)return Promise.resolve({run:existing,created:false});
+    this.shadowRuns.push(record.run);
+    return Promise.resolve({run:record.run,created:true});
+  }
+
+  listRuleShadowRuns(rulePackageId: string): Promise<readonly SavedRuleShadowRun[]> {
+    return Promise.resolve(this.shadowRuns.filter((item)=>item.rulePackageId===rulePackageId)
+      .sort((left,right)=>right.executedAt.getTime()-left.executedAt.getTime()));
+  }
+
+  findRuleShadowRun(rulePackageId: string, runId: string): Promise<SavedRuleShadowRun | null> {
+    return Promise.resolve(this.shadowRuns.find((item)=>item.rulePackageId===rulePackageId&&item.id===runId)??null);
   }
 
   approveRuleVersion(record: ApproveRuleVersionRecord): Promise<SavedRuleVersion | null> {

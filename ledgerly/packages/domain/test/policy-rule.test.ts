@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createPolicySource,
   createGoldenFixtureSet,
+  compareRuleShadowExecutions,
   acceptRuleTestEvidence,
   activateRuleVersion,
   approveRuleVersion,
@@ -110,6 +111,42 @@ describe('policy and rule governance domain', () => {
       fixtureSetVersion: '2026.10.08-1', redactionAttested: true,
       professionalNote: '场景覆盖不足。', fixtures: fixtures.slice(0, 2), contentHash: hash,
     })).toThrow('missing scenarios');
+  });
+
+  it('classifies shadow calculation output, step, and execution differences deterministically', () => {
+    const baseline = [
+      { caseId:'same', output:{ amount:'1.00', nested:{ b:2, a:1 } }, steps:[{ key:'round', value:'1.00' }] },
+      { caseId:'output', output:{ amount:'1.00' }, steps:[{ key:'calculate' }] },
+      { caseId:'steps', output:{ amount:'1.00' }, steps:[{ key:'old-step' }] },
+      { caseId:'old-fails', steps:[], error:'baseline failed' },
+      { caseId:'new-fails', output:{ amount:'1.00' }, steps:[] },
+      { caseId:'both-fail', steps:[], error:'baseline failed' },
+    ];
+    const candidate = [
+      { caseId:'steps', output:{ amount:'1.00' }, steps:[{ key:'new-step' }] },
+      { caseId:'same', output:{ nested:{ a:1, b:2 }, amount:'1.00' }, steps:[{ value:'1.00', key:'round' }] },
+      { caseId:'new-fails', steps:[], error:'candidate failed' },
+      { caseId:'output', output:{ amount:'2.00' }, steps:[{ key:'calculate' }] },
+      { caseId:'old-fails', output:{ amount:'1.00' }, steps:[] },
+      { caseId:'both-fail', steps:[], error:'candidate failed' },
+    ];
+    const result = compareRuleShadowExecutions(baseline, candidate);
+    expect(result).toMatchObject({ status:'execution_failed', totalFixtures:6, identicalFixtures:1, changedFixtures:2, failedFixtures:3 });
+    expect(result.differences.map((item) => [item.caseId,item.status])).toEqual([
+      ['both-fail','both_failed'],['new-fails','candidate_failed'],['old-fails','baseline_failed'],['output','output_changed'],
+      ['same','identical'],['steps','steps_changed'],
+    ]);
+  });
+
+  it('rejects shadow comparisons that do not use the same unique fixture cases', () => {
+    expect(() => compareRuleShadowExecutions(
+      [{ caseId:'case-a', output:{ amount:'1.00' }, steps:[] }],
+      [{ caseId:'case-b', output:{ amount:'1.00' }, steps:[] }],
+    )).toThrow('same fixture cases');
+    expect(() => compareRuleShadowExecutions(
+      [{ caseId:'case-a', output:{ amount:'1.00' }, steps:[] },{ caseId:'case-a', output:{ amount:'1.00' }, steps:[] }],
+      [{ caseId:'case-a', output:{ amount:'1.00' }, steps:[] }],
+    )).toThrow('unique');
   });
 
   it('separates approval duties and schedules only inside the effective period', () => {
