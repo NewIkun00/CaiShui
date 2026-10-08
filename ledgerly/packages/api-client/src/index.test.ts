@@ -103,4 +103,22 @@ describe('generated API client', () => {
     expect(run.decision?.code).toBe('NO_MATCHING_RULE');
     expect(report.balanceSheet).toMatchObject({ balanced: true, totalAssets: '100.00' });
   });
+
+  it('infers fact import requests and generated business event ids', async () => {
+    const eventId = '20000000-0000-4000-8000-000000000002';
+    const client = createApiClient({
+      baseUrl: 'https://api.example.test',
+      fetch: (() => Promise.resolve(new Response(JSON.stringify({
+        status: 'confirmed', rows: [{ businessEventId: eventId }],
+      }), { headers: { 'content-type': 'application/json' } }))) as typeof fetch,
+    });
+
+    const batch = await client('/v1/companies/{companyId}/imports/bank-csv', {
+      method: 'post',
+      path: { companyId: '10000000-0000-4000-8000-000000000001' },
+      body: { fileName: 'bank.csv', content: 'date,description,amount' },
+    });
+
+    expect(batch.rows[0]?.businessEventId).toBe(eventId);
+  });
 });

@@ -1,12 +1,14 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
-  documentUploadSchema, documentVersionUploadSchema,
+  documentContentResponseSchema, documentListResponseSchema, documentResponseSchema,
+  documentUploadResponseSchema, documentUploadSchema, documentVersionUploadSchema,
   type DocumentUploadRequest, type DocumentVersionUploadRequest,
 } from '@ledgerly/contracts';
 import type { FastifyRequest } from 'fastify';
 import { requestContext } from '../../../shared/request-context.js';
 import { ZodValidationPipe } from '../../../shared/zod-validation.pipe.js';
+import { ApiZodBody, ApiZodCreatedResponse, ApiZodOkResponse } from '../../../shared/zod-openapi.js';
 import { DocumentService } from '../application/document.service.js';
 import type { SavedDocument } from '../application/document-store.js';
 
@@ -19,6 +21,8 @@ export class DocumentController {
 
   @Post()
   @ApiOperation({ summary: '上传私有单据并建立首个版本' })
+  @ApiZodBody(documentUploadSchema)
+  @ApiZodCreatedResponse(documentUploadResponseSchema)
   async upload(@Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Body(new ZodValidationPipe(documentUploadSchema)) input: DocumentUploadRequest,
     @Req() request: FastifyRequest) {
@@ -28,6 +32,7 @@ export class DocumentController {
 
   @Get()
   @ApiOperation({ summary: '列出单据档案' })
+  @ApiZodOkResponse(documentListResponseSchema)
   async list(@Param('companyId', new ParseUUIDPipe()) companyId: string, @Req() request: FastifyRequest) {
     const items = await this.service.list(companyId, requestContext(request, true));
     return { items: items.map((item) => this.present(item)) };
@@ -35,6 +40,8 @@ export class DocumentController {
 
   @Post(':documentId/versions')
   @ApiOperation({ summary: '为单据增加不可覆盖的新版本' })
+  @ApiZodBody(documentVersionUploadSchema)
+  @ApiZodCreatedResponse(documentUploadResponseSchema)
   async addVersion(@Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Param('documentId', new ParseUUIDPipe()) documentId: string,
     @Body(new ZodValidationPipe(documentVersionUploadSchema)) input: DocumentVersionUploadRequest,
@@ -45,6 +52,7 @@ export class DocumentController {
 
   @Get(':documentId/versions/:versionId/content')
   @ApiOperation({ summary: '读取私有单据版本内容' })
+  @ApiZodOkResponse(documentContentResponseSchema)
   content(@Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Param('documentId', new ParseUUIDPipe()) documentId: string,
     @Param('versionId', new ParseUUIDPipe()) versionId: string, @Req() request: FastifyRequest) {
@@ -53,6 +61,7 @@ export class DocumentController {
 
   @Post(':documentId/links/business-events/:eventId')
   @ApiOperation({ summary: '将单据证据关联到业务事项' })
+  @ApiZodCreatedResponse(documentResponseSchema)
   async link(@Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Param('documentId', new ParseUUIDPipe()) documentId: string,
     @Param('eventId', new ParseUUIDPipe()) eventId: string, @Req() request: FastifyRequest) {

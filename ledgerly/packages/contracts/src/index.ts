@@ -191,6 +191,7 @@ export const bankImportRowSchema = z.object({
   direction: z.enum(['income', 'expense']).optional(), amount: z.string().optional(),
   balance: z.string().optional(), fingerprint: z.string(),
   status: z.enum(['valid', 'invalid', 'duplicate']), errors: z.array(z.string()),
+  businessEventId: z.string().uuid().optional(),
 });
 
 export const bankImportBatchSchema = z.object({

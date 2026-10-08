@@ -1317,7 +1317,33 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            readonly amount: string;
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly confirmedAt?: string;
+                            /** Format: uuid */
+                            readonly counterpartyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            readonly description: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** Format: date */
+                            readonly occurredOn: string;
+                            /** @enum {string} */
+                            readonly source: "manual" | "import";
+                            /** @enum {string} */
+                            readonly status: "draft" | "confirmed";
+                            /** @enum {string} */
+                            readonly type: "service_completed" | "invoice_issued" | "money_received" | "expense_incurred" | "money_paid" | "capital_contribution" | "shareholder_advance";
+                            readonly version: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -1333,13 +1359,50 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly amount: string;
+                    /** Format: uuid */
+                    readonly counterpartyId: string;
+                    readonly description: string;
+                    /** Format: date */
+                    readonly occurredOn: string;
+                    /** @enum {string} */
+                    readonly type: "service_completed" | "invoice_issued" | "money_received" | "expense_incurred" | "money_paid" | "capital_contribution" | "shareholder_advance";
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly amount: string;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly confirmedAt?: string;
+                        /** Format: uuid */
+                        readonly counterpartyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        readonly description: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        /** Format: date */
+                        readonly occurredOn: string;
+                        /** @enum {string} */
+                        readonly source: "manual" | "import";
+                        /** @enum {string} */
+                        readonly status: "draft" | "confirmed";
+                        /** @enum {string} */
+                        readonly type: "service_completed" | "invoice_issued" | "money_received" | "expense_incurred" | "money_paid" | "capital_contribution" | "shareholder_advance";
+                        readonly version: number;
+                    };
+                };
             };
         };
     };
@@ -1362,7 +1425,31 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly amount: string;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly confirmedAt?: string;
+                        /** Format: uuid */
+                        readonly counterpartyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        readonly description: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        /** Format: date */
+                        readonly occurredOn: string;
+                        /** @enum {string} */
+                        readonly source: "manual" | "import";
+                        /** @enum {string} */
+                        readonly status: "draft" | "confirmed";
+                        /** @enum {string} */
+                        readonly type: "service_completed" | "invoice_issued" | "money_received" | "expense_incurred" | "money_paid" | "capital_contribution" | "shareholder_advance";
+                        readonly version: number;
+                    };
+                };
             };
         };
     };
@@ -1617,7 +1704,41 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            readonly accountingMonth: string;
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            readonly currentVersion: number;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly linkedBusinessEventIds: readonly string[];
+                            /** @enum {string} */
+                            readonly status: "active";
+                            readonly title: string;
+                            /** @enum {string} */
+                            readonly type: "invoice" | "bank_receipt" | "contract" | "screenshot" | "payroll" | "other";
+                            readonly versions: readonly {
+                                readonly byteSize: number;
+                                /** Format: date-time */
+                                readonly createdAt: string;
+                                readonly fileName: string;
+                                /** Format: uuid */
+                                readonly id: string;
+                                /** @enum {string} */
+                                readonly mediaType: "application/pdf" | "application/ofd" | "image/jpeg" | "image/png";
+                                readonly scanEngine: string;
+                                /** @enum {string} */
+                                readonly scanStatus: "clean";
+                                readonly sha256: string;
+                                readonly versionNumber: number;
+                            }[];
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -1633,13 +1754,61 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly accountingMonth: string;
+                    readonly contentBase64: string;
+                    readonly fileName: string;
+                    /** @enum {string} */
+                    readonly mediaType: "application/pdf" | "application/ofd" | "image/jpeg" | "image/png";
+                    readonly title: string;
+                    /** @enum {string} */
+                    readonly type: "invoice" | "bank_receipt" | "contract" | "screenshot" | "payroll" | "other";
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly document: {
+                            readonly accountingMonth: string;
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            readonly currentVersion: number;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly linkedBusinessEventIds: readonly string[];
+                            /** @enum {string} */
+                            readonly status: "active";
+                            readonly title: string;
+                            /** @enum {string} */
+                            readonly type: "invoice" | "bank_receipt" | "contract" | "screenshot" | "payroll" | "other";
+                            readonly versions: readonly {
+                                readonly byteSize: number;
+                                /** Format: date-time */
+                                readonly createdAt: string;
+                                readonly fileName: string;
+                                /** Format: uuid */
+                                readonly id: string;
+                                /** @enum {string} */
+                                readonly mediaType: "application/pdf" | "application/ofd" | "image/jpeg" | "image/png";
+                                readonly scanEngine: string;
+                                /** @enum {string} */
+                                readonly scanStatus: "clean";
+                                readonly sha256: string;
+                                readonly versionNumber: number;
+                            }[];
+                        };
+                        readonly duplicate: boolean;
+                    };
+                };
             };
         };
     };
@@ -1663,7 +1832,39 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly accountingMonth: string;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        readonly currentVersion: number;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly linkedBusinessEventIds: readonly string[];
+                        /** @enum {string} */
+                        readonly status: "active";
+                        readonly title: string;
+                        /** @enum {string} */
+                        readonly type: "invoice" | "bank_receipt" | "contract" | "screenshot" | "payroll" | "other";
+                        readonly versions: readonly {
+                            readonly byteSize: number;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            readonly fileName: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** @enum {string} */
+                            readonly mediaType: "application/pdf" | "application/ofd" | "image/jpeg" | "image/png";
+                            readonly scanEngine: string;
+                            /** @enum {string} */
+                            readonly scanStatus: "clean";
+                            readonly sha256: string;
+                            readonly versionNumber: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -1680,13 +1881,57 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly contentBase64: string;
+                    readonly fileName: string;
+                    /** @enum {string} */
+                    readonly mediaType: "application/pdf" | "application/ofd" | "image/jpeg" | "image/png";
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly document: {
+                            readonly accountingMonth: string;
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            readonly currentVersion: number;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly linkedBusinessEventIds: readonly string[];
+                            /** @enum {string} */
+                            readonly status: "active";
+                            readonly title: string;
+                            /** @enum {string} */
+                            readonly type: "invoice" | "bank_receipt" | "contract" | "screenshot" | "payroll" | "other";
+                            readonly versions: readonly {
+                                readonly byteSize: number;
+                                /** Format: date-time */
+                                readonly createdAt: string;
+                                readonly fileName: string;
+                                /** Format: uuid */
+                                readonly id: string;
+                                /** @enum {string} */
+                                readonly mediaType: "application/pdf" | "application/ofd" | "image/jpeg" | "image/png";
+                                readonly scanEngine: string;
+                                /** @enum {string} */
+                                readonly scanStatus: "clean";
+                                readonly sha256: string;
+                                readonly versionNumber: number;
+                            }[];
+                        };
+                        readonly duplicate: boolean;
+                    };
+                };
             };
         };
     };
@@ -1710,7 +1955,14 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly contentBase64: string;
+                        readonly fileName: string;
+                        /** @enum {string} */
+                        readonly mediaType: "application/pdf" | "application/ofd" | "image/jpeg" | "image/png";
+                    };
+                };
             };
         };
     };
@@ -1726,13 +1978,60 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly content: string;
+                    readonly fileName: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly batchErrors: readonly string[];
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly confirmedAt?: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        readonly duplicateRows: number;
+                        readonly fileHash: string;
+                        readonly fileName: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly invalidRows: number;
+                        readonly rows: readonly {
+                            readonly amount?: string;
+                            readonly balance?: string;
+                            /** Format: uuid */
+                            readonly businessEventId?: string;
+                            /** Format: uuid */
+                            readonly counterpartyId?: string;
+                            readonly counterpartyName?: string;
+                            readonly description?: string;
+                            /** @enum {string} */
+                            readonly direction?: "income" | "expense";
+                            readonly errors: readonly string[];
+                            readonly fingerprint: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly occurredOn?: string;
+                            readonly rowNumber: number;
+                            /** @enum {string} */
+                            readonly status: "valid" | "invalid" | "duplicate";
+                        }[];
+                        /** @enum {string} */
+                        readonly status: "validated" | "has_errors" | "confirmed";
+                        readonly totalRows: number;
+                        readonly validRows: number;
+                    };
+                };
             };
         };
     };
@@ -1755,7 +2054,47 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly batchErrors: readonly string[];
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly confirmedAt?: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        readonly duplicateRows: number;
+                        readonly fileHash: string;
+                        readonly fileName: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly invalidRows: number;
+                        readonly rows: readonly {
+                            readonly amount?: string;
+                            readonly balance?: string;
+                            /** Format: uuid */
+                            readonly businessEventId?: string;
+                            /** Format: uuid */
+                            readonly counterpartyId?: string;
+                            readonly counterpartyName?: string;
+                            readonly description?: string;
+                            /** @enum {string} */
+                            readonly direction?: "income" | "expense";
+                            readonly errors: readonly string[];
+                            readonly fingerprint: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly occurredOn?: string;
+                            readonly rowNumber: number;
+                            /** @enum {string} */
+                            readonly status: "valid" | "invalid" | "duplicate";
+                        }[];
+                        /** @enum {string} */
+                        readonly status: "validated" | "has_errors" | "confirmed";
+                        readonly totalRows: number;
+                        readonly validRows: number;
+                    };
+                };
             };
         };
     };
@@ -1778,7 +2117,47 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly batchErrors: readonly string[];
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly confirmedAt?: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        readonly duplicateRows: number;
+                        readonly fileHash: string;
+                        readonly fileName: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly invalidRows: number;
+                        readonly rows: readonly {
+                            readonly amount?: string;
+                            readonly balance?: string;
+                            /** Format: uuid */
+                            readonly businessEventId?: string;
+                            /** Format: uuid */
+                            readonly counterpartyId?: string;
+                            readonly counterpartyName?: string;
+                            readonly description?: string;
+                            /** @enum {string} */
+                            readonly direction?: "income" | "expense";
+                            readonly errors: readonly string[];
+                            readonly fingerprint: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly occurredOn?: string;
+                            readonly rowNumber: number;
+                            /** @enum {string} */
+                            readonly status: "valid" | "invalid" | "duplicate";
+                        }[];
+                        /** @enum {string} */
+                        readonly status: "validated" | "has_errors" | "confirmed";
+                        readonly totalRows: number;
+                        readonly validRows: number;
+                    };
+                };
             };
         };
     };
@@ -1800,7 +2179,40 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            readonly amountExcludingTax: string;
+                            /** @enum {string} */
+                            readonly color: "blue" | "red";
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly confirmedAt?: string;
+                            /** Format: uuid */
+                            readonly counterpartyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** @enum {string} */
+                            readonly direction: "input" | "output";
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly invoiceNumber: string;
+                            /** Format: date */
+                            readonly issuedOn: string;
+                            /** @enum {string} */
+                            readonly kind: "ordinary" | "special";
+                            readonly remarks?: string;
+                            /** @enum {string} */
+                            readonly source: "manual" | "mock_ocr";
+                            /** @enum {string} */
+                            readonly status: "draft" | "confirmed";
+                            readonly taxAmount: string;
+                            readonly totalAmount: string;
+                            readonly version: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -1816,13 +2228,69 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly amountExcludingTax: string;
+                    /** @enum {string} */
+                    readonly color: "blue" | "red";
+                    /** Format: uuid */
+                    readonly counterpartyId: string;
+                    /** @enum {string} */
+                    readonly direction: "input" | "output";
+                    readonly invoiceNumber: string;
+                    /** Format: date */
+                    readonly issuedOn: string;
+                    /** @enum {string} */
+                    readonly kind: "ordinary" | "special";
+                    readonly remarks?: string;
+                    /**
+                     * @default manual
+                     * @enum {string}
+                     */
+                    readonly source?: "manual" | "mock_ocr";
+                    readonly taxAmount: string;
+                    readonly totalAmount: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly amountExcludingTax: string;
+                        /** @enum {string} */
+                        readonly color: "blue" | "red";
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly confirmedAt?: string;
+                        /** Format: uuid */
+                        readonly counterpartyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** @enum {string} */
+                        readonly direction: "input" | "output";
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly invoiceNumber: string;
+                        /** Format: date */
+                        readonly issuedOn: string;
+                        /** @enum {string} */
+                        readonly kind: "ordinary" | "special";
+                        readonly remarks?: string;
+                        /** @enum {string} */
+                        readonly source: "manual" | "mock_ocr";
+                        /** @enum {string} */
+                        readonly status: "draft" | "confirmed";
+                        readonly taxAmount: string;
+                        readonly totalAmount: string;
+                        readonly version: number;
+                    };
+                };
             };
         };
     };
@@ -1845,7 +2313,38 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly amountExcludingTax: string;
+                        /** @enum {string} */
+                        readonly color: "blue" | "red";
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly confirmedAt?: string;
+                        /** Format: uuid */
+                        readonly counterpartyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** @enum {string} */
+                        readonly direction: "input" | "output";
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly invoiceNumber: string;
+                        /** Format: date */
+                        readonly issuedOn: string;
+                        /** @enum {string} */
+                        readonly kind: "ordinary" | "special";
+                        readonly remarks?: string;
+                        /** @enum {string} */
+                        readonly source: "manual" | "mock_ocr";
+                        /** @enum {string} */
+                        readonly status: "draft" | "confirmed";
+                        readonly taxAmount: string;
+                        readonly totalAmount: string;
+                        readonly version: number;
+                    };
+                };
             };
         };
     };
@@ -1861,13 +2360,46 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly text: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly candidate: {
+                            readonly amountExcludingTax?: string;
+                            /** @enum {string} */
+                            readonly color?: "blue" | "red";
+                            /** Format: uuid */
+                            readonly counterpartyId?: string;
+                            readonly counterpartyName?: string;
+                            /** @enum {string} */
+                            readonly direction?: "input" | "output";
+                            readonly invoiceNumber?: string;
+                            /** Format: date */
+                            readonly issuedOn?: string;
+                            /** @enum {string} */
+                            readonly kind?: "ordinary" | "special";
+                            readonly remarks?: string;
+                            readonly taxAmount?: string;
+                            readonly totalAmount?: string;
+                        };
+                        readonly confidence: number;
+                        /** @enum {string} */
+                        readonly provider: "deterministic-mock-v1";
+                        /** @enum {boolean} */
+                        readonly requiresConfirmation: true;
+                        readonly warnings: readonly string[];
+                    };
+                };
             };
         };
     };
