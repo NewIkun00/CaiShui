@@ -318,6 +318,9 @@ export const voucherConfirmRequestSchema=z.object({expectedVersion:z.number().in
 export type VoucherConfirmRequest=z.infer<typeof voucherConfirmRequestSchema>;
 export const voucherReversalRequestSchema=z.object({reversalDate:z.iso.date(),reason:z.string().trim().min(1).max(300),expectedVersion:z.number().int().positive()});
 export type VoucherReversalRequest=z.infer<typeof voucherReversalRequestSchema>;
+export const accountingPeriodLockResponseSchema=z.object({
+  periodId:z.string().uuid(),periodStart:z.iso.date(),periodEnd:z.iso.date(),status:z.literal('locked'),
+});
 export const ledgerResponseSchema=z.object({
   period:z.object({start:z.iso.date(),end:z.iso.date(),status:z.enum(['open','locked'])}),
   openingBalance:z.object({accountName:z.string(),amount:z.string(),source:z.enum(['none','paid_in_capital','shareholder_advance']),asOf:z.iso.date(),includedInTrialBalance:z.literal(true),entries:z.array(z.object({lineNumber:z.number().int().positive(),accountCode:z.string(),accountName:z.string(),side:z.enum(['debit','credit']),amount:z.string()}))}),
@@ -574,3 +577,38 @@ export const calculationRunInputSchema = z.object({
   message: '计算结束日期不得早于开始日期', path: ['periodEnd'],
 });
 export type CalculationRunInputRequest = z.infer<typeof calculationRunInputSchema>;
+
+const calculationStepValueSchema=z.union([z.string(),z.number(),z.array(z.string())]);
+const calculationExplanationStepSchema=z.object({
+  sequence:z.number().int().positive(),
+  key:z.enum(['scope_validation','fact_snapshot','rule_selection']),
+  category:z.enum(['validation','selection']),status:z.enum(['passed','blocked']),
+  inputs:z.record(z.string(),calculationStepValueSchema),
+  output:z.record(z.string(),calculationStepValueSchema),explanation:z.string(),
+}).strict();
+const calculationDecisionSchema=z.object({
+  code:z.enum(['SCOPE_PROFILE_MISSING','SCOPE_NOT_ELIGIBLE','NO_CONFIRMED_FACTS','NO_MATCHING_RULE','MULTIPLE_MATCHING_RULES']),
+  message:z.string(),candidateRuleVersionIds:z.array(z.string().uuid()),
+}).strict();
+export const calculationRunResponseSchema=z.object({
+  id:z.string().uuid(),tenantId:z.string().uuid(),companyId:z.string().uuid(),
+  taxType:z.enum(['vat','surcharge','corporate_income_tax','stamp_duty']),
+  periodStart:z.iso.date(),periodEnd:z.iso.date(),status:z.enum(['ready','decision_required']),
+  inputSnapshot:z.object({
+    companyId:z.string().uuid(),scopeEvaluationId:z.string().uuid().optional(),
+    taxType:z.enum(['vat','surcharge','corporate_income_tax','stamp_duty']),
+    periodStart:z.iso.date(),periodEnd:z.iso.date(),jurisdictionCodes:z.array(z.string()),
+    profile:z.record(z.string(),z.unknown()).optional(),facts:z.array(z.record(z.string(),z.unknown())),
+  }).strict(),
+  inputHash:z.string().regex(/^[0-9a-f]{64}$/),
+  ruleVersionId:z.string().uuid().optional(),ruleContentHash:z.string().regex(/^[0-9a-f]{64}$/).optional(),
+  decision:calculationDecisionSchema.optional(),steps:z.array(calculationExplanationStepSchema),
+  createdAt:z.string().datetime(),createdBy:z.string().uuid(),
+}).strict().superRefine((value,context)=>{
+  const ready=value.status==='ready';
+  if(ready!==Boolean(value.ruleVersionId&&value.ruleContentHash)||ready===Boolean(value.decision)){
+    context.addIssue({code:'custom',message:'计算运行的状态、规则和阻断决定不一致'});
+  }
+});
+export const calculationRunListResponseSchema=z.object({items:z.array(calculationRunResponseSchema)}).strict();
+export type CalculationRunResponse=z.infer<typeof calculationRunResponseSchema>;

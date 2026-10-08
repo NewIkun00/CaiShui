@@ -842,7 +842,21 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** @enum {string} */
+                            readonly category: "asset" | "liability" | "equity" | "revenue" | "expense";
+                            readonly code: string;
+                            /** @enum {boolean} */
+                            readonly enabled: true;
+                            readonly name: string;
+                            /** @enum {string} */
+                            readonly normalSide: "debit" | "credit";
+                        }[];
+                        readonly templateVersion: string;
+                    };
+                };
             };
         };
     };
@@ -864,7 +878,62 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly journal: readonly {
+                            readonly accountCode: string;
+                            readonly accountName: string;
+                            readonly amount: string;
+                            /** Format: uuid */
+                            readonly reversalOfVoucherId?: string;
+                            /** @enum {string} */
+                            readonly side: "debit" | "credit";
+                            /** @enum {string} */
+                            readonly status: "confirmed" | "reversed";
+                            readonly summary: string;
+                            /** Format: date */
+                            readonly voucherDate: string;
+                            /** Format: uuid */
+                            readonly voucherId: string;
+                        }[];
+                        readonly openingBalance: {
+                            readonly accountName: string;
+                            readonly amount: string;
+                            /** Format: date */
+                            readonly asOf: string;
+                            readonly entries: readonly {
+                                readonly accountCode: string;
+                                readonly accountName: string;
+                                readonly amount: string;
+                                readonly lineNumber: number;
+                                /** @enum {string} */
+                                readonly side: "debit" | "credit";
+                            }[];
+                            /** @enum {boolean} */
+                            readonly includedInTrialBalance: true;
+                            /** @enum {string} */
+                            readonly source: "none" | "paid_in_capital" | "shareholder_advance";
+                        };
+                        readonly period: {
+                            /** Format: date */
+                            readonly end: string;
+                            /** Format: date */
+                            readonly start: string;
+                            /** @enum {string} */
+                            readonly status: "open" | "locked";
+                        };
+                        readonly trialBalance: readonly {
+                            readonly accountCode: string;
+                            readonly accountName: string;
+                            readonly creditMovement: string;
+                            readonly debitMovement: string;
+                            readonly endingCredit: string;
+                            readonly endingDebit: string;
+                            readonly openingCredit: string;
+                            readonly openingDebit: string;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -886,7 +955,18 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        /** Format: date */
+                        readonly periodEnd: string;
+                        /** Format: uuid */
+                        readonly periodId: string;
+                        /** Format: date */
+                        readonly periodStart: string;
+                        /** @enum {string} */
+                        readonly status: "locked";
+                    };
+                };
             };
         };
     };
@@ -908,7 +988,63 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly balanceSheet: {
+                            readonly assets: readonly {
+                                readonly accountCode: string;
+                                readonly accountName: string;
+                                readonly amount: string;
+                            }[];
+                            readonly balanced: boolean;
+                            readonly currentPeriodProfit: string;
+                            readonly difference: string;
+                            readonly equity: readonly {
+                                readonly accountCode: string;
+                                readonly accountName: string;
+                                readonly amount: string;
+                            }[];
+                            readonly liabilities: readonly {
+                                readonly accountCode: string;
+                                readonly accountName: string;
+                                readonly amount: string;
+                            }[];
+                            readonly totalAssets: string;
+                            readonly totalEquity: string;
+                            readonly totalLiabilities: string;
+                        };
+                        readonly basis: {
+                            /** @enum {boolean} */
+                            readonly includesDraftVouchers: false;
+                            /** @enum {string} */
+                            readonly source: "confirmed_vouchers_and_opening_entries";
+                            readonly templateVersion: string;
+                        };
+                        readonly period: {
+                            /** Format: date */
+                            readonly end: string;
+                            /** Format: date */
+                            readonly start: string;
+                            /** @enum {string} */
+                            readonly status: "open" | "locked";
+                        };
+                        readonly profitStatement: {
+                            readonly expenses: readonly {
+                                readonly accountCode: string;
+                                readonly accountName: string;
+                                readonly amount: string;
+                            }[];
+                            readonly profit: string;
+                            readonly revenue: readonly {
+                                readonly accountCode: string;
+                                readonly accountName: string;
+                                readonly amount: string;
+                            }[];
+                            readonly totalExpenses: string;
+                            readonly totalRevenue: string;
+                        };
+                    };
+                };
             };
         };
     };
@@ -930,7 +1066,44 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly confirmedAt?: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            readonly entries: readonly {
+                                readonly accountCode: string;
+                                readonly accountName: string;
+                                readonly amount: string;
+                                /** Format: uuid */
+                                readonly id: string;
+                                readonly lineNumber: number;
+                                /** @enum {string} */
+                                readonly side: "debit" | "credit";
+                            }[];
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** Format: uuid */
+                            readonly reversalOfVoucherId?: string;
+                            /** Format: date-time */
+                            readonly reversedAt?: string;
+                            readonly ruleVersion: string;
+                            /** Format: uuid */
+                            readonly sourceBusinessEventId: string;
+                            /** @enum {string} */
+                            readonly status: "draft" | "confirmed" | "reversed";
+                            readonly summary: string;
+                            readonly templateVersion: string;
+                            readonly version: number;
+                            /** Format: date */
+                            readonly voucherDate: string;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -947,13 +1120,54 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly expectedVersion: number;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly confirmedAt?: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        readonly entries: readonly {
+                            readonly accountCode: string;
+                            readonly accountName: string;
+                            readonly amount: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly lineNumber: number;
+                            /** @enum {string} */
+                            readonly side: "debit" | "credit";
+                        }[];
+                        /** Format: uuid */
+                        readonly id: string;
+                        /** Format: uuid */
+                        readonly reversalOfVoucherId?: string;
+                        /** Format: date-time */
+                        readonly reversedAt?: string;
+                        readonly ruleVersion: string;
+                        /** Format: uuid */
+                        readonly sourceBusinessEventId: string;
+                        /** @enum {string} */
+                        readonly status: "draft" | "confirmed" | "reversed";
+                        readonly summary: string;
+                        readonly templateVersion: string;
+                        readonly version: number;
+                        /** Format: date */
+                        readonly voucherDate: string;
+                    };
+                };
             };
         };
     };
@@ -970,13 +1184,57 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly expectedVersion: number;
+                    readonly reason: string;
+                    /** Format: date */
+                    readonly reversalDate: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly confirmedAt?: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        readonly entries: readonly {
+                            readonly accountCode: string;
+                            readonly accountName: string;
+                            readonly amount: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly lineNumber: number;
+                            /** @enum {string} */
+                            readonly side: "debit" | "credit";
+                        }[];
+                        /** Format: uuid */
+                        readonly id: string;
+                        /** Format: uuid */
+                        readonly reversalOfVoucherId?: string;
+                        /** Format: date-time */
+                        readonly reversedAt?: string;
+                        readonly ruleVersion: string;
+                        /** Format: uuid */
+                        readonly sourceBusinessEventId: string;
+                        /** @enum {string} */
+                        readonly status: "draft" | "confirmed" | "reversed";
+                        readonly summary: string;
+                        readonly templateVersion: string;
+                        readonly version: number;
+                        /** Format: date */
+                        readonly voucherDate: string;
+                    };
+                };
             };
         };
     };
@@ -999,7 +1257,45 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly generated: boolean;
+                        readonly voucher: {
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly confirmedAt?: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            readonly entries: readonly {
+                                readonly accountCode: string;
+                                readonly accountName: string;
+                                readonly amount: string;
+                                /** Format: uuid */
+                                readonly id: string;
+                                readonly lineNumber: number;
+                                /** @enum {string} */
+                                readonly side: "debit" | "credit";
+                            }[];
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** Format: uuid */
+                            readonly reversalOfVoucherId?: string;
+                            /** Format: date-time */
+                            readonly reversedAt?: string;
+                            readonly ruleVersion: string;
+                            /** Format: uuid */
+                            readonly sourceBusinessEventId: string;
+                            /** @enum {string} */
+                            readonly status: "draft" | "confirmed" | "reversed";
+                            readonly summary: string;
+                            readonly templateVersion: string;
+                            readonly version: number;
+                            /** Format: date */
+                            readonly voucherDate: string;
+                        };
+                    };
+                };
             };
         };
     };
@@ -1088,7 +1384,75 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly decision?: {
+                                readonly candidateRuleVersionIds: readonly string[];
+                                /** @enum {string} */
+                                readonly code: "SCOPE_PROFILE_MISSING" | "SCOPE_NOT_ELIGIBLE" | "NO_CONFIRMED_FACTS" | "NO_MATCHING_RULE" | "MULTIPLE_MATCHING_RULES";
+                                readonly message: string;
+                            };
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly inputHash: string;
+                            readonly inputSnapshot: {
+                                /** Format: uuid */
+                                readonly companyId: string;
+                                readonly facts: readonly {
+                                    readonly [key: string]: unknown;
+                                }[];
+                                readonly jurisdictionCodes: readonly string[];
+                                /** Format: date */
+                                readonly periodEnd: string;
+                                /** Format: date */
+                                readonly periodStart: string;
+                                readonly profile?: {
+                                    readonly [key: string]: unknown;
+                                };
+                                /** Format: uuid */
+                                readonly scopeEvaluationId?: string;
+                                /** @enum {string} */
+                                readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                            };
+                            /** Format: date */
+                            readonly periodEnd: string;
+                            /** Format: date */
+                            readonly periodStart: string;
+                            readonly ruleContentHash?: string;
+                            /** Format: uuid */
+                            readonly ruleVersionId?: string;
+                            /** @enum {string} */
+                            readonly status: "ready" | "decision_required";
+                            readonly steps: readonly {
+                                /** @enum {string} */
+                                readonly category: "validation" | "selection";
+                                readonly explanation: string;
+                                readonly inputs: {
+                                    readonly [key: string]: string | number | readonly string[];
+                                };
+                                /** @enum {string} */
+                                readonly key: "scope_validation" | "fact_snapshot" | "rule_selection";
+                                readonly output: {
+                                    readonly [key: string]: string | number | readonly string[];
+                                };
+                                readonly sequence: number;
+                                /** @enum {string} */
+                                readonly status: "passed" | "blocked";
+                            }[];
+                            /** @enum {string} */
+                            readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                            /** Format: uuid */
+                            readonly tenantId: string;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -1104,13 +1468,90 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: date */
+                    readonly periodEnd: string;
+                    /** Format: date */
+                    readonly periodStart: string;
+                    /** @enum {string} */
+                    readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        readonly decision?: {
+                            readonly candidateRuleVersionIds: readonly string[];
+                            /** @enum {string} */
+                            readonly code: "SCOPE_PROFILE_MISSING" | "SCOPE_NOT_ELIGIBLE" | "NO_CONFIRMED_FACTS" | "NO_MATCHING_RULE" | "MULTIPLE_MATCHING_RULES";
+                            readonly message: string;
+                        };
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly inputHash: string;
+                        readonly inputSnapshot: {
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            readonly facts: readonly {
+                                readonly [key: string]: unknown;
+                            }[];
+                            readonly jurisdictionCodes: readonly string[];
+                            /** Format: date */
+                            readonly periodEnd: string;
+                            /** Format: date */
+                            readonly periodStart: string;
+                            readonly profile?: {
+                                readonly [key: string]: unknown;
+                            };
+                            /** Format: uuid */
+                            readonly scopeEvaluationId?: string;
+                            /** @enum {string} */
+                            readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                        };
+                        /** Format: date */
+                        readonly periodEnd: string;
+                        /** Format: date */
+                        readonly periodStart: string;
+                        readonly ruleContentHash?: string;
+                        /** Format: uuid */
+                        readonly ruleVersionId?: string;
+                        /** @enum {string} */
+                        readonly status: "ready" | "decision_required";
+                        readonly steps: readonly {
+                            /** @enum {string} */
+                            readonly category: "validation" | "selection";
+                            readonly explanation: string;
+                            readonly inputs: {
+                                readonly [key: string]: string | number | readonly string[];
+                            };
+                            /** @enum {string} */
+                            readonly key: "scope_validation" | "fact_snapshot" | "rule_selection";
+                            readonly output: {
+                                readonly [key: string]: string | number | readonly string[];
+                            };
+                            readonly sequence: number;
+                            /** @enum {string} */
+                            readonly status: "passed" | "blocked";
+                        }[];
+                        /** @enum {string} */
+                        readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                        /** Format: uuid */
+                        readonly tenantId: string;
+                    };
+                };
             };
         };
     };

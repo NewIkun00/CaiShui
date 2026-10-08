@@ -1,11 +1,13 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
-  calculationRunInputSchema, type CalculationRunInputRequest,
+  calculationRunInputSchema, calculationRunListResponseSchema, calculationRunResponseSchema,
+  type CalculationRunInputRequest,
 } from '@ledgerly/contracts';
 import type { FastifyRequest } from 'fastify';
 import { requestContext } from '../../../shared/request-context.js';
 import { ZodValidationPipe } from '../../../shared/zod-validation.pipe.js';
+import { ApiZodBody, ApiZodCreatedResponse, ApiZodOkResponse } from '../../../shared/zod-openapi.js';
 import { CalculationService } from '../application/calculation.service.js';
 
 @ApiTags('calculation-runs')
@@ -17,6 +19,8 @@ export class CalculationController {
 
   @Post()
   @ApiOperation({ summary: '冻结计算输入并选择唯一活动规则；无法确定时返回 DecisionRequired' })
+  @ApiZodBody(calculationRunInputSchema)
+  @ApiZodCreatedResponse(calculationRunResponseSchema)
   create(
     @Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Body(new ZodValidationPipe(calculationRunInputSchema)) input: CalculationRunInputRequest,
@@ -27,6 +31,7 @@ export class CalculationController {
 
   @Get()
   @ApiOperation({ summary: '列出公司的不可变计算运行快照' })
+  @ApiZodOkResponse(calculationRunListResponseSchema)
   async list(
     @Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Req() request: FastifyRequest,

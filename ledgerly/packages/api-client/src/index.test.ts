@@ -76,4 +76,31 @@ describe('generated API client', () => {
 
     expect(result.items[0]?.taxType).toBe('vat');
   });
+
+  it('infers calculation decisions and financial report totals', async () => {
+    const client = createApiClient({
+      baseUrl: 'https://api.example.test',
+      fetch: ((input) => {
+        const url = input instanceof Request ? input.url : input.toString();
+        const payload = url.endsWith('/reports')
+          ? { balanceSheet: { balanced: true, totalAssets: '100.00' } }
+          : { status: 'decision_required', decision: { code: 'NO_MATCHING_RULE' } };
+        return Promise.resolve(new Response(JSON.stringify(payload), {
+          headers: { 'content-type': 'application/json' },
+        }));
+      }) as typeof fetch,
+    });
+    const path = { companyId: '10000000-0000-4000-8000-000000000001' };
+
+    const run = await client('/v1/companies/{companyId}/calculation-runs', {
+      method: 'post', path,
+      body: { taxType: 'vat', periodStart: '2026-10-01', periodEnd: '2026-12-31' },
+    });
+    const report = await client('/v1/companies/{companyId}/accounting/reports', {
+      method: 'get', path,
+    });
+
+    expect(run.decision?.code).toBe('NO_MATCHING_RULE');
+    expect(report.balanceSheet).toMatchObject({ balanced: true, totalAssets: '100.00' });
+  });
 });
