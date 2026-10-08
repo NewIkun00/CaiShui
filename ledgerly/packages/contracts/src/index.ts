@@ -396,6 +396,13 @@ export const rulePackageInputSchema = z.object({
 });
 export type RulePackageInputRequest = z.infer<typeof rulePackageInputSchema>;
 
+export const rulePackageResponseSchema = rulePackageInputSchema.extend({
+  id: z.string().uuid(), version: z.number().int().positive(),
+  createdAt: z.string().datetime(), createdBy: z.string().uuid(),
+}).strict();
+export const rulePackageListResponseSchema = z.object({ items: z.array(rulePackageResponseSchema) }).strict();
+export type RulePackageResponse = z.infer<typeof rulePackageResponseSchema>;
+
 const ruleApplicabilitySchema = z.object({
   taxpayerStatuses: z.array(z.string().trim().min(1).max(100)).min(1).max(20),
   filingCycles: z.array(z.string().trim().min(1).max(100)).min(1).max(20),
@@ -417,6 +424,26 @@ export const ruleVersionInputSchema = z.object({
   message: '失效日不得早于生效日', path: ['effectiveTo'],
 });
 export type RuleVersionInputRequest = z.infer<typeof ruleVersionInputSchema>;
+
+const ruleVersionStatusSchema = z.enum([
+  'draft', 'technical_reviewed', 'tax_reviewed', 'tested', 'approved', 'scheduled',
+  'active', 'superseded', 'withdrawn',
+]);
+export const ruleVersionResponseSchema = z.intersection(ruleVersionInputSchema, z.object({
+  id: z.string().uuid(), rulePackageId: z.string().uuid(), contentHash: sha256Schema,
+  status: ruleVersionStatusSchema, recordVersion: z.number().int().positive(),
+  createdAt: z.string().datetime(), createdBy: z.string().uuid(),
+  technicalReviewedBy: z.string().uuid().optional(), taxReviewedBy: z.string().uuid().optional(),
+  testedBy: z.string().uuid().optional(), testedAt: z.string().datetime().optional(),
+  approvedBy: z.string().uuid().optional(), approvedAt: z.string().datetime().optional(),
+  scheduledBy: z.string().uuid().optional(), scheduledAt: z.string().datetime().optional(),
+  activationAt: z.string().datetime().optional(), activatedBy: z.string().uuid().optional(),
+  activatedAt: z.string().datetime().optional(), supersededByRuleVersionId: z.string().uuid().optional(),
+  supersededAt: z.string().datetime().optional(), withdrawnBy: z.string().uuid().optional(),
+  withdrawnAt: z.string().datetime().optional(),
+}));
+export const ruleVersionListResponseSchema = z.object({ items: z.array(ruleVersionResponseSchema) }).strict();
+export type RuleVersionResponse = z.infer<typeof ruleVersionResponseSchema>;
 
 export const ruleVersionReviewSchema = z.object({
   kind: z.enum(['technical', 'tax']),
@@ -450,6 +477,27 @@ export const goldenFixtureSetInputSchema = z.object({
   })).min(6).max(500),
 });
 export type GoldenFixtureSetInputRequest = z.infer<typeof goldenFixtureSetInputSchema>;
+
+export const goldenFixtureSetResponseSchema = goldenFixtureSetInputSchema.extend({
+  id: z.string().uuid(), ruleVersionId: z.string().uuid(), contentHash: sha256Schema,
+  signedOffBy: z.string().uuid(), signedOffAt: z.string().datetime(),
+}).strict();
+export const goldenFixtureSetListResponseSchema = z.object({ items: z.array(goldenFixtureSetResponseSchema) }).strict();
+export type GoldenFixtureSetResponse = z.infer<typeof goldenFixtureSetResponseSchema>;
+
+const goldenFixtureExecutionCaseSchema = z.object({
+  caseId: z.string(), passed: z.boolean(), expected: z.record(z.string(), z.unknown()),
+  actual: z.record(z.string(), z.unknown()).optional(),
+  steps: z.array(z.record(z.string(), z.unknown())), error: z.string().optional(),
+}).strict();
+export const goldenFixtureExecutionResponseSchema = z.object({
+  id: z.string().uuid(), ruleVersionId: z.string().uuid(), fixtureSetId: z.string().uuid(),
+  implementationKey: z.string(), status: z.enum(['passed', 'failed']),
+  totalFixtures: z.number().int().positive(), passedFixtures: z.number().int().nonnegative(),
+  artifactHash: sha256Schema, results: z.array(goldenFixtureExecutionCaseSchema),
+  executedBy: z.string().uuid(), executedAt: z.string().datetime(),
+}).strict();
+export type GoldenFixtureExecutionResponse = z.infer<typeof goldenFixtureExecutionResponseSchema>;
 
 export const ruleShadowRunInputSchema = z.object({
   baselineRuleVersionId: z.string().uuid(),
