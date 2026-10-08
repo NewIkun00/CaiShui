@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable, NotFoundExc
 import type { ReconciliationIssueTriageInput, SettlementInputRequest } from '@ledgerly/contracts';
 import {
   assertReconciliationTriageTransition, BusinessEventStatus, BusinessEventType, createSettlement,
-  InvoiceStatus, Money, ReconciliationError, ReconciliationIssueTriageStatus, runReconciliationChecks,
+  InvoiceColor,InvoiceDirection,InvoiceStatus, Money, ReconciliationError, ReconciliationIssueTriageStatus, runReconciliationChecks,
 } from '@ledgerly/domain';
 import { createHash, randomUUID } from 'node:crypto';
 import { BUSINESS_EVENT_STORE, type BusinessEventStore } from '../../business-event/application/business-event-store.js';
@@ -80,7 +80,7 @@ export class ReconciliationService {
     return {
       invoices: confirmedInvoices.map((item) => {
         const allocated = allocatedInvoice(item.id); const outstanding = item.totalAmount.subtract(allocated);
-        return { invoiceId: item.id, direction: item.direction, invoiceNumber: item.invoiceNumber,
+        return { invoiceId: item.id, direction: item.direction,color:item.color, invoiceNumber: item.invoiceNumber,
           issuedOn: item.issuedOn, counterpartyId: item.counterpartyId, totalAmount: item.totalAmount.toString(),
           allocatedAmount: allocated.toString(), outstandingAmount: outstanding.toString(),
           status: outstanding.equals(Money.zero()) ? 'settled' as const : 'open' as const };
@@ -105,11 +105,14 @@ export class ReconciliationService {
     const ledgerAccountCode=setup.accountType==='bank'?'1002':'1001',ledgerRow=ledger.trialBalance.find(item=>item.accountCode===ledgerAccountCode);
     const ledgerEndingBalance=Money.from(ledgerRow?.endingDebit??'0').subtract(Money.from(ledgerRow?.endingCredit??'0')).toString();
     const statementRow=statement?.rows.filter(item=>item.status==='valid'&&item.occurredOn&&item.balance!==undefined).sort((a,b)=>a.occurredOn!.localeCompare(b.occurredOn!)||a.rowNumber-b.rowNumber).at(-1);
+    const subledgerBalance=(direction:InvoiceDirection)=>overview.invoices.filter(item=>item.direction===direction).reduce((total,item)=>{const outstanding=Money.from(item.outstandingAmount);return total.add(item.color===InvoiceColor.Red?Money.zero().subtract(outstanding):outstanding)},Money.zero()).toString();
+    const accountBalance=(code:'1122'|'2202')=>{const row=ledger.trialBalance.find(item=>item.accountCode===code);return code==='1122'?Money.from(row?.endingDebit??'0').subtract(Money.from(row?.endingCredit??'0')).toString():Money.from(row?.endingCredit??'0').subtract(Money.from(row?.endingDebit??'0')).toString()};
     const snapshot={
       invoices:overview.invoices.map(item=>({invoiceId:item.invoiceId,invoiceNumber:item.invoiceNumber,outstandingAmount:item.outstandingAmount})).sort((a,b)=>a.invoiceId.localeCompare(b.invoiceId)),
       payments:overview.payments.map(item=>({paymentEventId:item.paymentEventId,description:item.description,unallocatedAmount:item.unallocatedAmount})).sort((a,b)=>a.paymentEventId.localeCompare(b.paymentEventId)),
       accounts:[...ledger.trialBalance].sort((a,b)=>a.accountCode.localeCompare(b.accountCode)),
       bankAccounts:setup.accountType==='bank'?[{accountId:setup.accountId,accountName:setup.accountName,ledgerAccountCode,ledgerEndingBalance,...(statementRow?.balance!==undefined?{statementBalance:statementRow.balance,statementBatchId:statement!.id}:{})}]:[],
+      subledgers:[{kind:'receivable' as const,accountCode:'1122' as const,subledgerBalance:subledgerBalance(InvoiceDirection.Output),ledgerBalance:accountBalance('1122')},{kind:'payable' as const,accountCode:'2202' as const,subledgerBalance:subledgerBalance(InvoiceDirection.Input),ledgerBalance:accountBalance('2202')}],
     };
     const result=runReconciliationChecks({...snapshot,periodId:setup.periodId}),createdAt=new Date();
     return this.checks.save({run:{id:randomUUID(),tenantId:context.tenantId,companyId,periodId:setup.periodId,

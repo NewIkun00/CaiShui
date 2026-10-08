@@ -65,23 +65,27 @@ async function fixture() {
     }, context);
     return eventService.confirm(created.company.id, draft.id, context);
   }
-  return { created, context, service, accounting, invoice, payment, setups,statement };
+  async function serviceCompleted(amount:string){const draft=await eventService.create(created.company.id,{type:'service_completed',occurredOn:'2026-10-08',amount,counterpartyId:party.id,description:'完成服务'},context);return eventService.confirm(created.company.id,draft.id,context)}
+  return { created, context, service, accounting, invoice, payment, serviceCompleted,setups,statement };
 }
 
 describe('ReconciliationService', () => {
   it('fully reconciles an invoice and payment and unlocks voucher generation', async () => {
-    const { created, context, service, accounting, invoice, payment,statement } = await fixture();
+    const { created, context, service, accounting, invoice, payment,serviceCompleted,statement } = await fixture();
     const inv = await invoice('12345678'); const pay = await payment('106.00');
     await service.create(created.company.id, { invoiceId: inv.id, paymentEventId: pay.id, amount: '106.00' }, context);
     const overview = await service.overview(created.company.id, context);
     expect(overview.invoices[0]?.status).toBe('settled'); expect(overview.payments[0]?.status).toBe('settled');
+    const revenueEvent=await serviceCompleted('106.00'),revenueVoucher=await accounting.generate(created.company.id,revenueEvent.id,context);
+    await accounting.confirm(created.company.id,revenueVoucher.voucher.id,revenueVoucher.voucher.version,context);
     const generated = await accounting.generate(created.company.id, pay.id, context);
     expect(generated.voucher.entries.map((item) => item.accountCode)).toEqual(['1002', '1122']);
     await accounting.confirm(created.company.id, generated.voucher.id, generated.voucher.version, context);
     await statement('106.00',new Date());
     const check = await service.runCheck(created.company.id, context);
     expect(check).toMatchObject({ grade: 'green', blocksFiling: false, totalIssues: 0 });
-    expect(check.inputSnapshot.accounts.map((item) => item.accountCode)).toEqual(['1002', '1122']);
+    expect(check.inputSnapshot.accounts.map((item) => item.accountCode)).toEqual(['1002', '1122','5001']);
+    expect(check.inputSnapshot.subledgers).toEqual([{kind:'receivable',accountCode:'1122',subledgerBalance:'0.00',ledgerBalance:'0.00'},{kind:'payable',accountCode:'2202',subledgerBalance:'0.00',ledgerBalance:'0.00'}]);
   });
 
   it('supports one invoice settled by multiple payments', async () => {
@@ -113,7 +117,7 @@ describe('ReconciliationService', () => {
     const { created, context, service, invoice, payment } = await fixture();
     const inv = await invoice('12345682'); const pay = await payment('106.00');
     const first = await service.runCheck(created.company.id, context);
-    expect(first).toMatchObject({ grade: 'yellow', blocksFiling: true, totalIssues: 2 });
+    expect(first).toMatchObject({ grade: 'red', blocksFiling: true, totalIssues: 3, yellowIssues:2,redIssues:1 });
     expect((await service.runCheck(created.company.id, context)).id).toBe(first.id);
     const issue = first.issues[0]!;
     await expect(service.triageIssue(created.company.id, first.id, issue.id, {

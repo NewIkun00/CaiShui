@@ -376,7 +376,7 @@ export const settlementInputSchema=z.object({invoiceId:z.string().uuid(),payment
 export type SettlementInputRequest=z.infer<typeof settlementInputSchema>;
 export const settlementResponseSchema=z.object({id:z.string().uuid(),companyId:z.string().uuid(),invoiceId:z.string().uuid(),paymentEventId:z.string().uuid(),amount:z.string(),createdAt:z.string().datetime()});
 export const reconciliationOverviewSchema=z.object({
-  invoices:z.array(z.object({invoiceId:z.string().uuid(),direction:z.enum(['input','output']),invoiceNumber:z.string(),issuedOn:z.iso.date(),counterpartyId:z.string().uuid(),totalAmount:z.string(),allocatedAmount:z.string(),outstandingAmount:z.string(),status:z.enum(['open','settled'])})),
+  invoices:z.array(z.object({invoiceId:z.string().uuid(),direction:z.enum(['input','output']),color:z.enum(['blue','red']),invoiceNumber:z.string(),issuedOn:z.iso.date(),counterpartyId:z.string().uuid(),totalAmount:z.string(),allocatedAmount:z.string(),outstandingAmount:z.string(),status:z.enum(['open','settled'])})),
   payments:z.array(z.object({paymentEventId:z.string().uuid(),type:z.enum(['money_received','money_paid']),occurredOn:z.iso.date(),counterpartyId:z.string().uuid(),description:z.string(),totalAmount:z.string(),allocatedAmount:z.string(),unallocatedAmount:z.string(),status:z.enum(['open','settled'])})),
   settlements:z.array(settlementResponseSchema),
 });
@@ -384,8 +384,8 @@ export type ReconciliationOverview=z.infer<typeof reconciliationOverviewSchema>;
 
 export const reconciliationIssueTriageStatusSchema=z.enum(['open','investigating','needs_documents','ready_for_recheck']);
 export const reconciliationCheckIssueSchema=z.object({
-  id:z.string().uuid(),code:z.enum(['INVOICE_OUTSTANDING','PAYMENT_UNALLOCATED','ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH','TRIAL_BALANCE_UNBALANCED','BANK_STATEMENT_MISSING','BANK_LEDGER_BALANCE_MISMATCH']),severity:z.enum(['yellow','red']),
-  subjectType:z.enum(['invoice','payment','account','ledger']),subjectId:z.string().min(1),amount:z.string(),message:z.string(),suggestedAction:z.string(),
+  id:z.string().uuid(),code:z.enum(['INVOICE_OUTSTANDING','PAYMENT_UNALLOCATED','ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH','TRIAL_BALANCE_UNBALANCED','BANK_STATEMENT_MISSING','BANK_LEDGER_BALANCE_MISMATCH','RECEIVABLE_LEDGER_MISMATCH','PAYABLE_LEDGER_MISMATCH']),severity:z.enum(['yellow','red']),
+  subjectType:z.enum(['invoice','payment','account','ledger','subledger']),subjectId:z.string().min(1),amount:z.string(),message:z.string(),suggestedAction:z.string(),
   triageStatus:reconciliationIssueTriageStatusSchema,triageVersion:z.number().int().positive(),triageNote:z.string().optional(),
   triagedBy:z.string().uuid().optional(),triagedAt:z.string().datetime().optional(),
 }).strict();
@@ -396,6 +396,7 @@ export const reconciliationCheckRunResponseSchema=z.object({
     payments:z.array(z.object({paymentEventId:z.string().uuid(),description:z.string(),unallocatedAmount:z.string()}).strict()),
     accounts:z.array(z.object({accountCode:z.string(),accountName:z.string(),openingDebit:z.string(),openingCredit:z.string(),debitMovement:z.string(),creditMovement:z.string(),endingDebit:z.string(),endingCredit:z.string()}).strict()),
     bankAccounts:z.array(z.object({accountId:z.string().uuid(),accountName:z.string(),ledgerAccountCode:z.string(),ledgerEndingBalance:z.string(),statementBalance:z.string().optional(),statementBatchId:z.string().uuid().optional()}).strict()),
+    subledgers:z.array(z.object({kind:z.enum(['receivable','payable']),accountCode:z.enum(['1122','2202']),subledgerBalance:z.string(),ledgerBalance:z.string()}).strict()),
   }).strict(),
   inputHash:z.string().regex(/^[0-9a-f]{64}$/),grade:z.enum(['green','yellow','red']),blocksFiling:z.boolean(),
   totalIssues:z.number().int().nonnegative(),yellowIssues:z.number().int().nonnegative(),redIssues:z.number().int().nonnegative(),

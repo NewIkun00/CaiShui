@@ -12,7 +12,7 @@ export class ReconciliationError extends Error{override readonly name='Reconcili
 
 export enum ReconciliationCheckGrade{Green='green',Yellow='yellow',Red='red'}
 export enum ReconciliationIssueTriageStatus{Open='open',Investigating='investigating',NeedsDocuments='needs_documents',ReadyForRecheck='ready_for_recheck'}
-export type ReconciliationIssueCode='INVOICE_OUTSTANDING'|'PAYMENT_UNALLOCATED'|'ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH'|'TRIAL_BALANCE_UNBALANCED'|'BANK_STATEMENT_MISSING'|'BANK_LEDGER_BALANCE_MISMATCH';
+export type ReconciliationIssueCode='INVOICE_OUTSTANDING'|'PAYMENT_UNALLOCATED'|'ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH'|'TRIAL_BALANCE_UNBALANCED'|'BANK_STATEMENT_MISSING'|'BANK_LEDGER_BALANCE_MISMATCH'|'RECEIVABLE_LEDGER_MISMATCH'|'PAYABLE_LEDGER_MISMATCH';
 export interface ReconciliationCheckInvoice{readonly invoiceId:string;readonly invoiceNumber:string;readonly outstandingAmount:string;}
 export interface ReconciliationCheckPayment{readonly paymentEventId:string;readonly description:string;readonly unallocatedAmount:string;}
 export interface ReconciliationCheckAccount{
@@ -20,8 +20,9 @@ export interface ReconciliationCheckAccount{
   readonly debitMovement:string;readonly creditMovement:string;readonly endingDebit:string;readonly endingCredit:string;
 }
 export interface ReconciliationCheckBankAccount{readonly accountId:string;readonly accountName:string;readonly ledgerAccountCode:string;readonly ledgerEndingBalance:string;readonly statementBalance?:string|undefined;readonly statementBatchId?:string|undefined;}
+export interface ReconciliationCheckSubledger{readonly kind:'receivable'|'payable';readonly accountCode:'1122'|'2202';readonly subledgerBalance:string;readonly ledgerBalance:string;}
 export interface ReconciliationCheckIssue{
-  readonly code:ReconciliationIssueCode;readonly severity:'yellow'|'red';readonly subjectType:'invoice'|'payment'|'account'|'ledger';
+  readonly code:ReconciliationIssueCode;readonly severity:'yellow'|'red';readonly subjectType:'invoice'|'payment'|'account'|'ledger'|'subledger';
   readonly subjectId:string;readonly amount:string;readonly message:string;readonly suggestedAction:string;
 }
 export interface ReconciliationCheckResult{
@@ -30,7 +31,7 @@ export interface ReconciliationCheckResult{
   readonly issues:readonly ReconciliationCheckIssue[];
 }
 
-export function runReconciliationChecks(input:{readonly periodId?:string;readonly invoices:readonly ReconciliationCheckInvoice[];readonly payments:readonly ReconciliationCheckPayment[];readonly accounts?:readonly ReconciliationCheckAccount[];readonly bankAccounts?:readonly ReconciliationCheckBankAccount[]}):ReconciliationCheckResult{
+export function runReconciliationChecks(input:{readonly periodId?:string;readonly invoices:readonly ReconciliationCheckInvoice[];readonly payments:readonly ReconciliationCheckPayment[];readonly accounts?:readonly ReconciliationCheckAccount[];readonly bankAccounts?:readonly ReconciliationCheckBankAccount[];readonly subledgers?:readonly ReconciliationCheckSubledger[]}):ReconciliationCheckResult{
   const invoiceIssues=input.invoices.filter(item=>Money.from(item.outstandingAmount).isGreaterThan(Money.zero())).map(item=>Object.freeze({
     code:'INVOICE_OUTSTANDING' as const,severity:'yellow' as const,subjectType:'invoice' as const,subjectId:item.invoiceId,
     amount:Money.from(item.outstandingAmount).toString(),message:`发票 ${item.invoiceNumber} 仍有未核销余额`,suggestedAction:'匹配同一往来方的收付款；缺少资金记录时补充资料后重新检查。',
@@ -65,7 +66,14 @@ export function runReconciliationChecks(input:{readonly periodId?:string;readonl
     const difference=Money.from(item.statementBalance).subtract(Money.from(item.ledgerEndingBalance));
     if(!difference.equals(Money.zero()))bankIssues.push(Object.freeze({code:'BANK_LEDGER_BALANCE_MISMATCH',severity:'red',subjectType:'account',subjectId:item.accountId,amount:absolute(difference).toString(),message:`资金账户“${item.accountName}”的银行余额与总账 ${item.ledgerAccountCode} 余额不一致`,suggestedAction:'逐笔核对未入账流水、重复凭证、截止日期和银行手续费，修正事实后重新检查。'}));
   }
-  const issues=[...invoiceIssues,...paymentIssues,...accountIssues,...trialBalanceIssues,...bankIssues].sort((left,right)=>left.subjectId.localeCompare(right.subjectId)||left.code.localeCompare(right.code));
+  const subledgerIssues:ReconciliationCheckIssue[]=[];
+  for(const item of input.subledgers??[]){
+    const difference=Money.from(item.subledgerBalance).subtract(Money.from(item.ledgerBalance));
+    if(difference.equals(Money.zero()))continue;
+    const receivable=item.kind==='receivable';
+    subledgerIssues.push(Object.freeze({code:receivable?'RECEIVABLE_LEDGER_MISMATCH':'PAYABLE_LEDGER_MISMATCH',severity:'red',subjectType:'subledger',subjectId:item.kind,amount:absolute(difference).toString(),message:`${receivable?'应收':'应付'}核销明细余额与总账 ${item.accountCode} 不一致`,suggestedAction:`核对${receivable?'销项':'进项'}发票、核销记录及对应业务事项凭证，修正或补充入账后重新检查。`}));
+  }
+  const issues=[...invoiceIssues,...paymentIssues,...accountIssues,...trialBalanceIssues,...bankIssues,...subledgerIssues].sort((left,right)=>left.subjectId.localeCompare(right.subjectId)||left.code.localeCompare(right.code));
   const redIssues=issues.filter(item=>item.severity==='red').length,yellowIssues=issues.length-redIssues;
   return Object.freeze({grade:redIssues>0?ReconciliationCheckGrade.Red:yellowIssues>0?ReconciliationCheckGrade.Yellow:ReconciliationCheckGrade.Green,blocksFiling:issues.length>0,totalIssues:issues.length,yellowIssues,redIssues,issues});
 }

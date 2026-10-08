@@ -95,6 +95,7 @@ export {
   type ReconciliationCheckIssue,
   type ReconciliationCheckAccount,
   type ReconciliationCheckBankAccount,
+  type ReconciliationCheckSubledger,
   type ReconciliationCheckResult,
   type ReconciliationIssueCode,
   type Settlement,

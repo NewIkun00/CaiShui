@@ -2758,6 +2758,8 @@ export interface operations {
                     readonly "application/json": {
                         readonly invoices: readonly {
                             readonly allocatedAmount: string;
+                            /** @enum {string} */
+                            readonly color: "blue" | "red";
                             /** Format: uuid */
                             readonly counterpartyId: string;
                             /** @enum {string} */
@@ -2871,11 +2873,19 @@ export interface operations {
                                 readonly paymentEventId: string;
                                 readonly unallocatedAmount: string;
                             }[];
+                            readonly subledgers: readonly {
+                                /** @enum {string} */
+                                readonly accountCode: "1122" | "2202";
+                                /** @enum {string} */
+                                readonly kind: "receivable" | "payable";
+                                readonly ledgerBalance: string;
+                                readonly subledgerBalance: string;
+                            }[];
                         };
                         readonly issues: readonly {
                             readonly amount: string;
                             /** @enum {string} */
-                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED" | "BANK_STATEMENT_MISSING" | "BANK_LEDGER_BALANCE_MISMATCH";
+                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED" | "BANK_STATEMENT_MISSING" | "BANK_LEDGER_BALANCE_MISMATCH" | "RECEIVABLE_LEDGER_MISMATCH" | "PAYABLE_LEDGER_MISMATCH";
                             /** Format: uuid */
                             readonly id: string;
                             readonly message: string;
@@ -2883,7 +2893,7 @@ export interface operations {
                             readonly severity: "yellow" | "red";
                             readonly subjectId: string;
                             /** @enum {string} */
-                            readonly subjectType: "invoice" | "payment" | "account" | "ledger";
+                            readonly subjectType: "invoice" | "payment" | "account" | "ledger" | "subledger";
                             readonly suggestedAction: string;
                             /** Format: date-time */
                             readonly triagedAt?: string;
@@ -2941,7 +2951,7 @@ export interface operations {
                     readonly "application/json": {
                         readonly amount: string;
                         /** @enum {string} */
-                        readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED" | "BANK_STATEMENT_MISSING" | "BANK_LEDGER_BALANCE_MISMATCH";
+                        readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED" | "BANK_STATEMENT_MISSING" | "BANK_LEDGER_BALANCE_MISMATCH" | "RECEIVABLE_LEDGER_MISMATCH" | "PAYABLE_LEDGER_MISMATCH";
                         /** Format: uuid */
                         readonly id: string;
                         readonly message: string;
@@ -2949,7 +2959,7 @@ export interface operations {
                         readonly severity: "yellow" | "red";
                         readonly subjectId: string;
                         /** @enum {string} */
-                        readonly subjectType: "invoice" | "payment" | "account" | "ledger";
+                        readonly subjectType: "invoice" | "payment" | "account" | "ledger" | "subledger";
                         readonly suggestedAction: string;
                         /** Format: date-time */
                         readonly triagedAt?: string;
@@ -3029,11 +3039,19 @@ export interface operations {
                                 readonly paymentEventId: string;
                                 readonly unallocatedAmount: string;
                             }[];
+                            readonly subledgers: readonly {
+                                /** @enum {string} */
+                                readonly accountCode: "1122" | "2202";
+                                /** @enum {string} */
+                                readonly kind: "receivable" | "payable";
+                                readonly ledgerBalance: string;
+                                readonly subledgerBalance: string;
+                            }[];
                         };
                         readonly issues: readonly {
                             readonly amount: string;
                             /** @enum {string} */
-                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED" | "BANK_STATEMENT_MISSING" | "BANK_LEDGER_BALANCE_MISMATCH";
+                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED" | "BANK_STATEMENT_MISSING" | "BANK_LEDGER_BALANCE_MISMATCH" | "RECEIVABLE_LEDGER_MISMATCH" | "PAYABLE_LEDGER_MISMATCH";
                             /** Format: uuid */
                             readonly id: string;
                             readonly message: string;
@@ -3041,7 +3059,7 @@ export interface operations {
                             readonly severity: "yellow" | "red";
                             readonly subjectId: string;
                             /** @enum {string} */
-                            readonly subjectType: "invoice" | "payment" | "account" | "ledger";
+                            readonly subjectType: "invoice" | "payment" | "account" | "ledger" | "subledger";
                             readonly suggestedAction: string;
                             /** Format: date-time */
                             readonly triagedAt?: string;

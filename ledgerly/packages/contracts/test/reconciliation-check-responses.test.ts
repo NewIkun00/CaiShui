@@ -16,6 +16,7 @@ describe('reconciliation check contracts', () => {
         payments: [],
         accounts: [],
         bankAccounts: [],
+        subledgers: [],
       }, inputHash: 'a'.repeat(64),
       grade: 'yellow', blocksFiling: true, totalIssues: 1, yellowIssues: 1, redIssues: 0,
       issues: [{

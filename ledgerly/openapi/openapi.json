@@ -4638,6 +4638,13 @@
                               "output"
                             ]
                           },
+                          "color": {
+                            "type": "string",
+                            "enum": [
+                              "blue",
+                              "red"
+                            ]
+                          },
                           "invoiceNumber": {
                             "type": "string"
                           },
@@ -4671,6 +4678,7 @@
                         "required": [
                           "invoiceId",
                           "direction",
+                          "color",
                           "invoiceNumber",
                           "issuedOn",
                           "counterpartyId",
@@ -5117,13 +5125,49 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "subledgers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "receivable",
+                                  "payable"
+                                ]
+                              },
+                              "accountCode": {
+                                "type": "string",
+                                "enum": [
+                                  "1122",
+                                  "2202"
+                                ]
+                              },
+                              "subledgerBalance": {
+                                "type": "string"
+                              },
+                              "ledgerBalance": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "accountCode",
+                              "subledgerBalance",
+                              "ledgerBalance"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "invoices",
                         "payments",
                         "accounts",
-                        "bankAccounts"
+                        "bankAccounts",
+                        "subledgers"
                       ],
                       "additionalProperties": false
                     },
@@ -5175,7 +5219,9 @@
                               "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH",
                               "TRIAL_BALANCE_UNBALANCED",
                               "BANK_STATEMENT_MISSING",
-                              "BANK_LEDGER_BALANCE_MISMATCH"
+                              "BANK_LEDGER_BALANCE_MISMATCH",
+                              "RECEIVABLE_LEDGER_MISMATCH",
+                              "PAYABLE_LEDGER_MISMATCH"
                             ]
                           },
                           "severity": {
@@ -5191,7 +5237,8 @@
                               "invoice",
                               "payment",
                               "account",
-                              "ledger"
+                              "ledger",
+                              "subledger"
                             ]
                           },
                           "subjectId": {
@@ -5484,13 +5531,49 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "subledgers": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "receivable",
+                                  "payable"
+                                ]
+                              },
+                              "accountCode": {
+                                "type": "string",
+                                "enum": [
+                                  "1122",
+                                  "2202"
+                                ]
+                              },
+                              "subledgerBalance": {
+                                "type": "string"
+                              },
+                              "ledgerBalance": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "accountCode",
+                              "subledgerBalance",
+                              "ledgerBalance"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "invoices",
                         "payments",
                         "accounts",
-                        "bankAccounts"
+                        "bankAccounts",
+                        "subledgers"
                       ],
                       "additionalProperties": false
                     },
@@ -5542,7 +5625,9 @@
                               "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH",
                               "TRIAL_BALANCE_UNBALANCED",
                               "BANK_STATEMENT_MISSING",
-                              "BANK_LEDGER_BALANCE_MISMATCH"
+                              "BANK_LEDGER_BALANCE_MISMATCH",
+                              "RECEIVABLE_LEDGER_MISMATCH",
+                              "PAYABLE_LEDGER_MISMATCH"
                             ]
                           },
                           "severity": {
@@ -5558,7 +5643,8 @@
                               "invoice",
                               "payment",
                               "account",
-                              "ledger"
+                              "ledger",
+                              "subledger"
                             ]
                           },
                           "subjectId": {
@@ -5759,7 +5845,9 @@
                         "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH",
                         "TRIAL_BALANCE_UNBALANCED",
                         "BANK_STATEMENT_MISSING",
-                        "BANK_LEDGER_BALANCE_MISMATCH"
+                        "BANK_LEDGER_BALANCE_MISMATCH",
+                        "RECEIVABLE_LEDGER_MISMATCH",
+                        "PAYABLE_LEDGER_MISMATCH"
                       ]
                     },
                     "severity": {
@@ -5775,7 +5863,8 @@
                         "invoice",
                         "payment",
                         "account",
-                        "ledger"
+                        "ledger",
+                        "subledger"
                       ]
                     },
                     "subjectId": {
