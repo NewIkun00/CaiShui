@@ -325,6 +325,29 @@ export const ledgerResponseSchema=z.object({
   trialBalance:z.array(z.object({accountCode:z.string(),accountName:z.string(),openingDebit:z.string(),openingCredit:z.string(),debitMovement:z.string(),creditMovement:z.string(),endingDebit:z.string(),endingCredit:z.string()})),
 });
 export type LedgerResponse=z.infer<typeof ledgerResponseSchema>;
+const financialReportAmountSchema=z.string().regex(/^-?(0|[1-9]\d*)\.\d{2}$/);
+const financialReportLineSchema=z.object({
+  accountCode:z.string(),accountName:z.string(),amount:financialReportAmountSchema,
+}).strict();
+export const financialReportsResponseSchema=z.object({
+  period:z.object({start:z.iso.date(),end:z.iso.date(),status:z.enum(['open','locked'])}).strict(),
+  basis:z.object({
+    templateVersion:z.string(),source:z.literal('confirmed_vouchers_and_opening_entries'),
+    includesDraftVouchers:z.literal(false),
+  }).strict(),
+  profitStatement:z.object({
+    revenue:z.array(financialReportLineSchema),expenses:z.array(financialReportLineSchema),
+    totalRevenue:financialReportAmountSchema,totalExpenses:financialReportAmountSchema,
+    profit:financialReportAmountSchema,
+  }).strict(),
+  balanceSheet:z.object({
+    assets:z.array(financialReportLineSchema),liabilities:z.array(financialReportLineSchema),
+    equity:z.array(financialReportLineSchema),currentPeriodProfit:financialReportAmountSchema,
+    totalAssets:financialReportAmountSchema,totalLiabilities:financialReportAmountSchema,
+    totalEquity:financialReportAmountSchema,difference:financialReportAmountSchema,balanced:z.boolean(),
+  }).strict(),
+}).strict();
+export type FinancialReportsResponse=z.infer<typeof financialReportsResponseSchema>;
 export const periodReopenRequestInputSchema=z.object({reason:z.string().trim().min(5).max(500)});
 export type PeriodReopenRequestInput=z.infer<typeof periodReopenRequestInputSchema>;
 export const periodReopenRequestResponseSchema=z.object({

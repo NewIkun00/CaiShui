@@ -1,5 +1,5 @@
 import { Body,Controller,Get,Param,ParseUUIDPipe,Post,Req } from '@nestjs/common';
-import { voucherConfirmRequestSchema,voucherReversalRequestSchema,type VoucherConfirmRequest,type VoucherReversalRequest } from '@ledgerly/contracts';
+import { financialReportsResponseSchema,voucherConfirmRequestSchema,voucherReversalRequestSchema,type VoucherConfirmRequest,type VoucherReversalRequest } from '@ledgerly/contracts';
 import { ApiHeader,ApiOperation,ApiTags } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
 import { requestContext } from '../../../shared/request-context.js';
@@ -25,6 +25,8 @@ export class AccountingController{
   async reverse(@Param('companyId',new ParseUUIDPipe())companyId:string,@Param('voucherId',new ParseUUIDPipe())voucherId:string,@Body(new ZodValidationPipe(voucherReversalRequestSchema))input:VoucherReversalRequest,@Req()request:FastifyRequest){return this.present(await this.service.reverse(companyId,voucherId,input,requestContext(request,true)));}
   @Get('ledger')@ApiOperation({summary:'读取正式凭证明细账和本期科目余额'})
   async ledger(@Param('companyId',new ParseUUIDPipe())companyId:string,@Req()request:FastifyRequest){return this.service.ledger(companyId,requestContext(request,true));}
+  @Get('reports')@ApiOperation({summary:'基于正式账簿生成利润表和资产负债表'})
+  async reports(@Param('companyId',new ParseUUIDPipe())companyId:string,@Req()request:FastifyRequest){return financialReportsResponseSchema.parse(await this.service.reports(companyId,requestContext(request,true)));}
   @Post('period/lock')@ApiOperation({summary:'锁定当前会计期间'})
   async lock(@Param('companyId',new ParseUUIDPipe())companyId:string,@Req()request:FastifyRequest){const result=await this.service.lockPeriod(companyId,requestContext(request,true));return{periodId:result.periodId,periodStart:result.periodStart,periodEnd:result.periodEnd,status:result.periodStatus};}
   private present(item:SavedVoucher){return{id:item.id,companyId:item.companyId,voucherDate:item.voucherDate,summary:item.summary,sourceBusinessEventId:item.sourceBusinessEventId,templateVersion:item.templateVersion,ruleVersion:item.ruleVersion,status:item.status,version:item.version,entries:item.entries.map(entry=>({id:entry.id,lineNumber:entry.lineNumber,accountCode:entry.accountCode,accountName:entry.accountName,side:entry.side,amount:entry.amount.toString()})),createdAt:item.createdAt.toISOString(),confirmedAt:item.confirmedAt?.toISOString(),reversedAt:item.reversedAt?.toISOString(),reversalOfVoucherId:item.reversalOfVoucherId};}
