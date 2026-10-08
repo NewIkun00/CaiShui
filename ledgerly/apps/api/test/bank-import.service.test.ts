@@ -42,8 +42,8 @@ async function fixture() {
 describe('BankImportService', () => {
   it('validates and confirms a CSV batch into confirmed business events', async () => {
     const { created, context, events, service } = await fixture();
-    const batch = await service.upload(created.company.id, { fileName: '流水.csv', content: csv }, context);
-    expect(batch).toMatchObject({ status: 'validated', validRows: 1, invalidRows: 0 });
+    const batch = await service.upload(created.company.id, { fileName: '流水.csv', content: csv,statementPeriodStart:'2026-10-01',statementPeriodEnd:'2026-10-31' }, context);
+    expect(batch).toMatchObject({ status: 'validated', validRows: 1, invalidRows: 0,statementPeriodStart:'2026-10-01',statementPeriodEnd:'2026-10-31' });
     const confirmed = await service.confirm(created.company.id, batch.id, context);
     expect(confirmed.status).toBe('confirmed');
     expect(await events.list(context.tenantId, created.company.id)).toEqual([
@@ -53,16 +53,18 @@ describe('BankImportService', () => {
 
   it('recognizes a previously confirmed row as a duplicate', async () => {
     const { created, context, service } = await fixture();
-    const first = await service.upload(created.company.id, { fileName: '第一次.csv', content: csv }, context);
+    const first = await service.upload(created.company.id, { fileName: '第一次.csv', content: csv,statementPeriodStart:'2026-10-01',statementPeriodEnd:'2026-10-31' }, context);
     await service.confirm(created.company.id, first.id, context);
-    const second = await service.upload(created.company.id, { fileName: '第二次.csv', content: csv }, context);
+    const second = await service.upload(created.company.id, { fileName: '第二次.csv', content: csv,statementPeriodStart:'2026-10-01',statementPeriodEnd:'2026-10-31' }, context);
     expect(second).toMatchObject({ validRows: 0, duplicateRows: 1 });
   });
 
   it('allows validation but blocks import confirmation after period lock', async () => {
     const { created, context, setups, service } = await fixture();
-    const batch=await service.upload(created.company.id,{fileName:'待确认.csv',content:csv},context);
+    const batch=await service.upload(created.company.id,{fileName:'待确认.csv',content:csv,statementPeriodStart:'2026-10-01',statementPeriodEnd:'2026-10-31'},context);
     await setups.lockCurrentPeriod({ tenantId:context.tenantId, companyId:created.company.id, actorId, traceId:'lock', lockedAt:new Date() });
     await expect(service.confirm(created.company.id,batch.id,context)).rejects.toMatchObject({ status:409, response:{ code:'ACCOUNTING_PERIOD_LOCKED' } });
   });
+
+  it('rejects a statement that does not cover the open accounting period',async()=>{const{created,context,service}=await fixture();await expect(service.upload(created.company.id,{fileName:'不完整.csv',content:csv,statementPeriodStart:'2026-10-01',statementPeriodEnd:'2026-10-08'},context)).rejects.toMatchObject({status:409,response:{code:'STATEMENT_PERIOD_MISMATCH'}})});
 });

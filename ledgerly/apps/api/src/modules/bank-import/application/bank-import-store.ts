@@ -22,6 +22,9 @@ export interface BankImportRow {
 export interface BankImportBatch {
   readonly id: string;
   readonly companyId: string;
+  readonly accountId:string;
+  readonly statementPeriodStart:string;
+  readonly statementPeriodEnd:string;
   readonly fileName: string;
   readonly fileHash: string;
   readonly status: BankImportStatus;
@@ -65,5 +68,6 @@ export interface BankImportStore {
   fingerprintsExist(tenantId: string, companyId: string, fingerprints: readonly string[]): Promise<ReadonlySet<string>>;
   save(record: SaveBankImportRecord): Promise<BankImportBatch>;
   find(tenantId: string, companyId: string, batchId: string): Promise<BankImportBatch | null>;
+  latestConfirmedStatement(tenantId:string,companyId:string,accountId:string,periodStart:string,periodEnd:string):Promise<BankImportBatch|null>;
   confirm(record: ConfirmBankImportRecord): Promise<BankImportBatch | null>;
 }

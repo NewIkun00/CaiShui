@@ -116,7 +116,7 @@ describe('generated API client', () => {
     const batch = await client('/v1/companies/{companyId}/imports/bank-csv', {
       method: 'post',
       path: { companyId: '10000000-0000-4000-8000-000000000001' },
-      body: { fileName: 'bank.csv', content: 'date,description,amount' },
+      body: { fileName: 'bank.csv', content: 'date,description,amount',statementPeriodStart:'2026-10-01',statementPeriodEnd:'2026-10-31' },
     });
 
     expect(batch.rows[0]?.businessEventId).toBe(eventId);

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { DATABASE, type Database } from '../../../infrastructure/database/database.provider.js';
 import {
@@ -31,7 +31,8 @@ export class PostgresBankImportStore implements BankImportStore {
   async save(record: SaveBankImportRecord): Promise<BankImportBatch> {
     await this.db.transaction(async (tx) => {
       await tx.insert(importBatches).values({
-        id: record.batch.id, tenantId: record.tenantId, companyId: record.batch.companyId,
+        id: record.batch.id, tenantId: record.tenantId, companyId: record.batch.companyId,accountId:record.batch.accountId,
+        statementPeriodStart:record.batch.statementPeriodStart,statementPeriodEnd:record.batch.statementPeriodEnd,
         importType: 'bank_csv_v1', fileName: record.batch.fileName, fileHash: record.batch.fileHash,
         status: record.batch.status, totalRows: record.batch.totalRows,
         validRows: record.batch.validRows, invalidRows: record.batch.invalidRows,
@@ -64,13 +65,18 @@ export class PostgresBankImportStore implements BankImportStore {
     if (!batch) return null;
     const rows = await this.db.select().from(bankImportRows).where(eq(bankImportRows.batchId, batchId));
     return {
-      id: batch.id, companyId: batch.companyId, fileName: batch.fileName, fileHash: batch.fileHash,
+      id: batch.id, companyId: batch.companyId,accountId:batch.accountId,statementPeriodStart:batch.statementPeriodStart,statementPeriodEnd:batch.statementPeriodEnd,fileName: batch.fileName, fileHash: batch.fileHash,
       status: batch.status as BankImportBatch['status'], totalRows: batch.totalRows,
       validRows: batch.validRows, invalidRows: batch.invalidRows, duplicateRows: batch.duplicateRows,
       rows: rows.sort((a, b) => a.rowNumber - b.rowNumber).map((row) => this.mapRow(row)),
       batchErrors: batch.batchErrors as string[], createdAt: batch.createdAt,
       confirmedAt: batch.confirmedAt ?? undefined,
     };
+  }
+
+  async latestConfirmedStatement(tenantId:string,companyId:string,accountId:string,periodStart:string,periodEnd:string):Promise<BankImportBatch|null>{
+    const[batch]=await this.db.select({id:importBatches.id}).from(importBatches).where(and(eq(importBatches.tenantId,tenantId),eq(importBatches.companyId,companyId),eq(importBatches.accountId,accountId),eq(importBatches.statementPeriodStart,periodStart),eq(importBatches.statementPeriodEnd,periodEnd),eq(importBatches.status,'confirmed'))).orderBy(desc(importBatches.confirmedAt),desc(importBatches.createdAt)).limit(1);
+    return batch?this.find(tenantId,companyId,batch.id):null;
   }
 
   async confirm(record: ConfirmBankImportRecord): Promise<BankImportBatch | null> {

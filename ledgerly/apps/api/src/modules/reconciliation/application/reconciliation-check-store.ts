@@ -13,6 +13,7 @@ export interface ReconciliationCheckInputSnapshot {
   readonly invoices:readonly {readonly invoiceId:string;readonly invoiceNumber:string;readonly outstandingAmount:string}[];
   readonly payments:readonly {readonly paymentEventId:string;readonly description:string;readonly unallocatedAmount:string}[];
   readonly accounts:readonly {readonly accountCode:string;readonly accountName:string;readonly openingDebit:string;readonly openingCredit:string;readonly debitMovement:string;readonly creditMovement:string;readonly endingDebit:string;readonly endingCredit:string}[];
+  readonly bankAccounts:readonly {readonly accountId:string;readonly accountName:string;readonly ledgerAccountCode:string;readonly ledgerEndingBalance:string;readonly statementBalance?:string|undefined;readonly statementBatchId?:string|undefined}[];
 }
 export interface SavedReconciliationCheckRun {
   readonly id:string;readonly tenantId:string;readonly companyId:string;readonly periodId:string;

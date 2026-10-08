@@ -2258,11 +2258,23 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 2000000
+                  },
+                  "statementPeriodStart": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  "statementPeriodEnd": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                   }
                 },
                 "required": [
                   "fileName",
-                  "content"
+                  "content",
+                  "statementPeriodStart",
+                  "statementPeriodEnd"
                 ]
               }
             }
@@ -2285,6 +2297,21 @@
                       "type": "string",
                       "format": "uuid",
                       "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "accountId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "statementPeriodStart": {
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
+                    "statementPeriodEnd": {
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                     },
                     "fileName": {
                       "type": "string"
@@ -2415,6 +2442,9 @@
                   "required": [
                     "id",
                     "companyId",
+                    "accountId",
+                    "statementPeriodStart",
+                    "statementPeriodEnd",
                     "fileName",
                     "fileHash",
                     "status",
@@ -2493,6 +2523,21 @@
                       "format": "uuid",
                       "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                     },
+                    "accountId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "statementPeriodStart": {
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
+                    "statementPeriodEnd": {
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
                     "fileName": {
                       "type": "string"
                     },
@@ -2622,6 +2667,9 @@
                   "required": [
                     "id",
                     "companyId",
+                    "accountId",
+                    "statementPeriodStart",
+                    "statementPeriodEnd",
                     "fileName",
                     "fileHash",
                     "status",
@@ -2699,6 +2747,21 @@
                       "format": "uuid",
                       "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                     },
+                    "accountId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "statementPeriodStart": {
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
+                    "statementPeriodEnd": {
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
                     "fileName": {
                       "type": "string"
                     },
@@ -2828,6 +2891,9 @@
                   "required": [
                     "id",
                     "companyId",
+                    "accountId",
+                    "statementPeriodStart",
+                    "statementPeriodEnd",
                     "fileName",
                     "fileHash",
                     "status",
@@ -5014,12 +5080,50 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "bankAccounts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accountId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "accountName": {
+                                "type": "string"
+                              },
+                              "ledgerAccountCode": {
+                                "type": "string"
+                              },
+                              "ledgerEndingBalance": {
+                                "type": "string"
+                              },
+                              "statementBalance": {
+                                "type": "string"
+                              },
+                              "statementBatchId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              }
+                            },
+                            "required": [
+                              "accountId",
+                              "accountName",
+                              "ledgerAccountCode",
+                              "ledgerEndingBalance"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "invoices",
                         "payments",
-                        "accounts"
+                        "accounts",
+                        "bankAccounts"
                       ],
                       "additionalProperties": false
                     },
@@ -5069,7 +5173,9 @@
                               "INVOICE_OUTSTANDING",
                               "PAYMENT_UNALLOCATED",
                               "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH",
-                              "TRIAL_BALANCE_UNBALANCED"
+                              "TRIAL_BALANCE_UNBALANCED",
+                              "BANK_STATEMENT_MISSING",
+                              "BANK_LEDGER_BALANCE_MISMATCH"
                             ]
                           },
                           "severity": {
@@ -5341,12 +5447,50 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "bankAccounts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accountId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "accountName": {
+                                "type": "string"
+                              },
+                              "ledgerAccountCode": {
+                                "type": "string"
+                              },
+                              "ledgerEndingBalance": {
+                                "type": "string"
+                              },
+                              "statementBalance": {
+                                "type": "string"
+                              },
+                              "statementBatchId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              }
+                            },
+                            "required": [
+                              "accountId",
+                              "accountName",
+                              "ledgerAccountCode",
+                              "ledgerEndingBalance"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "invoices",
                         "payments",
-                        "accounts"
+                        "accounts",
+                        "bankAccounts"
                       ],
                       "additionalProperties": false
                     },
@@ -5396,7 +5540,9 @@
                               "INVOICE_OUTSTANDING",
                               "PAYMENT_UNALLOCATED",
                               "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH",
-                              "TRIAL_BALANCE_UNBALANCED"
+                              "TRIAL_BALANCE_UNBALANCED",
+                              "BANK_STATEMENT_MISSING",
+                              "BANK_LEDGER_BALANCE_MISMATCH"
                             ]
                           },
                           "severity": {
@@ -5611,7 +5757,9 @@
                         "INVOICE_OUTSTANDING",
                         "PAYMENT_UNALLOCATED",
                         "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH",
-                        "TRIAL_BALANCE_UNBALANCED"
+                        "TRIAL_BALANCE_UNBALANCED",
+                        "BANK_STATEMENT_MISSING",
+                        "BANK_LEDGER_BALANCE_MISMATCH"
                       ]
                     },
                     "severity": {

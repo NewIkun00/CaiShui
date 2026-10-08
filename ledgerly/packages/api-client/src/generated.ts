@@ -2153,6 +2153,10 @@ export interface operations {
                 readonly "application/json": {
                     readonly content: string;
                     readonly fileName: string;
+                    /** Format: date */
+                    readonly statementPeriodEnd: string;
+                    /** Format: date */
+                    readonly statementPeriodStart: string;
                 };
             };
         };
@@ -2163,6 +2167,8 @@ export interface operations {
                 };
                 content: {
                     readonly "application/json": {
+                        /** Format: uuid */
+                        readonly accountId: string;
                         readonly batchErrors: readonly string[];
                         /** Format: uuid */
                         readonly companyId: string;
@@ -2196,6 +2202,10 @@ export interface operations {
                             /** @enum {string} */
                             readonly status: "valid" | "invalid" | "duplicate";
                         }[];
+                        /** Format: date */
+                        readonly statementPeriodEnd: string;
+                        /** Format: date */
+                        readonly statementPeriodStart: string;
                         /** @enum {string} */
                         readonly status: "validated" | "has_errors" | "confirmed";
                         readonly totalRows: number;
@@ -2226,6 +2236,8 @@ export interface operations {
                 };
                 content: {
                     readonly "application/json": {
+                        /** Format: uuid */
+                        readonly accountId: string;
                         readonly batchErrors: readonly string[];
                         /** Format: uuid */
                         readonly companyId: string;
@@ -2259,6 +2271,10 @@ export interface operations {
                             /** @enum {string} */
                             readonly status: "valid" | "invalid" | "duplicate";
                         }[];
+                        /** Format: date */
+                        readonly statementPeriodEnd: string;
+                        /** Format: date */
+                        readonly statementPeriodStart: string;
                         /** @enum {string} */
                         readonly status: "validated" | "has_errors" | "confirmed";
                         readonly totalRows: number;
@@ -2289,6 +2305,8 @@ export interface operations {
                 };
                 content: {
                     readonly "application/json": {
+                        /** Format: uuid */
+                        readonly accountId: string;
                         readonly batchErrors: readonly string[];
                         /** Format: uuid */
                         readonly companyId: string;
@@ -2322,6 +2340,10 @@ export interface operations {
                             /** @enum {string} */
                             readonly status: "valid" | "invalid" | "duplicate";
                         }[];
+                        /** Format: date */
+                        readonly statementPeriodEnd: string;
+                        /** Format: date */
+                        readonly statementPeriodStart: string;
                         /** @enum {string} */
                         readonly status: "validated" | "has_errors" | "confirmed";
                         readonly totalRows: number;
@@ -2827,6 +2849,16 @@ export interface operations {
                                 readonly openingCredit: string;
                                 readonly openingDebit: string;
                             }[];
+                            readonly bankAccounts: readonly {
+                                /** Format: uuid */
+                                readonly accountId: string;
+                                readonly accountName: string;
+                                readonly ledgerAccountCode: string;
+                                readonly ledgerEndingBalance: string;
+                                readonly statementBalance?: string;
+                                /** Format: uuid */
+                                readonly statementBatchId?: string;
+                            }[];
                             readonly invoices: readonly {
                                 /** Format: uuid */
                                 readonly invoiceId: string;
@@ -2843,7 +2875,7 @@ export interface operations {
                         readonly issues: readonly {
                             readonly amount: string;
                             /** @enum {string} */
-                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED";
+                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED" | "BANK_STATEMENT_MISSING" | "BANK_LEDGER_BALANCE_MISMATCH";
                             /** Format: uuid */
                             readonly id: string;
                             readonly message: string;
@@ -2909,7 +2941,7 @@ export interface operations {
                     readonly "application/json": {
                         readonly amount: string;
                         /** @enum {string} */
-                        readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED";
+                        readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED" | "BANK_STATEMENT_MISSING" | "BANK_LEDGER_BALANCE_MISMATCH";
                         /** Format: uuid */
                         readonly id: string;
                         readonly message: string;
@@ -2975,6 +3007,16 @@ export interface operations {
                                 readonly openingCredit: string;
                                 readonly openingDebit: string;
                             }[];
+                            readonly bankAccounts: readonly {
+                                /** Format: uuid */
+                                readonly accountId: string;
+                                readonly accountName: string;
+                                readonly ledgerAccountCode: string;
+                                readonly ledgerEndingBalance: string;
+                                readonly statementBalance?: string;
+                                /** Format: uuid */
+                                readonly statementBatchId?: string;
+                            }[];
                             readonly invoices: readonly {
                                 /** Format: uuid */
                                 readonly invoiceId: string;
@@ -2991,7 +3033,7 @@ export interface operations {
                         readonly issues: readonly {
                             readonly amount: string;
                             /** @enum {string} */
-                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED";
+                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED" | "BANK_STATEMENT_MISSING" | "BANK_LEDGER_BALANCE_MISMATCH";
                             /** Format: uuid */
                             readonly id: string;
                             readonly message: string;

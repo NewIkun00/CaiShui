@@ -187,6 +187,9 @@ export const businessEventListResponseSchema = z.object({ items: z.array(busines
 export const bankCsvImportRequestSchema = z.object({
   fileName: z.string().trim().min(1).max(255).refine((name) => name.toLowerCase().endsWith('.csv')),
   content: z.string().min(1).max(2_000_000),
+  statementPeriodStart:z.iso.date(),statementPeriodEnd:z.iso.date(),
+}).refine(value=>value.statementPeriodStart<=value.statementPeriodEnd,{
+  message:'对账单开始日期不能晚于结束日期',path:['statementPeriodEnd'],
 });
 
 export type BankCsvImportRequest = z.infer<typeof bankCsvImportRequestSchema>;
@@ -202,7 +205,7 @@ export const bankImportRowSchema = z.object({
 });
 
 export const bankImportBatchSchema = z.object({
-  id: z.string().uuid(), companyId: z.string().uuid(), fileName: z.string(), fileHash: z.string(),
+  id: z.string().uuid(), companyId: z.string().uuid(),accountId:z.string().uuid(),statementPeriodStart:z.iso.date(),statementPeriodEnd:z.iso.date(), fileName: z.string(), fileHash: z.string(),
   status: z.enum(['validated', 'has_errors', 'confirmed']), totalRows: z.number().int().nonnegative(),
   validRows: z.number().int().nonnegative(), invalidRows: z.number().int().nonnegative(),
   duplicateRows: z.number().int().nonnegative(), rows: z.array(bankImportRowSchema),
@@ -381,7 +384,7 @@ export type ReconciliationOverview=z.infer<typeof reconciliationOverviewSchema>;
 
 export const reconciliationIssueTriageStatusSchema=z.enum(['open','investigating','needs_documents','ready_for_recheck']);
 export const reconciliationCheckIssueSchema=z.object({
-  id:z.string().uuid(),code:z.enum(['INVOICE_OUTSTANDING','PAYMENT_UNALLOCATED','ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH','TRIAL_BALANCE_UNBALANCED']),severity:z.enum(['yellow','red']),
+  id:z.string().uuid(),code:z.enum(['INVOICE_OUTSTANDING','PAYMENT_UNALLOCATED','ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH','TRIAL_BALANCE_UNBALANCED','BANK_STATEMENT_MISSING','BANK_LEDGER_BALANCE_MISMATCH']),severity:z.enum(['yellow','red']),
   subjectType:z.enum(['invoice','payment','account','ledger']),subjectId:z.string().min(1),amount:z.string(),message:z.string(),suggestedAction:z.string(),
   triageStatus:reconciliationIssueTriageStatusSchema,triageVersion:z.number().int().positive(),triageNote:z.string().optional(),
   triagedBy:z.string().uuid().optional(),triagedAt:z.string().datetime().optional(),
@@ -392,6 +395,7 @@ export const reconciliationCheckRunResponseSchema=z.object({
     invoices:z.array(z.object({invoiceId:z.string().uuid(),invoiceNumber:z.string(),outstandingAmount:z.string()}).strict()),
     payments:z.array(z.object({paymentEventId:z.string().uuid(),description:z.string(),unallocatedAmount:z.string()}).strict()),
     accounts:z.array(z.object({accountCode:z.string(),accountName:z.string(),openingDebit:z.string(),openingCredit:z.string(),debitMovement:z.string(),creditMovement:z.string(),endingDebit:z.string(),endingCredit:z.string()}).strict()),
+    bankAccounts:z.array(z.object({accountId:z.string().uuid(),accountName:z.string(),ledgerAccountCode:z.string(),ledgerEndingBalance:z.string(),statementBalance:z.string().optional(),statementBatchId:z.string().uuid().optional()}).strict()),
   }).strict(),
   inputHash:z.string().regex(/^[0-9a-f]{64}$/),grade:z.enum(['green','yellow','red']),blocksFiling:z.boolean(),
   totalIssues:z.number().int().nonnegative(),yellowIssues:z.number().int().nonnegative(),redIssues:z.number().int().nonnegative(),

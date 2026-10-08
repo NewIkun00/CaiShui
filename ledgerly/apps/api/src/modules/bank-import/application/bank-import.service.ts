@@ -31,8 +31,14 @@ export class BankImportService {
   ) {}
 
   async upload(companyId: string, input: BankCsvImportRequest, context: RequestContext): Promise<BankImportBatch> {
-    if (!context.tenantId || !await this.ledgerSetups.find(context.tenantId, companyId)) {
+    if (!context.tenantId) {
       throw new ConflictException({ code: 'LEDGER_SETUP_REQUIRED', message: 'Ledger setup is required' });
+    }
+    const setup=await this.ledgerSetups.find(context.tenantId,companyId);
+    if(!setup)throw new ConflictException({ code: 'LEDGER_SETUP_REQUIRED', message: 'Ledger setup is required' });
+    if(setup.accountType!=='bank')throw new ConflictException({code:'BANK_ACCOUNT_REQUIRED',message:'Bank statements require a bank account'});
+    if(input.statementPeriodStart!==setup.periodStart||input.statementPeriodEnd!==setup.periodEnd){
+      throw new ConflictException({code:'STATEMENT_PERIOD_MISMATCH',message:'Statement period must match the open accounting period'});
     }
     const parsed = parseBankCsv(input.content);
     if (parsed.rows.length > 1000) throw new ConflictException({ code: 'IMPORT_TOO_LARGE', message: 'A batch can contain at most 1000 rows' });
@@ -46,6 +52,7 @@ export class BankImportService {
     const withinBatch = new Set<string>();
     const rows: BankImportRow[] = provisional.map(({ row, fingerprint, counterpartyId }) => {
       const errors = [...row.errors];
+      if(row.occurredOn&&(row.occurredOn<input.statementPeriodStart||row.occurredOn>input.statementPeriodEnd))errors.push('交易日期不在对账单期间内');
       if (!counterpartyId && row.counterpartyName) errors.push('未找到同名往来单位');
       const duplicate = existing.has(fingerprint) || withinBatch.has(fingerprint);
       withinBatch.add(fingerprint);
@@ -63,7 +70,7 @@ export class BankImportService {
     return this.imports.save({
       tenantId: context.tenantId, actorId: context.actorId, traceId: context.traceId,
       batch: {
-        id: randomUUID(), companyId, fileName: input.fileName, fileHash: sha256(input.content),
+        id: randomUUID(), companyId,accountId:setup.accountId,statementPeriodStart:input.statementPeriodStart,statementPeriodEnd:input.statementPeriodEnd,fileName: input.fileName, fileHash: sha256(input.content),
         status: parsed.errors.length > 0 || invalidRows > 0 ? 'has_errors' : 'validated',
         totalRows: rows.length, validRows, invalidRows, duplicateRows, rows,
         batchErrors: parsed.errors, createdAt: now,

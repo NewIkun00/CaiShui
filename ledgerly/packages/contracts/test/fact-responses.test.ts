@@ -22,7 +22,7 @@ describe('fact collection response contracts', () => {
 
   it('exposes the generated business event id after confirming a bank import', () => {
     const result = bankImportBatchSchema.parse({
-      id: '40000000-0000-4000-8000-000000000004', companyId, fileName: 'bank.csv',
+      id: '40000000-0000-4000-8000-000000000004', companyId,accountId:'41000000-0000-4000-8000-000000000004',statementPeriodStart:'2026-10-01',statementPeriodEnd:'2026-10-31', fileName: 'bank.csv',
       fileHash: 'a'.repeat(64), status: 'confirmed', totalRows: 1, validRows: 1,
       invalidRows: 0, duplicateRows: 0, batchErrors: [], createdAt: now, confirmedAt: now,
       rows: [{

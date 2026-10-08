@@ -94,6 +94,7 @@ export {
   ReconciliationIssueTriageStatus,
   type ReconciliationCheckIssue,
   type ReconciliationCheckAccount,
+  type ReconciliationCheckBankAccount,
   type ReconciliationCheckResult,
   type ReconciliationIssueCode,
   type Settlement,

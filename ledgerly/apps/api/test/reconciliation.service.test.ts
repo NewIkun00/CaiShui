@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { randomUUID } from 'node:crypto';
 import { AccountingService } from '../src/modules/accounting/application/accounting.service.js';
 import { MemoryVoucherStore } from '../src/modules/accounting/infrastructure/memory-voucher.store.js';
 import { BusinessEventService } from '../src/modules/business-event/application/business-event.service.js';
 import { MemoryBusinessEventStore } from '../src/modules/business-event/infrastructure/memory-business-event.store.js';
+import { MemoryBankImportStore } from '../src/modules/bank-import/infrastructure/memory-bank-import.store.js';
 import { CounterpartyService } from '../src/modules/counterparty/application/counterparty.service.js';
 import { MemoryCounterpartyStore } from '../src/modules/counterparty/infrastructure/memory-counterparty.store.js';
 import { InvoiceService } from '../src/modules/invoice/application/invoice.service.js';
@@ -24,7 +26,7 @@ async function fixture() {
   const organizations = new MemoryOrganizationStore(); const scopes = new MemoryScopeStore();
   const setups = new MemoryLedgerSetupStore(); const parties = new MemoryCounterpartyStore();
   const events = new MemoryBusinessEventStore(); const invoices = new MemoryInvoiceStore();
-  const settlements = new MemorySettlementStore(); const checks = new MemoryReconciliationCheckStore(); const vouchers = new MemoryVoucherStore();
+  const settlements = new MemorySettlementStore(); const checks = new MemoryReconciliationCheckStore(); const vouchers = new MemoryVoucherStore(); const bankImports=new MemoryBankImportStore(events);
   const created = await new OrganizationService(organizations).bootstrap({
     tenantName: '测试', company: { name: '常州市测试科技有限公司', unifiedSocialCreditCode: '913204001234567890', provinceCode: '32', cityCode: '3204' },
   }, { actorId, traceId: 'create' });
@@ -36,7 +38,7 @@ async function fixture() {
     hasDifferenceTax: false, hasCrossRegionPrepayment: false, hasComplexPayroll: false,
     hasShareholderTransactions: false, hasComplexTaxAdjustments: false, sourceDocumentsComplete: true,
   }, context);
-  await new LedgerSetupService(organizations, scopes, setups).create(created.company.id, {
+  const setup=await new LedgerSetupService(organizations, scopes, setups).create(created.company.id, {
     accountName: '基本户', accountType: 'bank', bankName: '招商银行', accountNumberLast4: '1234',
     openingBalance: '0', openingBalanceSource: 'none', openingBalanceAsOf: '2026-09-30',
     periodStart: '2026-10-01', periodEnd: '2026-10-31',
@@ -45,8 +47,10 @@ async function fixture() {
     .create(created.company.id, { name: '示例客户', type: 'customer' }, context);
   const invoiceService = new InvoiceService(setups, parties, invoices, new MockInvoiceExtractionProvider());
   const eventService = new BusinessEventService(setups, parties, events);
-  const service = new ReconciliationService(invoices, events, settlements, setups, checks, vouchers);
+  const service = new ReconciliationService(invoices, events, settlements, setups, checks, vouchers,bankImports);
   const accounting = new AccountingService(setups, events, vouchers, settlements);
+  async function statement(balance:string,createdAt=new Date(0)){return bankImports.save({tenantId:context.tenantId,actorId,traceId:'statement',batch:{id:randomUUID(),companyId:created.company.id,accountId:setup.accountId,statementPeriodStart:setup.periodStart,statementPeriodEnd:setup.periodEnd,fileName:'statement.csv',fileHash:'a'.repeat(64),status:'confirmed',totalRows:1,validRows:1,invalidRows:0,duplicateRows:0,batchErrors:[],createdAt,confirmedAt:createdAt,rows:[{id:randomUUID(),rowNumber:2,occurredOn:'2026-10-31',description:'期末余额',direction:'income',amount:'0.01',balance,fingerprint:randomUUID(),status:'valid',errors:[]}]}})}
+  await statement('0.00');
   async function invoice(number: string, total = '106.00') {
     const draft = await invoiceService.create(created.company.id, {
       direction: 'output', kind: 'ordinary', color: 'blue', invoiceNumber: number, issuedOn: '2026-10-08',
@@ -61,12 +65,12 @@ async function fixture() {
     }, context);
     return eventService.confirm(created.company.id, draft.id, context);
   }
-  return { created, context, service, accounting, invoice, payment, setups };
+  return { created, context, service, accounting, invoice, payment, setups,statement };
 }
 
 describe('ReconciliationService', () => {
   it('fully reconciles an invoice and payment and unlocks voucher generation', async () => {
-    const { created, context, service, accounting, invoice, payment } = await fixture();
+    const { created, context, service, accounting, invoice, payment,statement } = await fixture();
     const inv = await invoice('12345678'); const pay = await payment('106.00');
     await service.create(created.company.id, { invoiceId: inv.id, paymentEventId: pay.id, amount: '106.00' }, context);
     const overview = await service.overview(created.company.id, context);
@@ -74,6 +78,7 @@ describe('ReconciliationService', () => {
     const generated = await accounting.generate(created.company.id, pay.id, context);
     expect(generated.voucher.entries.map((item) => item.accountCode)).toEqual(['1002', '1122']);
     await accounting.confirm(created.company.id, generated.voucher.id, generated.voucher.version, context);
+    await statement('106.00',new Date());
     const check = await service.runCheck(created.company.id, context);
     expect(check).toMatchObject({ grade: 'green', blocksFiling: false, totalIssues: 0 });
     expect(check.inputSnapshot.accounts.map((item) => item.accountCode)).toEqual(['1002', '1122']);
@@ -126,4 +131,6 @@ describe('ReconciliationService', () => {
     expect(green).toMatchObject({ grade: 'green', blocksFiling: false, totalIssues: 0 });
     expect(green.id).not.toBe(first.id);
   });
+
+  it('blocks filing when the confirmed bank statement differs from the cash ledger',async()=>{const{created,context,service,statement}=await fixture();await statement('12.34',new Date());const result=await service.runCheck(created.company.id,context);expect(result).toMatchObject({grade:'red',blocksFiling:true,redIssues:1});expect(result.issues).toContainEqual(expect.objectContaining({code:'BANK_LEDGER_BALANCE_MISMATCH',amount:'12.34'}));expect(result.inputSnapshot.bankAccounts[0]).toMatchObject({ledgerAccountCode:'1002',ledgerEndingBalance:'0.00',statementBalance:'12.34'})});
 });
