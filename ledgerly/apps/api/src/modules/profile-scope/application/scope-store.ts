@@ -2,7 +2,9 @@ import type { CompanyProfile, ScopeEvaluation } from '@ledgerly/domain';
 
 export interface SavedScopeEvaluation extends ScopeEvaluation {
   readonly id: string;
+  readonly profileId: string;
   readonly companyId: string;
+  readonly profile: CompanyProfile;
   readonly evaluatedAt: Date;
 }
 

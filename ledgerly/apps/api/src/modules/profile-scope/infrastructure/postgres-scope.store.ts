@@ -8,7 +8,7 @@ import {
   outboxEvents,
   scopeEvaluations,
 } from '../../../infrastructure/database/schema.js';
-import type { ScopeDecision, ScopeReason } from '@ledgerly/domain';
+import type { CompanyProfile, ScopeDecision, ScopeReason } from '@ledgerly/domain';
 import type { SaveScopeRecord, SavedScopeEvaluation, ScopeStore } from '../application/scope-store.js';
 
 @Injectable()
@@ -68,9 +68,14 @@ export class PostgresScopeStore implements ScopeStore {
       .where(and(eq(scopeEvaluations.tenantId, tenantId), eq(scopeEvaluations.companyId, companyId)))
       .orderBy(desc(scopeEvaluations.evaluatedAt)).limit(1);
     if (!row) return null;
+    const [profile] = await this.db.select().from(companyProfiles)
+      .where(eq(companyProfiles.id, row.profileId)).limit(1);
+    if (!profile) return null;
     return {
       id: row.id,
+      profileId: row.profileId,
       companyId: row.companyId,
+      profile: this.toProfile(profile),
       decision: row.decision as ScopeDecision,
       reasons: row.reasons as ScopeReason[],
       nextAction: row.nextAction as SavedScopeEvaluation['nextAction'],
@@ -81,9 +86,28 @@ export class PostgresScopeStore implements ScopeStore {
   private toSaved(record: SaveScopeRecord): SavedScopeEvaluation {
     return {
       id: record.id,
+      profileId: record.profileId,
       companyId: record.companyId,
+      profile: record.profile,
       ...record.evaluation,
       evaluatedAt: record.evaluatedAt,
+    };
+  }
+
+  private toProfile(row: typeof companyProfiles.$inferSelect): CompanyProfile {
+    return {
+      entityType: row.entityType as CompanyProfile['entityType'],
+      vatTaxpayerStatus: row.vatTaxpayerStatus as CompanyProfile['vatTaxpayerStatus'],
+      vatFilingCycle: row.vatFilingCycle as CompanyProfile['vatFilingCycle'],
+      incomeTaxCollection: row.incomeTaxCollection as CompanyProfile['incomeTaxCollection'],
+      industry: row.industry as CompanyProfile['industry'],
+      hasInventory: row.hasInventory, hasBranches: row.hasBranches,
+      hasImportExport: row.hasImportExport, hasForeignCurrency: row.hasForeignCurrency,
+      hasSpecialVatFivePercent: row.hasSpecialVatFivePercent, hasDifferenceTax: row.hasDifferenceTax,
+      hasCrossRegionPrepayment: row.hasCrossRegionPrepayment, hasComplexPayroll: row.hasComplexPayroll,
+      hasShareholderTransactions: row.hasShareholderTransactions,
+      hasComplexTaxAdjustments: row.hasComplexTaxAdjustments,
+      sourceDocumentsComplete: row.sourceDocumentsComplete,
     };
   }
 }

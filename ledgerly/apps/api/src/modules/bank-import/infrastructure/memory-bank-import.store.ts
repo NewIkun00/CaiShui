@@ -28,6 +28,11 @@ export class MemoryBankImportStore implements BankImportStore {
     return Promise.resolve(this.batches.get(this.key(tenantId, companyId, batchId)) ?? null);
   }
 
+  latestConfirmedStatement(tenantId:string,companyId:string,accountId:string,periodStart:string,periodEnd:string):Promise<BankImportBatch|null>{
+    const matches=[...this.batches.entries()].filter(([key,batch])=>key.startsWith(`${tenantId}:${companyId}:`)&&batch.accountId===accountId&&batch.statementPeriodStart===periodStart&&batch.statementPeriodEnd===periodEnd&&batch.status==='confirmed').map(([,batch])=>batch).sort((a,b)=>b.createdAt.getTime()-a.createdAt.getTime());
+    return Promise.resolve(matches[0]??null);
+  }
+
   async confirm(record: ConfirmBankImportRecord): Promise<BankImportBatch | null> {
     const key = this.key(record.tenantId, record.companyId, record.batchId);
     const batch = this.batches.get(key);

@@ -3,6 +3,7 @@
 import {
   businessEventListResponseSchema, chartOfAccountsResponseSchema, ledgerResponseSchema,
   periodReopenRequestCreationResponseSchema, periodReopenRequestListResponseSchema,
+  periodReopenRequestResponseSchema,
   voucherGenerationResponseSchema, voucherListResponseSchema, voucherResponseSchema,
   type BusinessEventResponse, type LedgerResponse, type PeriodReopenRequestResponse, type VoucherResponse,
 } from '@ledgerly/contracts';
@@ -30,6 +31,8 @@ async function errorMessage(response: Response, fallback: string) {
     VOUCHER_CONFIRM_CONFLICT:'凭证状态已变化，请刷新后重试。', VOUCHER_REVERSAL_CONFLICT:'凭证已变化、已冲销或不允许冲销。',
     VOUCHER_MAPPING_REQUIRES_REVIEW:'该事项需要核销关系或补充证据，已停止自动入账。', EVENT_OUTSIDE_OPEN_PERIOD:'事项不在当前会计期间，不能生成凭证。',
     ACCOUNTING_PERIOD_NOT_LOCKED:'当前期间尚未锁定，无需申请反结账。',
+    PERIOD_REOPEN_REQUEST_CHANGED:'申请已被其他人处理，请刷新后重试。',
+    PERIOD_REOPEN_DECISION_REJECTED:'申请人不能复核自己的申请，且只能处理待复核申请。',
   };
   return messages[payload?.error?.code ?? ''] ?? payload?.error?.message ?? fallback;
 }
@@ -46,7 +49,8 @@ export function AccountingManager() {
   const [pending,setPending] = useState(false);
   const [message,setMessage] = useState<string|null>(null);
   const [view,setView] = useState<View>('vouchers');
-  const [reopenRequest,setReopenRequest] = useState<PeriodReopenRequestResponse|null>(null);
+  const [reopenRequests,setReopenRequests] = useState<PeriodReopenRequestResponse[]>([]);
+  const [reviewerId,setReviewerId] = useState('20000000-0000-4000-8000-000000000002');
 
   async function loadLedger(current: WorkspaceContext) {
     const response = await fetch(`${api()}/v1/companies/${current.companyId}/accounting/ledger`,{ headers:headers(current) });
@@ -66,13 +70,14 @@ export function AccountingManager() {
       fetch(`${api()}/v1/companies/${current.companyId}/accounting-period/reopen-requests`,{headers:h}).then(r=>r.json()),
     ]).then(([eventPayload,voucherPayload,chartPayload,ledgerPayload,reopenPayload]:unknown[]) => {
       const e=businessEventListResponseSchema.safeParse(eventPayload),v=voucherListResponseSchema.safeParse(voucherPayload),c=chartOfAccountsResponseSchema.safeParse(chartPayload),l=ledgerResponseSchema.safeParse(ledgerPayload),r=periodReopenRequestListResponseSchema.safeParse(reopenPayload);
-      if(e.success)setEvents(e.data.items); if(v.success)setVouchers(v.data.items); if(c.success){setTemplateVersion(c.data.templateVersion);setAccountCount(c.data.items.length);} if(l.success)setLedger(l.data);if(r.success)setReopenRequest(r.data.items.find(item=>item.status==='pending')??null);
+      if(e.success)setEvents(e.data.items); if(v.success)setVouchers(v.data.items); if(c.success){setTemplateVersion(c.data.templateVersion);setAccountCount(c.data.items.length);} if(l.success)setLedger(l.data);if(r.success)setReopenRequests(r.data.items);
     }).catch(()=>setMessage('暂时无法读取账务数据。')).finally(()=>setReady(true));
   },[]);
 
   const used=useMemo(()=>new Set(vouchers.filter(item=>!item.reversalOfVoucherId).map(item=>item.sourceBusinessEventId)),[vouchers]);
   const candidates=events.filter(item=>item.status==='confirmed'&&!used.has(item.id));
   const locked=ledger?.period.status==='locked';
+  const reopenRequest=reopenRequests.find(item=>item.status==='pending')??null;
 
   async function generate() {
     if(!workspace||!selected)return; setPending(true); setMessage('正在应用确定性记账规则…');
@@ -117,7 +122,12 @@ export function AccountingManager() {
   async function requestReopen() {
     if(!workspace)return;const reason=window.prompt('请说明反结账原因（至少 5 个字，将进入审计记录）');if(!reason?.trim())return;
     setPending(true);setMessage('正在提交反结账申请…');
-    try{const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting-period/reopen-requests`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({reason:reason.trim()})});if(!response.ok)throw new Error(await errorMessage(response,'反结账申请提交失败。'));const result=periodReopenRequestCreationResponseSchema.parse(await response.json());setReopenRequest(result.request);setMessage(result.created?'反结账申请已提交，等待专业人员复核。':'本期已有待复核申请，没有重复创建。');}catch(error:unknown){setMessage(error instanceof Error?error.message:'申请提交失败。');}finally{setPending(false);}
+    try{const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting-period/reopen-requests`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({reason:reason.trim()})});if(!response.ok)throw new Error(await errorMessage(response,'反结账申请提交失败。'));const result=periodReopenRequestCreationResponseSchema.parse(await response.json());setReopenRequests(current=>[result.request,...current.filter(item=>item.id!==result.request.id)]);setMessage(result.created?'反结账申请已提交，等待专业人员复核。':'本期已有待复核申请，没有重复创建。');}catch(error:unknown){setMessage(error instanceof Error?error.message:'申请提交失败。');}finally{setPending(false);}
+  }
+
+  async function decideReopen(decision:'approve'|'reject') {
+    if(!workspace||!reopenRequest)return;const reason=window.prompt(decision==='approve'?'请输入批准依据（批准后会立即解锁期间）':'请输入驳回原因（期间将保持锁定）');if(!reason?.trim())return;if(!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(reviewerId)){setMessage('复核人 ID 必须是 UUID。');return;}setPending(true);setMessage('正在记录专业复核决定…');
+    try{const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting-period/reopen-requests/${reopenRequest.id}/decision`,{method:'POST',headers:{'x-user-id':reviewerId,'x-tenant-id':workspace.tenantId,'content-type':'application/json'},body:JSON.stringify({decision,reason:reason.trim(),expectedVersion:reopenRequest.version})});if(!response.ok)throw new Error(await errorMessage(response,'反结账复核失败。'));const result=periodReopenRequestResponseSchema.parse(await response.json());setReopenRequests(current=>current.map(item=>item.id===result.id?result:item));await loadLedger(workspace);setMessage(decision==='approve'?'反结账已批准，会计期间已重新开放。':'申请已驳回，会计期间保持锁定。');}catch(error:unknown){setMessage(error instanceof Error?error.message:'反结账复核失败。');}finally{setPending(false);}
   }
 
   if(!ready)return <section className="accounting-workspace"><div className="onboarding-card">正在读取账务数据…</div></section>;
@@ -126,7 +136,7 @@ export function AccountingManager() {
     <aside>
       <div className="accounting-template"><p className="eyebrow">科目模板</p><strong>{templateVersion||'—'}</strong><span>{accountCount} 个启用科目</span></div>
       <div className="onboarding-card voucher-generator"><h2>生成记账草稿</h2><label>已确认业务事项<select value={selected} onChange={e=>setSelected(e.target.value)} disabled={locked}><option value="">请选择…</option>{candidates.map(item=><option value={item.id} key={item.id}>{item.occurredOn} · {labels[item.type]} · ¥{item.amount}</option>)}</select></label><div className="notice">收付款需先完成核销；证据不足时系统会停止自动生成。</div><button className="primary button" type="button" disabled={!selected||pending||locked} onClick={()=>void generate()}>生成凭证草稿</button></div>
-      {ledger&&<div className="onboarding-card period-card"><p className="eyebrow">当前会计期间</p><strong>{ledger.period.start} — {ledger.period.end}</strong><span className={`period-status ${ledger.period.status}`}>{ledger.period.status==='open'?'开放记账':'已锁定'}</span>{locked?(reopenRequest?<div className="reopen-pending"><b>反结账申请待复核</b><span>{reopenRequest.reason}</span><small>{new Date(reopenRequest.requestedAt).toLocaleString('zh-CN')}</small></div>:<button type="button" className="button" disabled={pending} onClick={()=>void requestReopen()}>申请反结账</button>):<button type="button" className="button" disabled={pending} onClick={()=>void lockPeriod()}>锁定本期</button>}<small>存在待确认草稿时无法锁账；反结账申请不会直接解锁，需专业人员复核。</small></div>}
+      {ledger&&<div className="onboarding-card period-card"><p className="eyebrow">当前会计期间</p><strong>{ledger.period.start} — {ledger.period.end}</strong><span className={`period-status ${ledger.period.status}`}>{ledger.period.status==='open'?'开放记账':'已锁定'}</span>{locked?(reopenRequest?<div className="reopen-pending"><b>反结账申请待复核</b><span>{reopenRequest.reason}</span><small>{new Date(reopenRequest.requestedAt).toLocaleString('zh-CN')}</small><label>开发态复核人 UUID<input value={reviewerId} onChange={event=>setReviewerId(event.target.value)}/></label><div className="voucher-actions"><button type="button" disabled={pending} onClick={()=>void decideReopen('approve')}>批准并解锁</button><button type="button" disabled={pending} onClick={()=>void decideReopen('reject')}>驳回</button></div></div>:<button type="button" className="button" disabled={pending} onClick={()=>void requestReopen()}>申请反结账</button>):<button type="button" className="button" disabled={pending} onClick={()=>void lockPeriod()}>锁定本期</button>}<small>申请人与复核人必须不同；批准后申请决定与期间解锁在同一事务完成。</small>{reopenRequests.filter(item=>item.status!=='pending').slice(0,3).map(item=><small key={item.id}>{item.status==='approved'?'已批准':'已驳回'} · {item.decisionReason} · {item.decidedAt?new Date(item.decidedAt).toLocaleString('zh-CN'):''}</small>)}</div>}
       {message&&<p className={message.includes('失败')||message.includes('不能')||message.includes('阻止')?'form-error':'form-success'}>{message}</p>}
     </aside>
     <section className="voucher-list">

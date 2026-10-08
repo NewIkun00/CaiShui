@@ -1,10 +1,11 @@
 import helmet from '@fastify/helmet';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from './app.module.js';
 import { HttpExceptionFilter } from './shared/http-exception.filter.js';
+import { createOpenApiDocument } from './openapi/document.js';
 
 async function bootstrap(): Promise<void> {
   const production = process.env['NODE_ENV'] === 'production';
@@ -33,12 +34,7 @@ async function bootstrap(): Promise<void> {
     done();
   });
   app.useGlobalFilters(new HttpExceptionFilter());
-  const config = new DocumentBuilder()
-    .setTitle('Ledgerly API')
-    .setDescription('一人公司记账报税平台 V1 API')
-    .setVersion('0.1.0')
-    .build();
-  SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, config));
+  SwaggerModule.setup('docs', app, createOpenApiDocument(app));
   await app.listen(Number(process.env['API_PORT'] ?? 3001), '0.0.0.0');
 }
 

@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
-    "start": "next start",
+    "dev": "next dev -p 3020",
+    "start": "next start -p 3020",
     "lint": "eslint app",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"

@@ -1,11 +1,13 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
-  invoiceInputSchema, mockInvoiceExtractionRequestSchema, type InvoiceInputRequest,
+  invoiceInputSchema, invoiceListResponseSchema, invoiceResponseSchema,
+  mockInvoiceExtractionRequestSchema, mockInvoiceExtractionResponseSchema, type InvoiceInputRequest,
 } from '@ledgerly/contracts';
 import type { FastifyRequest } from 'fastify';
 import { requestContext } from '../../../shared/request-context.js';
 import { ZodValidationPipe } from '../../../shared/zod-validation.pipe.js';
+import { ApiZodBody, ApiZodCreatedResponse, ApiZodOkResponse } from '../../../shared/zod-openapi.js';
 import { InvoiceService } from '../application/invoice.service.js';
 import type { SavedInvoice } from '../application/invoice-store.js';
 
@@ -18,6 +20,8 @@ export class InvoiceController {
 
   @Post()
   @ApiOperation({ summary: '新增发票草稿' })
+  @ApiZodBody(invoiceInputSchema)
+  @ApiZodCreatedResponse(invoiceResponseSchema)
   async create(@Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Body(new ZodValidationPipe(invoiceInputSchema)) input: InvoiceInputRequest,
     @Req() request: FastifyRequest) {
@@ -26,6 +30,7 @@ export class InvoiceController {
 
   @Get()
   @ApiOperation({ summary: '列出当前公司的发票' })
+  @ApiZodOkResponse(invoiceListResponseSchema)
   async list(@Param('companyId', new ParseUUIDPipe()) companyId: string, @Req() request: FastifyRequest) {
     const items = await this.service.list(companyId, requestContext(request, true));
     return { items: items.map((item) => this.present(item)) };
@@ -33,6 +38,8 @@ export class InvoiceController {
 
   @Post('extractions/mock')
   @ApiOperation({ summary: '使用确定性模拟适配器提取发票字段' })
+  @ApiZodBody(mockInvoiceExtractionRequestSchema)
+  @ApiZodCreatedResponse(mockInvoiceExtractionResponseSchema)
   extract(@Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Body(new ZodValidationPipe(mockInvoiceExtractionRequestSchema)) input: { text: string },
     @Req() request: FastifyRequest) {
@@ -41,6 +48,7 @@ export class InvoiceController {
 
   @Post(':invoiceId/confirm')
   @ApiOperation({ summary: '确认发票事实' })
+  @ApiZodCreatedResponse(invoiceResponseSchema)
   async confirm(@Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Param('invoiceId', new ParseUUIDPipe()) invoiceId: string, @Req() request: FastifyRequest) {
     return this.present(await this.service.confirm(companyId, invoiceId, requestContext(request, true)));

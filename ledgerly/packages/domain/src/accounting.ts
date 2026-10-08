@@ -41,6 +41,43 @@ export interface VoucherState extends VoucherDraft {
   readonly reversalOfVoucherId?: string | undefined;
 }
 
+export interface FinancialReportBalance {
+  readonly accountCode: string;
+  readonly accountName: string;
+  readonly category: AccountCategory;
+  readonly debitMovement: Money;
+  readonly creditMovement: Money;
+  readonly endingDebit: Money;
+  readonly endingCredit: Money;
+}
+
+export interface FinancialReportLine {
+  readonly accountCode: string;
+  readonly accountName: string;
+  readonly amount: Money;
+}
+
+export interface FinancialStatements {
+  readonly profitStatement: {
+    readonly revenue: readonly FinancialReportLine[];
+    readonly expenses: readonly FinancialReportLine[];
+    readonly totalRevenue: Money;
+    readonly totalExpenses: Money;
+    readonly profit: Money;
+  };
+  readonly balanceSheet: {
+    readonly assets: readonly FinancialReportLine[];
+    readonly liabilities: readonly FinancialReportLine[];
+    readonly equity: readonly FinancialReportLine[];
+    readonly currentPeriodProfit: Money;
+    readonly totalAssets: Money;
+    readonly totalLiabilities: Money;
+    readonly totalEquity: Money;
+    readonly difference: Money;
+    readonly balanced: boolean;
+  };
+}
+
 export class AccountingError extends Error { override readonly name='AccountingError'; }
 
 export function v1ChartOfAccounts(): readonly ChartAccount[] { return accounts; }
@@ -82,6 +119,41 @@ export function assertBalanced(entries: readonly VoucherEntry[]): void {
   const total = (side: EntrySide) => entries.filter((entry)=>entry.side===side)
     .reduce((sum,entry)=>sum.add(entry.amount),Money.zero());
   if (!total('debit').equals(total('credit'))) throw new AccountingError('Voucher debits and credits must be equal');
+}
+
+export function createFinancialStatements(balances: readonly FinancialReportBalance[]): FinancialStatements {
+  const line = (balance: FinancialReportBalance, amount: Money): FinancialReportLine => Object.freeze({
+    accountCode: balance.accountCode, accountName: balance.accountName, amount,
+  });
+  const byCategory = (category: AccountCategory) => balances.filter((balance) => balance.category === category);
+  const movement = (balance: FinancialReportBalance, normalSide: EntrySide) => normalSide === 'debit'
+    ? balance.debitMovement.subtract(balance.creditMovement)
+    : balance.creditMovement.subtract(balance.debitMovement);
+  const ending = (balance: FinancialReportBalance, normalSide: EntrySide) => normalSide === 'debit'
+    ? balance.endingDebit.subtract(balance.endingCredit)
+    : balance.endingCredit.subtract(balance.endingDebit);
+  const sum = (lines: readonly FinancialReportLine[]) => lines.reduce(
+    (total, item) => total.add(item.amount), Money.zero(),
+  );
+  const revenue = Object.freeze(byCategory('revenue').map((balance) => line(balance, movement(balance, 'credit'))));
+  const expenses = Object.freeze(byCategory('expense').map((balance) => line(balance, movement(balance, 'debit'))));
+  const assets = Object.freeze(byCategory('asset').map((balance) => line(balance, ending(balance, 'debit'))));
+  const liabilities = Object.freeze(byCategory('liability').map((balance) => line(balance, ending(balance, 'credit'))));
+  const equity = Object.freeze(byCategory('equity').map((balance) => line(balance, ending(balance, 'credit'))));
+  const totalRevenue = sum(revenue);
+  const totalExpenses = sum(expenses);
+  const profit = totalRevenue.subtract(totalExpenses);
+  const totalAssets = sum(assets);
+  const totalLiabilities = sum(liabilities);
+  const totalEquity = sum(equity).add(profit);
+  const difference = totalAssets.subtract(totalLiabilities).subtract(totalEquity);
+  return Object.freeze({
+    profitStatement: Object.freeze({ revenue, expenses, totalRevenue, totalExpenses, profit }),
+    balanceSheet: Object.freeze({
+      assets, liabilities, equity, currentPeriodProfit: profit,
+      totalAssets, totalLiabilities, totalEquity, difference, balanced: difference.equals(Money.zero()),
+    }),
+  });
 }
 
 export function confirmVoucher(voucher: VoucherState, expectedVersion: number): VoucherState {

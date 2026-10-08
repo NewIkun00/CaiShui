@@ -1,9 +1,10 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { companyProfileSchema, type CompanyProfileInput } from '@ledgerly/contracts';
+import { companyProfileSchema, scopeEvaluationSchema, type CompanyProfileInput } from '@ledgerly/contracts';
 import type { FastifyRequest } from 'fastify';
 import { requestContext } from '../../../shared/request-context.js';
 import { ZodValidationPipe } from '../../../shared/zod-validation.pipe.js';
+import { ApiZodBody, ApiZodCreatedResponse, ApiZodOkResponse } from '../../../shared/zod-openapi.js';
 import { ProfileScopeService } from '../application/profile-scope.service.js';
 
 @ApiTags('profile-scope')
@@ -15,6 +16,8 @@ export class ProfileScopeController {
 
   @Post()
   @ApiOperation({ summary: '保存主体画像并生成适用性结论' })
+  @ApiZodBody(companyProfileSchema)
+  @ApiZodCreatedResponse(scopeEvaluationSchema)
   async evaluate(
     @Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Body(new ZodValidationPipe(companyProfileSchema)) input: CompanyProfileInput,
@@ -25,6 +28,7 @@ export class ProfileScopeController {
 
   @Get('latest')
   @ApiOperation({ summary: '读取最近一次适用性结论' })
+  @ApiZodOkResponse(scopeEvaluationSchema)
   async latest(
     @Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Req() request: FastifyRequest,

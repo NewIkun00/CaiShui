@@ -15,6 +15,6 @@ const storageProviders = process.env['STORAGE_MODE'] === 'memory'
 @Module({
   imports: [LedgerSetupModule, CounterpartyModule, BusinessEventModule],
   controllers: [BankImportController],
-  providers: [...storageProviders, BankImportService],
+  providers: [...storageProviders, BankImportService],exports:[BANK_IMPORT_STORE],
 })
 export class BankImportModule {}

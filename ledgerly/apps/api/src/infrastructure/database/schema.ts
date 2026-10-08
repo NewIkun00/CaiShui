@@ -11,6 +11,7 @@ import {
   date,
   numeric,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 const auditColumns = {
   version: integer('version').notNull().default(1),
@@ -178,6 +179,7 @@ export const periodReopenRequests = pgTable(
     periodStart:date('period_start').notNull(),periodEnd:date('period_end').notNull(),
     reason:text('reason').notNull(),status:text('status').notNull().default('pending'),
     requestedAt:timestamp('requested_at',{withTimezone:true}).notNull(),requestedBy:uuid('requested_by').notNull(),
+    decisionReason:text('decision_reason'),decidedAt:timestamp('decided_at',{withTimezone:true}),decidedBy:uuid('decided_by'),
     ...auditColumns,
   },
   (table)=>[
@@ -270,6 +272,9 @@ export const importBatches = pgTable(
     id: uuid('id').primaryKey(),
     tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
     companyId: uuid('company_id').notNull().references(() => companies.id),
+    accountId:uuid('account_id').notNull().references(()=>financialAccounts.id),
+    statementPeriodStart:date('statement_period_start').notNull(),
+    statementPeriodEnd:date('statement_period_end').notNull(),
     importType: text('import_type').notNull(),
     fileName: text('file_name').notNull(),
     fileHash: text('file_hash').notNull(),
@@ -436,5 +441,358 @@ export const invoiceSettlements = pgTable(
   (table)=>[
     uniqueIndex('invoice_settlements_pair_unique').on(table.invoiceId,table.paymentEventId),
     index('invoice_settlements_company_idx').on(table.tenantId,table.companyId),
+  ],
+);
+
+export const reconciliationCheckRuns=pgTable('reconciliation_check_runs',{
+  id:uuid('id').primaryKey(),tenantId:uuid('tenant_id').notNull().references(()=>tenants.id),
+  companyId:uuid('company_id').notNull().references(()=>companies.id),periodId:uuid('period_id').notNull().references(()=>accountingPeriods.id),
+  periodStart:date('period_start').notNull(),periodEnd:date('period_end').notNull(),inputSnapshot:jsonb('input_snapshot').notNull(),inputHash:text('input_hash').notNull(),
+  grade:text('grade').notNull(),blocksFiling:boolean('blocks_filing').notNull(),totalIssues:integer('total_issues').notNull(),
+  yellowIssues:integer('yellow_issues').notNull(),redIssues:integer('red_issues').notNull(),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull(),createdBy:uuid('created_by').notNull(),
+},(table)=>[
+  uniqueIndex('reconciliation_check_runs_input_unique').on(table.tenantId,table.companyId,table.periodId,table.inputHash),
+  index('reconciliation_check_runs_company_time_idx').on(table.tenantId,table.companyId,table.createdAt),
+]);
+
+export const reconciliationCheckIssues=pgTable('reconciliation_check_issues',{
+  id:uuid('id').primaryKey(),runId:uuid('run_id').notNull().references(()=>reconciliationCheckRuns.id),
+  code:text('code').notNull(),severity:text('severity').notNull(),subjectType:text('subject_type').notNull(),
+  subjectId:text('subject_id').notNull(),amount:numeric('amount',{precision:20,scale:2}).notNull(),message:text('message').notNull(),
+  suggestedAction:text('suggested_action').notNull(),triageStatus:text('triage_status').notNull().default('open'),
+  triageVersion:integer('triage_version').notNull().default(1),triageNote:text('triage_note'),triagedBy:uuid('triaged_by'),
+  triagedAt:timestamp('triaged_at',{withTimezone:true}),
+},(table)=>[
+  uniqueIndex('reconciliation_check_issues_subject_unique').on(table.runId,table.code,table.subjectId),
+  index('reconciliation_check_issues_run_idx').on(table.runId),
+]);
+
+export const reconciliationIssueTriageEvents=pgTable('reconciliation_issue_triage_events',{
+  id:uuid('id').primaryKey(),issueId:uuid('issue_id').notNull().references(()=>reconciliationCheckIssues.id),
+  fromStatus:text('from_status').notNull(),toStatus:text('to_status').notNull(),note:text('note').notNull(),
+  version:integer('version').notNull(),actorId:uuid('actor_id').notNull(),createdAt:timestamp('created_at',{withTimezone:true}).notNull(),
+},(table)=>[
+  uniqueIndex('reconciliation_issue_triage_events_version_unique').on(table.issueId,table.version),
+  index('reconciliation_issue_triage_events_issue_time_idx').on(table.issueId,table.createdAt),
+]);
+
+export const policySources = pgTable(
+  'policy_sources',
+  {
+    id: uuid('id').primaryKey(),
+    documentNumber: text('document_number').notNull(),
+    title: text('title').notNull(),
+    officialUrl: text('official_url').notNull(),
+    issuingAuthority: text('issuing_authority').notNull(),
+    publishedOn: date('published_on').notNull(),
+    effectiveFrom: date('effective_from').notNull(),
+    effectiveTo: date('effective_to'),
+    summary: text('summary').notNull(),
+    contentHash: text('content_hash').notNull(),
+    capturedAt: timestamp('captured_at', { withTimezone: true }).notNull(),
+    lastVerifiedOn: date('last_verified_on').notNull(),
+    ...auditColumns,
+  },
+  (table) => [
+    uniqueIndex('policy_sources_document_hash_unique').on(table.documentNumber, table.contentHash),
+    index('policy_sources_effective_range_idx').on(table.effectiveFrom, table.effectiveTo),
+  ],
+);
+
+export const rulePackages = pgTable(
+  'rule_packages',
+  {
+    id: uuid('id').primaryKey(),
+    code: text('code').notNull(),
+    name: text('name').notNull(),
+    taxType: text('tax_type').notNull(),
+    jurisdictions: jsonb('jurisdictions').notNull(),
+    description: text('description').notNull(),
+    ...auditColumns,
+  },
+  (table) => [
+    uniqueIndex('rule_packages_code_unique').on(table.code),
+    index('rule_packages_tax_type_idx').on(table.taxType),
+  ],
+);
+
+export const ruleVersions = pgTable(
+  'rule_versions',
+  {
+    id: uuid('id').primaryKey(),
+    rulePackageId: uuid('rule_package_id').notNull().references(() => rulePackages.id),
+    versionTag: text('version_tag').notNull(),
+    effectiveFrom: date('effective_from').notNull(),
+    effectiveTo: date('effective_to'),
+    applicability: jsonb('applicability').notNull(),
+    calculationImplementation: text('calculation_implementation').notNull(),
+    parameters: jsonb('parameters').notNull(),
+    explanation: text('explanation').notNull(),
+    contentHash: text('content_hash').notNull(),
+    status: text('status').notNull().default('draft'),
+    technicalReviewedBy: uuid('technical_reviewed_by'),
+    taxReviewedBy: uuid('tax_reviewed_by'),
+    testedBy: uuid('tested_by'),
+    testedAt: timestamp('tested_at', { withTimezone: true }),
+    approvedBy: uuid('approved_by'),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    scheduledBy: uuid('scheduled_by'),
+    scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
+    activationAt: timestamp('activation_at', { withTimezone: true }),
+    activatedBy: uuid('activated_by'),
+    activatedAt: timestamp('activated_at', { withTimezone: true }),
+    supersededByRuleVersionId: uuid('superseded_by_rule_version_id'),
+    supersededAt: timestamp('superseded_at', { withTimezone: true }),
+    withdrawnBy: uuid('withdrawn_by'),
+    withdrawnAt: timestamp('withdrawn_at', { withTimezone: true }),
+    ...auditColumns,
+  },
+  (table) => [
+    uniqueIndex('rule_versions_package_tag_unique').on(table.rulePackageId, table.versionTag),
+    uniqueIndex('rule_versions_package_hash_unique').on(table.rulePackageId, table.contentHash),
+    index('rule_versions_effective_status_idx').on(table.effectiveFrom, table.effectiveTo, table.status),
+    uniqueIndex('rule_versions_one_active_per_package_unique').on(table.rulePackageId)
+      .where(sql`${table.status} = 'active'`),
+  ],
+);
+
+export const ruleVersionReviews = pgTable(
+  'rule_version_reviews',
+  {
+    id: uuid('id').primaryKey(),
+    ruleVersionId: uuid('rule_version_id').notNull().references(() => ruleVersions.id),
+    reviewKind: text('review_kind').notNull(),
+    fromStatus: text('from_status').notNull(),
+    toStatus: text('to_status').notNull(),
+    note: text('note').notNull(),
+    reviewedBy: uuid('reviewed_by').notNull(),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('rule_version_reviews_kind_unique').on(table.ruleVersionId, table.reviewKind),
+    index('rule_version_reviews_version_idx').on(table.ruleVersionId, table.reviewedAt),
+  ],
+);
+
+export const ruleTestEvidence = pgTable(
+  'rule_test_evidence',
+  {
+    id: uuid('id').primaryKey(),
+    ruleVersionId: uuid('rule_version_id').notNull().references(() => ruleVersions.id),
+    fixtureSetVersion: text('fixture_set_version').notNull(),
+    totalFixtures: integer('total_fixtures').notNull(),
+    passedFixtures: integer('passed_fixtures').notNull(),
+    coveredScenarios: jsonb('covered_scenarios').notNull(),
+    artifactHash: text('artifact_hash').notNull(),
+    note: text('note').notNull(),
+    signedOffBy: uuid('signed_off_by').notNull(),
+    signedOffAt: timestamp('signed_off_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('rule_test_evidence_version_unique').on(table.ruleVersionId),
+    index('rule_test_evidence_fixture_set_idx').on(table.fixtureSetVersion),
+  ],
+);
+
+export const goldenFixtureSets = pgTable(
+  'golden_fixture_sets',
+  {
+    id: uuid('id').primaryKey(),
+    ruleVersionId: uuid('rule_version_id').notNull().references(() => ruleVersions.id),
+    fixtureSetVersion: text('fixture_set_version').notNull(),
+    contentHash: text('content_hash').notNull(),
+    redactionAttested: boolean('redaction_attested').notNull(),
+    professionalNote: text('professional_note').notNull(),
+    signedOffBy: uuid('signed_off_by').notNull(),
+    signedOffAt: timestamp('signed_off_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('golden_fixture_sets_version_unique').on(table.ruleVersionId, table.fixtureSetVersion),
+    uniqueIndex('golden_fixture_sets_hash_unique').on(table.ruleVersionId, table.contentHash),
+  ],
+);
+
+export const goldenFixtures = pgTable(
+  'golden_fixtures',
+  {
+    id: uuid('id').primaryKey(),
+    fixtureSetId: uuid('fixture_set_id').notNull().references(() => goldenFixtureSets.id),
+    caseId: text('case_id').notNull(),
+    scenario: text('scenario').notNull(),
+    input: jsonb('input').notNull(),
+    expected: jsonb('expected').notNull(),
+    explanation: text('explanation').notNull(),
+  },
+  (table) => [
+    uniqueIndex('golden_fixtures_case_unique').on(table.fixtureSetId, table.caseId),
+    index('golden_fixtures_scenario_idx').on(table.fixtureSetId, table.scenario),
+  ],
+);
+
+export const goldenFixtureExecutions = pgTable(
+  'golden_fixture_executions',
+  {
+    id: uuid('id').primaryKey(),
+    ruleVersionId: uuid('rule_version_id').notNull().references(() => ruleVersions.id),
+    fixtureSetId: uuid('fixture_set_id').notNull().references(() => goldenFixtureSets.id),
+    implementationKey: text('implementation_key').notNull(),
+    status: text('status').notNull(),
+    totalFixtures: integer('total_fixtures').notNull(),
+    passedFixtures: integer('passed_fixtures').notNull(),
+    artifactHash: text('artifact_hash').notNull(),
+    results: jsonb('results').notNull(),
+    executedBy: uuid('executed_by').notNull(),
+    executedAt: timestamp('executed_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('golden_fixture_executions_artifact_unique').on(table.ruleVersionId, table.artifactHash),
+    index('golden_fixture_executions_set_idx').on(table.fixtureSetId, table.executedAt),
+  ],
+);
+
+export const ruleShadowRuns = pgTable(
+  'rule_shadow_runs',
+  {
+    id: uuid('id').primaryKey(),
+    rulePackageId: uuid('rule_package_id').notNull().references(() => rulePackages.id),
+    baselineRuleVersionId: uuid('baseline_rule_version_id').notNull().references(() => ruleVersions.id),
+    candidateRuleVersionId: uuid('candidate_rule_version_id').notNull().references(() => ruleVersions.id),
+    fixtureSetId: uuid('fixture_set_id').notNull().references(() => goldenFixtureSets.id),
+    fixtureSetContentHash: text('fixture_set_content_hash').notNull(),
+    baselineImplementationKey: text('baseline_implementation_key').notNull(),
+    candidateImplementationKey: text('candidate_implementation_key').notNull(),
+    status: text('status').notNull(),
+    totalFixtures: integer('total_fixtures').notNull(),
+    identicalFixtures: integer('identical_fixtures').notNull(),
+    changedFixtures: integer('changed_fixtures').notNull(),
+    failedFixtures: integer('failed_fixtures').notNull(),
+    artifactHash: text('artifact_hash').notNull(),
+    differences: jsonb('differences').notNull(),
+    executedBy: uuid('executed_by').notNull(),
+    executedAt: timestamp('executed_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('rule_shadow_runs_artifact_unique').on(table.rulePackageId, table.artifactHash),
+    index('rule_shadow_runs_versions_idx').on(table.baselineRuleVersionId, table.candidateRuleVersionId),
+    index('rule_shadow_runs_package_time_idx').on(table.rulePackageId, table.executedAt),
+  ],
+);
+
+export const ruleVersionApprovals = pgTable(
+  'rule_version_approvals',
+  {
+    id: uuid('id').primaryKey(),
+    ruleVersionId: uuid('rule_version_id').notNull().references(() => ruleVersions.id),
+    note: text('note').notNull(),
+    approvedBy: uuid('approved_by').notNull(),
+    approvedAt: timestamp('approved_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('rule_version_approvals_version_unique').on(table.ruleVersionId),
+    index('rule_version_approvals_approved_at_idx').on(table.approvedAt),
+  ],
+);
+
+export const ruleReleaseSchedules = pgTable(
+  'rule_release_schedules',
+  {
+    id: uuid('id').primaryKey(),
+    ruleVersionId: uuid('rule_version_id').notNull().references(() => ruleVersions.id),
+    activationAt: timestamp('activation_at', { withTimezone: true }).notNull(),
+    note: text('note').notNull(),
+    scheduledBy: uuid('scheduled_by').notNull(),
+    scheduledAt: timestamp('scheduled_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('rule_release_schedules_version_unique').on(table.ruleVersionId),
+    index('rule_release_schedules_activation_idx').on(table.activationAt),
+  ],
+);
+
+export const ruleReleaseEvents = pgTable(
+  'rule_release_events',
+  {
+    id: uuid('id').primaryKey(),
+    ruleVersionId: uuid('rule_version_id').notNull().references(() => ruleVersions.id),
+    eventType: text('event_type').notNull(),
+    fromStatus: text('from_status').notNull(),
+    toStatus: text('to_status').notNull(),
+    relatedRuleVersionId: uuid('related_rule_version_id'),
+    note: text('note').notNull(),
+    actedBy: uuid('acted_by').notNull(),
+    actedAt: timestamp('acted_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index('rule_release_events_version_idx').on(table.ruleVersionId, table.actedAt),
+    index('rule_release_events_type_idx').on(table.eventType, table.actedAt),
+  ],
+);
+
+export const ruleVersionPolicySources = pgTable(
+  'rule_version_policy_sources',
+  {
+    ruleVersionId: uuid('rule_version_id').notNull().references(() => ruleVersions.id),
+    policySourceId: uuid('policy_source_id').notNull().references(() => policySources.id),
+  },
+  (table) => [
+    uniqueIndex('rule_version_policy_sources_unique').on(table.ruleVersionId, table.policySourceId),
+    index('rule_version_policy_sources_source_idx').on(table.policySourceId),
+  ],
+);
+
+export const calculationRuns = pgTable(
+  'calculation_runs',
+  {
+    id: uuid('id').primaryKey(),
+    tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+    companyId: uuid('company_id').notNull().references(() => companies.id),
+    taxType: text('tax_type').notNull(),
+    periodStart: date('period_start').notNull(),
+    periodEnd: date('period_end').notNull(),
+    status: text('status').notNull(),
+    inputSnapshot: jsonb('input_snapshot').notNull(),
+    inputHash: text('input_hash').notNull(),
+    ruleVersionId: uuid('rule_version_id').references(() => ruleVersions.id),
+    ruleContentHash: text('rule_content_hash'),
+    decision: jsonb('decision'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    createdBy: uuid('created_by').notNull(),
+  },
+  (table) => [
+    index('calculation_runs_company_period_idx').on(table.tenantId, table.companyId, table.periodStart),
+    index('calculation_runs_status_idx').on(table.status, table.createdAt),
+    index('calculation_runs_input_hash_idx').on(table.inputHash),
+  ],
+);
+
+export const calculationRunFacts = pgTable(
+  'calculation_run_facts',
+  {
+    calculationRunId: uuid('calculation_run_id').notNull().references(() => calculationRuns.id),
+    businessEventId: uuid('business_event_id').notNull().references(() => businessEvents.id),
+  },
+  (table) => [
+    uniqueIndex('calculation_run_facts_unique').on(table.calculationRunId, table.businessEventId),
+    index('calculation_run_facts_event_idx').on(table.businessEventId),
+  ],
+);
+
+export const calculationRunSteps = pgTable(
+  'calculation_run_steps',
+  {
+    id: uuid('id').primaryKey(),
+    calculationRunId: uuid('calculation_run_id').notNull().references(() => calculationRuns.id),
+    sequence: integer('sequence').notNull(),
+    key: text('key').notNull(),
+    category: text('category').notNull(),
+    status: text('status').notNull(),
+    inputs: jsonb('inputs').notNull(),
+    output: jsonb('output').notNull(),
+    explanation: text('explanation').notNull(),
+  },
+  (table) => [
+    uniqueIndex('calculation_run_steps_sequence_unique').on(table.calculationRunId, table.sequence),
+    uniqueIndex('calculation_run_steps_key_unique').on(table.calculationRunId, table.key),
   ],
 );

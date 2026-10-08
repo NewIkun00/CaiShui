@@ -40,4 +40,5 @@ export interface LedgerSetupStore {
   save(record: SaveLedgerSetupRecord): Promise<SavedLedgerSetup>;
   find(tenantId: string, companyId: string): Promise<SavedLedgerSetup | null>;
   lockCurrentPeriod(record:{readonly tenantId:string;readonly companyId:string;readonly actorId:string;readonly traceId:string;readonly lockedAt:Date}):Promise<SavedLedgerSetup|null>;
+  reopenCurrentPeriod(record:{readonly tenantId:string;readonly companyId:string;readonly periodId:string}):Promise<SavedLedgerSetup|null>;
 }

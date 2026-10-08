@@ -4,6 +4,24 @@ export class TaxPeriodError extends Error {
   override readonly name = 'TaxPeriodError';
 }
 
+export type PeriodReopenStatus = 'pending' | 'approved' | 'rejected';
+export type PeriodReopenDecision = 'approve' | 'reject';
+
+export function decidePeriodReopen(input: {
+  readonly status: PeriodReopenStatus;
+  readonly requestedBy: string;
+  readonly decidedBy: string;
+  readonly decision: PeriodReopenDecision;
+  readonly reason: string;
+}): Exclude<PeriodReopenStatus, 'pending'> {
+  if (input.status !== 'pending') throw new TaxPeriodError('Only a pending reopen request can be decided');
+  if (input.requestedBy === input.decidedBy) {
+    throw new TaxPeriodError('The requester cannot decide their own reopen request');
+  }
+  if (input.reason.trim().length < 5) throw new TaxPeriodError('Decision reason must contain at least 5 characters');
+  return input.decision === 'approve' ? 'approved' : 'rejected';
+}
+
 function validDate(value: string): boolean {
   if (!DATE_PATTERN.test(value)) return false;
   const date = new Date(`${value}T00:00:00.000Z`);

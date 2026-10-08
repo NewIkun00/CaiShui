@@ -7,7 +7,7 @@
 1. 复制 `.env.example` 为 `.env`。
 2. 运行 `docker compose -f infrastructure/docker/compose.yml up -d`。
 3. 运行 `pnpm install`、`pnpm db:migrate`、`pnpm dev`。
-4. 用户 Web：<http://localhost:3000>；API 文档：<http://localhost:3001/docs>。
+4. 用户 Web：<http://localhost:3020>；API 文档：<http://localhost:3001/docs>。
 
 开发态身份由 `x-user-id` 和 `x-tenant-id` 请求头提供，只能在 `AUTH_MODE=development-headers` 时启用。生产环境启动检查会拒绝该模式。
 
@@ -20,5 +20,7 @@
 ```bash
 pnpm check
 ```
+
+`pnpm openapi:generate` 会从当前 API 源码启动隔离的内存实例，更新 `openapi/openapi.json` 和 `packages/api-client/src/generated.ts`。`pnpm openapi:check` 会在 CI 中拦截未同步的 Controller 契约变更；不要手工修改生成文件。
 
 业务规则不得写在 Controller、React 组件、ORM Hook 或队列 Processor 中。架构决策见 `docs/architecture/adr`。
