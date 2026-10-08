@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { FixtureWorkbench } from './fixture-workbench';
+import './rules-extra.css';
 
 export default function RulesPage() {
   return <main className="events-shell">

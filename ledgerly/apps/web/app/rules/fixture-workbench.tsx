@@ -7,7 +7,9 @@ import {
   rulePackageListResponseSchema,
   ruleShadowRunCreationResponseSchema,
   ruleShadowRunListResponseSchema,
+  ruleTestEvidenceSchema,
   ruleVersionListResponseSchema,
+  ruleVersionResponseSchema,
   type GoldenFixtureExecutionResponse,
   type GoldenFixtureSetResponse,
   type RulePackageResponse,
@@ -78,6 +80,7 @@ export function FixtureWorkbench() {
   const [redactionAttested, setRedactionAttested] = useState(false);
   const [fixturesText, setFixturesText] = useState(fixtureTemplate);
   const [execution, setExecution] = useState<GoldenFixtureExecutionResponse | null>(null);
+  const [testEvidenceNote, setTestEvidenceNote] = useState('');
   const [selectedShadow, setSelectedShadow] = useState<RuleShadowRunResponse | null>(null);
   const [pending, setPending] = useState(false);
   const [ready, setReady] = useState(false);
@@ -134,7 +137,7 @@ export function FixtureWorkbench() {
   }
 
   async function selectVersion(nextVersionId: string) {
-    setVersionId(nextVersionId); setFixtureSetId(''); setExecution(null);
+    setVersionId(nextVersionId); setFixtureSetId(''); setExecution(null); setTestEvidenceNote('');
     if (!packageId || !nextVersionId) { setFixtureSets([]); return; }
     setPending(true); setMessage('正在读取签审样本…');
     try {
@@ -184,6 +187,28 @@ export function FixtureWorkbench() {
     finally { setPending(false); }
   }
 
+  async function signTestEvidence() {
+    if (!packageId || !versionId || !currentVersion || !selectedFixture || !execution || execution.status !== 'passed') return;
+    const coveredScenarios = [...new Set(selectedFixture.fixtures.map((item) => item.scenario))];
+    const parsed = ruleTestEvidenceSchema.safeParse({
+      expectedVersion: currentVersion.recordVersion, fixtureSetVersion: selectedFixture.fixtureSetVersion,
+      totalFixtures: execution.totalFixtures, passedFixtures: execution.passedFixtures,
+      coveredScenarios, artifactHash: execution.artifactHash, note: testEvidenceNote,
+    });
+    if (!parsed.success) { setMessage('请填写至少 5 个字的测试签署结论。'); return; }
+    setPending(true); setMessage('正在签署全量黄金样本测试证据…');
+    try {
+      const response = await fetch(`${api()}/v1/rule-packages/${packageId}/versions/${versionId}/test-evidence`, {
+        method: 'POST', headers: headers(actorId, true), body: JSON.stringify(parsed.data),
+      });
+      if (!response.ok) throw new Error(await errorMessage(response, '测试证据签署失败。'));
+      const saved = ruleVersionResponseSchema.parse(await response.json());
+      setVersions((current) => current.map((item) => item.id === saved.id ? saved : item));
+      setTestEvidenceNote(''); setMessage('全量样本证据已由财税复核人签署，规则可进入独立审批。');
+    } catch (reason: unknown) { setMessage(reason instanceof Error ? reason.message : '测试证据签署失败。'); }
+    finally { setPending(false); }
+  }
+
   async function executeShadow() {
     if (!packageId || !baselineId || !candidateId || !fixtureSetId) { setMessage('请选择基准版本、候选版本和样本集。'); return; }
     setPending(true); setMessage('正在对同一签审样本执行新旧版本对比…');
@@ -227,9 +252,9 @@ export function FixtureWorkbench() {
       </form>
 
       <section className="fixture-evidence">
-        <header><div><p className="eyebrow">不可变执行证据</p><h2>样本执行</h2></div><select value={fixtureSetId} onChange={(event) => { setFixtureSetId(event.target.value); setExecution(null); }} disabled={!fixtureSets.length}><option value="">选择样本集</option>{fixtureSets.map((item) => <option key={item.id} value={item.id}>{item.fixtureSetVersion} · {item.fixtures.length} 例</option>)}</select></header>
+        <header><div><p className="eyebrow">不可变执行证据</p><h2>样本执行</h2></div><select value={fixtureSetId} onChange={(event) => { setFixtureSetId(event.target.value); setExecution(null); setTestEvidenceNote(''); }} disabled={!fixtureSets.length}><option value="">选择样本集</option>{fixtureSets.map((item) => <option key={item.id} value={item.id}>{item.fixtureSetVersion} · {item.fixtures.length} 例</option>)}</select></header>
         {selectedFixture ? <div className="fixture-summary"><span>签署人 <code>{selectedFixture.signedOffBy}</code></span><span>内容哈希 <code>{selectedFixture.contentHash}</code></span><button type="button" className="secondary" onClick={() => void executeFixtures()} disabled={pending}>运行全量样本</button></div> : <p className="rule-empty">当前版本还没有已签审样本集。</p>}
-        {execution && <div className={`execution-result ${execution.status}`}><strong>{execution.passedFixtures} / {execution.totalFixtures} 通过</strong><code>{execution.artifactHash}</code>{execution.results.filter((item) => !item.passed).map((item) => <span key={item.caseId}>{item.caseId}：{item.error ?? '实际输出与签审期望不一致'}</span>)}</div>}
+        {execution && <div className={`execution-result ${execution.status}`}><strong>{execution.passedFixtures} / {execution.totalFixtures} 通过</strong><code>{execution.artifactHash}</code>{execution.results.filter((item) => !item.passed).map((item) => <span key={item.caseId}>{item.caseId}：{item.error ?? '实际输出与签审期望不一致'}</span>)}{execution.status === 'passed' && currentVersion?.status === 'tax_reviewed' && <div className="evidence-signoff"><label>财税测试签署结论<textarea rows={2} value={testEvidenceNote} onChange={(event) => setTestEvidenceNote(event.target.value)} placeholder="说明六类样本全量通过、适用边界和当前结论" /></label><button type="button" className="secondary" disabled={pending || currentVersion.taxReviewedBy !== actorId} onClick={() => void signTestEvidence()}>签署测试证据</button><small>仅该版本的财税复核人可签署；哈希、样本数和场景覆盖必须与本次执行完全一致。</small></div>}</div>}
       </section>
 
       <section className="fixture-evidence shadow-panel">

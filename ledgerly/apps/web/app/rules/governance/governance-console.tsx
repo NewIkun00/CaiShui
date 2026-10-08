@@ -4,13 +4,17 @@ import {
   policySourceInputSchema,
   policySourceListResponseSchema,
   policySourceResponseSchema,
+  ruleActivationSchema,
+  ruleApprovalSchema,
   rulePackageInputSchema,
   rulePackageListResponseSchema,
   rulePackageResponseSchema,
+  ruleScheduleSchema,
   ruleVersionInputSchema,
   ruleVersionListResponseSchema,
   ruleVersionResponseSchema,
   ruleVersionReviewSchema,
+  ruleWithdrawalSchema,
   type PolicySourceResponse,
   type RulePackageResponse,
   type RuleVersionResponse,
@@ -58,6 +62,8 @@ export function GovernanceConsole() {
   const [packageId, setPackageId] = useState('');
   const [sourceIds, setSourceIds] = useState<string[]>([]);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
+  const [releaseNotes, setReleaseNotes] = useState<Record<string, string>>({});
+  const [activationTimes, setActivationTimes] = useState<Record<string, string>>({});
   const [activePanel, setActivePanel] = useState<'source' | 'package' | 'version'>('source');
   const [ready, setReady] = useState(false);
   const [pending, setPending] = useState(false);
@@ -175,6 +181,37 @@ export function GovernanceConsole() {
     finally { setPending(false); }
   }
 
+  async function release(version: RuleVersionResponse, action: 'approval' | 'schedule' | 'activation' | 'withdrawal') {
+    if (!packageId) return;
+    const note = releaseNotes[version.id] ?? '';
+    let input: { expectedVersion: number; note: string; activationAt?: string };
+    if (action === 'schedule') {
+      const localTime = activationTimes[version.id] ?? '';
+      const activationDate = new Date(localTime);
+      if (!localTime || Number.isNaN(activationDate.getTime())) { setMessage('请选择有效的未来激活时间。'); return; }
+      input = { expectedVersion: version.recordVersion, activationAt: activationDate.toISOString(), note };
+    } else input = { expectedVersion: version.recordVersion, note };
+    const schema = action === 'approval' ? ruleApprovalSchema : action === 'schedule' ? ruleScheduleSchema :
+      action === 'activation' ? ruleActivationSchema : ruleWithdrawalSchema;
+    const parsed = schema.safeParse(input);
+    if (!parsed.success) { setMessage(action === 'withdrawal' ? '撤回原因至少 10 个字。' : '操作说明至少 5 个字。'); return; }
+    const pendingMessages = { approval: '正在提交独立批准…', schedule: '正在安排规则激活…', activation: '正在执行规则激活…', withdrawal: '正在执行紧急撤回…' };
+    setPending(true); setMessage(pendingMessages[action]);
+    try {
+      const response = await fetch(`${api()}/v1/rule-packages/${packageId}/versions/${version.id}/${action}`, {
+        method: 'POST', headers: authHeaders(actorId, true), body: JSON.stringify(parsed.data),
+      });
+      if (!response.ok) throw new Error(await errorMessage(response, '发布流程操作失败。'));
+      const saved = ruleVersionResponseSchema.parse(await response.json());
+      setVersions((current) => current.map((item) => item.id === saved.id ? saved : item));
+      setReleaseNotes((current) => ({ ...current, [version.id]: '' }));
+      const successMessages = { approval: '独立批准已完成，仅批准人可安排激活。', schedule: '规则已安排激活，到期前不会生效。', activation: '规则已激活，同规则包上一活动版本会自动标记为已替代。', withdrawal: '规则已紧急撤回，完整记录已保留。' };
+      setMessage(successMessages[action]);
+      if (action === 'activation') await loadVersions(packageId);
+    } catch (reason: unknown) { setMessage(reason instanceof Error ? reason.message : '发布流程操作失败。'); }
+    finally { setPending(false); }
+  }
+
   if (!ready) return <section className="governance-shell"><div className="onboarding-card">正在读取规则治理目录…</div></section>;
   return <section className="governance-shell">
     <div className="governance-identity"><div><p className="eyebrow">开发态职责分离</p><strong>当前操作人</strong><span>编辑、工程复核、财税复核必须使用不同 UUID。</span></div><input aria-label="开发态操作人 UUID" value={actorId} onChange={(event) => setActorId(event.target.value)} /><button type="button" className="secondary" onClick={applyActor} disabled={pending}>应用操作人</button></div>
@@ -184,7 +221,7 @@ export function GovernanceConsole() {
 
     {activePanel === 'package' && <div className="governance-grid"><form className="onboarding-card governance-form" onSubmit={(event) => void createPackage(event)}><h2>创建稳定规则包</h2><label>稳定编码<input name="code" required placeholder="vat.cn-js.small-scale" /></label><label>规则包名称<input name="name" required /></label><label>税种<select name="taxType" defaultValue="vat">{Object.entries(taxTypeNames).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label><label>适用区域<input name="jurisdictions" required defaultValue="CN" placeholder="CN,CN-JS" /><small>多个编码使用英文逗号分隔。</small></label><label>边界说明<textarea name="description" rows={5} required placeholder="说明该规则包解决的问题和明确不适用范围。" /></label><button className="primary button" disabled={pending}>创建规则包</button></form><Catalog title="规则包目录" empty="尚无规则包。">{packages.map((item) => <button type="button" className={packageId === item.id ? 'selected' : ''} key={item.id} onClick={() => { setActivePanel('version'); void loadVersions(item.id); }}><strong>{item.name}</strong><span>{taxTypeNames[item.taxType]} · {item.jurisdictions.join(' / ')}</span><small>{item.description}</small><code>{item.code}</code></button>)}</Catalog></div>}
 
-    {activePanel === 'version' && <><div className="version-package-selector"><label>当前规则包<select value={packageId} onChange={(event) => void loadVersions(event.target.value)}><option value="">请选择</option>{packages.map((item) => <option value={item.id} key={item.id}>{item.name} · {item.code}</option>)}</select></label><span>草稿不会自动执行；只有完成职责分离和黄金样本验证后才能进入发布。</span></div><div className="governance-grid version-grid"><form className="onboarding-card governance-form" onSubmit={(event) => void createVersion(event)}><h2>创建规则草稿</h2><label>版本标识<input name="versionTag" required defaultValue={versionToday()} /></label><div className="governance-dates two"><label>生效日<input name="effectiveFrom" type="date" required defaultValue={today()} /></label><label>失效日（可选）<input name="effectiveTo" type="date" /></label></div><fieldset><legend>政策来源（至少一项）</legend>{sources.length === 0 ? <span>请先登记官方政策来源。</span> : sources.map((source) => <label className="source-check" key={source.id}><input type="checkbox" checked={sourceIds.includes(source.id)} onChange={(event) => setSourceIds((current) => event.target.checked ? [...current, source.id] : current.filter((id) => id !== source.id))} /><span>{source.documentNumber}<small>{source.title}</small></span></label>)}</fieldset><label>计算实现键<input name="calculationImplementation" required placeholder="vat-small-scale-v1" /><small>必须引用版本化纯函数；此处不填写公式。</small></label><label>纳税人身份<input name="taxpayerStatuses" required placeholder="small_scale" /></label><label>申报周期<input name="filingCycles" required placeholder="quarterly" /></label><label>行业标识<input name="industries" required placeholder="modern_service" /></label><label>必备标签<input name="requiredTags" placeholder="可留空，多项用逗号分隔" /></label><label>排除标签<input name="excludedTags" placeholder="可留空，多项用逗号分隔" /></label><label>参数 JSON<textarea name="parameters" rows={4} defaultValue="{}" required /><small>未获专业签审前保持空对象，禁止试猜税率。</small></label><label>规则解释<textarea name="explanation" rows={5} required placeholder="说明政策依据、适用范围、失败和转人工边界。" /></label><button className="primary button" disabled={pending || !packageId || sources.length === 0}>创建不可执行草稿</button></form><Catalog title="版本与复核轨迹" empty={packageId ? '该规则包尚无版本。' : '请先选择规则包。'}>{versions.map((version) => <article className="version-card" key={version.id}><header><div><strong>{version.versionTag}</strong><code>{version.calculationImplementation}</code></div><span className={`rule-status ${version.status}`}>{statusNames[version.status]}</span></header><small>编辑人 {version.createdBy}</small>{version.technicalReviewedBy && <small>工程复核 {version.technicalReviewedBy}</small>}{version.taxReviewedBy && <small>财税复核 {version.taxReviewedBy}</small>}<p>{version.explanation}</p>{(version.status === 'draft' || version.status === 'technical_reviewed') && <div className="review-box"><textarea rows={2} value={reviewNotes[version.id] ?? ''} onChange={(event) => setReviewNotes((current) => ({ ...current, [version.id]: event.target.value }))} placeholder="写明复核范围、证据和结论（至少 5 个字）" /><button type="button" className="secondary" disabled={pending} onClick={() => void review(version, version.status === 'draft' ? 'technical' : 'tax')}>{version.status === 'draft' ? '完成工程复核' : '完成财税复核'}</button></div>}{version.status === 'tax_reviewed' && <Link className="setup-action" href="/rules">进入黄金样本工作台</Link>}<details><summary>查看哈希与适用性</summary><code>{version.contentHash}</code><pre>{JSON.stringify(version.applicability, null, 2)}</pre></details></article>)}</Catalog></div></>}
+    {activePanel === 'version' && <><div className="version-package-selector"><label>当前规则包<select value={packageId} onChange={(event) => void loadVersions(event.target.value)}><option value="">请选择</option>{packages.map((item) => <option value={item.id} key={item.id}>{item.name} · {item.code}</option>)}</select></label><span>草稿不会自动执行；只有完成职责分离和黄金样本验证后才能进入发布。</span></div><div className="governance-grid version-grid"><form className="onboarding-card governance-form" onSubmit={(event) => void createVersion(event)}><h2>创建规则草稿</h2><label>版本标识<input name="versionTag" required defaultValue={versionToday()} /></label><div className="governance-dates two"><label>生效日<input name="effectiveFrom" type="date" required defaultValue={today()} /></label><label>失效日（可选）<input name="effectiveTo" type="date" /></label></div><fieldset><legend>政策来源（至少一项）</legend>{sources.length === 0 ? <span>请先登记官方政策来源。</span> : sources.map((source) => <label className="source-check" key={source.id}><input type="checkbox" checked={sourceIds.includes(source.id)} onChange={(event) => setSourceIds((current) => event.target.checked ? [...current, source.id] : current.filter((id) => id !== source.id))} /><span>{source.documentNumber}<small>{source.title}</small></span></label>)}</fieldset><label>计算实现键<input name="calculationImplementation" required placeholder="vat-small-scale-v1" /><small>必须引用版本化纯函数；此处不填写公式。</small></label><label>纳税人身份<input name="taxpayerStatuses" required placeholder="small_scale" /></label><label>申报周期<input name="filingCycles" required placeholder="quarterly" /></label><label>行业标识<input name="industries" required placeholder="modern_service" /></label><label>必备标签<input name="requiredTags" placeholder="可留空，多项用逗号分隔" /></label><label>排除标签<input name="excludedTags" placeholder="可留空，多项用逗号分隔" /></label><label>参数 JSON<textarea name="parameters" rows={4} defaultValue="{}" required /><small>未获专业签审前保持空对象，禁止试猜税率。</small></label><label>规则解释<textarea name="explanation" rows={5} required placeholder="说明政策依据、适用范围、失败和转人工边界。" /></label><button className="primary button" disabled={pending || !packageId || sources.length === 0}>创建不可执行草稿</button></form><Catalog title="版本与复核轨迹" empty={packageId ? '该规则包尚无版本。' : '请先选择规则包。'}>{versions.map((version) => <article className="version-card" key={version.id}><header><div><strong>{version.versionTag}</strong><code>{version.calculationImplementation}</code></div><span className={`rule-status ${version.status}`}>{statusNames[version.status]}</span></header><small>编辑人 {version.createdBy}</small>{version.technicalReviewedBy && <small>工程复核 {version.technicalReviewedBy}</small>}{version.taxReviewedBy && <small>财税复核 {version.taxReviewedBy}</small>}{version.testedBy && <small>测试签署 {version.testedBy}</small>}{version.approvedBy && <small>独立批准 {version.approvedBy}</small>}<p>{version.explanation}</p>{(version.status === 'draft' || version.status === 'technical_reviewed') && <div className="review-box"><textarea rows={2} value={reviewNotes[version.id] ?? ''} onChange={(event) => setReviewNotes((current) => ({ ...current, [version.id]: event.target.value }))} placeholder="写明复核范围、证据和结论（至少 5 个字）" /><button type="button" className="secondary" disabled={pending} onClick={() => void review(version, version.status === 'draft' ? 'technical' : 'tax')}>{version.status === 'draft' ? '完成工程复核' : '完成财税复核'}</button></div>}{version.status === 'tax_reviewed' && <Link className="setup-action" href="/rules">进入黄金样本工作台</Link>}{(['tested', 'approved', 'scheduled', 'active'] as const).includes(version.status as 'tested' | 'approved' | 'scheduled' | 'active') && <ReleaseActions version={version} pending={pending} note={releaseNotes[version.id] ?? ''} activationTime={activationTimes[version.id] ?? ''} setNote={(value) => setReleaseNotes((current) => ({ ...current, [version.id]: value }))} setActivationTime={(value) => setActivationTimes((current) => ({ ...current, [version.id]: value }))} onAction={(action) => void release(version, action)} />}<details><summary>查看哈希与适用性</summary><code>{version.contentHash}</code><pre>{JSON.stringify(version.applicability, null, 2)}</pre></details></article>)}</Catalog></div></>}
     {message && <p className={message.includes('失败') || message.includes('必须') || message.includes('禁止') ? 'form-error governance-message' : 'form-success governance-message'} role="status">{message}</p>}
   </section>;
 }
@@ -192,4 +229,20 @@ export function GovernanceConsole() {
 function Catalog({ title, empty, children }: { title: string; empty: string; children: React.ReactNode }) {
   const hasChildren = Array.isArray(children) ? children.length > 0 : Boolean(children);
   return <section className="governance-catalog"><h2>{title}</h2>{hasChildren ? children : <p className="rule-empty">{empty}</p>}</section>;
+}
+
+function ReleaseActions({ version, pending, note, activationTime, setNote, setActivationTime, onAction }: {
+  version: RuleVersionResponse; pending: boolean; note: string; activationTime: string;
+  setNote: (value: string) => void; setActivationTime: (value: string) => void;
+  onAction: (action: 'approval' | 'schedule' | 'activation' | 'withdrawal') => void;
+}) {
+  const action = version.status === 'tested' ? 'approval' : version.status === 'approved' ? 'schedule' : version.status === 'scheduled' ? 'activation' : 'withdrawal';
+  const labels = { approval: '独立批准规则', schedule: '安排未来激活', activation: '到期后激活', withdrawal: '紧急撤回规则' };
+  return <div className={`release-box ${action}`}>
+    {version.activationAt && <small>计划激活时间 {new Date(version.activationAt).toLocaleString('zh-CN')}</small>}
+    {action === 'schedule' && <label>激活时间<input type="datetime-local" value={activationTime} onChange={(event) => setActivationTime(event.target.value)} /></label>}
+    <label>{action === 'withdrawal' ? '撤回原因' : '操作说明'}<textarea rows={2} value={note} onChange={(event) => setNote(event.target.value)} placeholder={action === 'approval' ? '确认职责独立、全量样本和发布边界' : action === 'withdrawal' ? '说明异常、影响范围和后续处置' : '说明激活安排与生效边界'} /></label>
+    <button type="button" className="secondary" disabled={pending} onClick={() => onAction(action)}>{labels[action]}</button>
+    <small>{action === 'approval' ? '批准人必须未参与编辑、双重复核和测试签署。' : '只有独立批准人可执行此操作。'}</small>
+  </div>;
 }

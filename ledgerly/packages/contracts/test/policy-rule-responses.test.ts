@@ -3,8 +3,13 @@ import {
   goldenFixtureExecutionResponseSchema,
   goldenFixtureSetListResponseSchema,
   policySourceListResponseSchema,
+  ruleActivationSchema,
+  ruleApprovalSchema,
   rulePackageListResponseSchema,
+  ruleScheduleSchema,
+  ruleTestEvidenceSchema,
   ruleVersionListResponseSchema,
+  ruleWithdrawalSchema,
 } from '../src/index.js';
 
 const actorId = '10000000-0000-4000-8000-000000000001';
@@ -14,6 +19,18 @@ const fixtureSetId = '40000000-0000-4000-8000-000000000004';
 const now = '2026-10-08T00:00:00.000Z';
 
 describe('policy-rule workbench response contracts', () => {
+  it('validates signed evidence and every release command without embedding tax parameters', () => {
+    expect(ruleTestEvidenceSchema.parse({
+      expectedVersion: 3, fixtureSetVersion: '2026.10.08-1', totalFixtures: 6, passedFixtures: 6,
+      coveredScenarios: ['normal', 'boundary', 'cross_period', 'red_invoice', 'correction', 'exception'],
+      artifactHash: 'e'.repeat(64), note: '六类签审样本全量通过。',
+    }).passedFixtures).toBe(6);
+    expect(ruleApprovalSchema.parse({ expectedVersion: 4, note: '独立审批检查通过。' }).expectedVersion).toBe(4);
+    expect(ruleScheduleSchema.parse({ expectedVersion: 5, activationAt: '2099-10-08T16:00:00.000Z', note: '按计划安排未来激活。' }).activationAt).toContain('2099');
+    expect(ruleActivationSchema.parse({ expectedVersion: 6, note: '计划时间已到，执行激活。' }).expectedVersion).toBe(6);
+    expect(ruleWithdrawalSchema.parse({ expectedVersion: 7, note: '发现异常并确认紧急撤回规则版本。' }).expectedVersion).toBe(7);
+  });
+
   it('parses official policy source snapshots serialized over HTTP', () => {
     const result = policySourceListResponseSchema.parse({ items: [{
       id: '80000000-0000-4000-8000-000000000008', documentNumber: '测试公告〔2026〕1号',
