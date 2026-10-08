@@ -39,6 +39,23 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/companies/{companyId}/accounting-period/reopen-requests/{requestId}/decision": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 专业复核反结账申请；申请人与复核人必须分离，批准后原子解锁期间 */
+        readonly post: operations["AccountingPeriodController_decide"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/companies/{companyId}/accounting/chart-of-accounts": {
         readonly parameters: {
             readonly query?: never;
@@ -872,6 +889,11 @@ export interface operations {
                         readonly items: readonly {
                             /** Format: uuid */
                             readonly companyId: string;
+                            /** Format: date-time */
+                            readonly decidedAt?: string;
+                            /** Format: uuid */
+                            readonly decidedBy?: string;
+                            readonly decisionReason?: string;
                             /** Format: uuid */
                             readonly id: string;
                             /** Format: date */
@@ -886,7 +908,7 @@ export interface operations {
                             /** Format: uuid */
                             readonly requestedBy: string;
                             /** @enum {string} */
-                            readonly status: "pending";
+                            readonly status: "pending" | "approved" | "rejected";
                             readonly version: number;
                         }[];
                     };
@@ -924,6 +946,11 @@ export interface operations {
                         readonly request: {
                             /** Format: uuid */
                             readonly companyId: string;
+                            /** Format: date-time */
+                            readonly decidedAt?: string;
+                            /** Format: uuid */
+                            readonly decidedBy?: string;
+                            readonly decisionReason?: string;
                             /** Format: uuid */
                             readonly id: string;
                             /** Format: date */
@@ -938,9 +965,67 @@ export interface operations {
                             /** Format: uuid */
                             readonly requestedBy: string;
                             /** @enum {string} */
-                            readonly status: "pending";
+                            readonly status: "pending" | "approved" | "rejected";
                             readonly version: number;
                         };
+                    };
+                };
+            };
+        };
+    };
+    readonly AccountingPeriodController_decide: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly requestId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @enum {string} */
+                    readonly decision: "approve" | "reject";
+                    readonly expectedVersion: number;
+                    readonly reason: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly decidedAt?: string;
+                        /** Format: uuid */
+                        readonly decidedBy?: string;
+                        readonly decisionReason?: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        /** Format: date */
+                        readonly periodEnd: string;
+                        /** Format: uuid */
+                        readonly periodId: string;
+                        /** Format: date */
+                        readonly periodStart: string;
+                        readonly reason: string;
+                        /** Format: date-time */
+                        readonly requestedAt: string;
+                        /** Format: uuid */
+                        readonly requestedBy: string;
+                        /** @enum {string} */
+                        readonly status: "pending" | "approved" | "rejected";
+                        readonly version: number;
                     };
                 };
             };

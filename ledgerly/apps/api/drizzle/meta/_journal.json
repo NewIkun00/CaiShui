@@ -28,6 +28,7 @@
     { "idx": 23, "version": "7", "when": 1791475210000, "tag": "0023_reconciliation_check_runs", "breakpoints": true },
     { "idx": 24, "version": "7", "when": 1791475211000, "tag": "0024_reconciliation_account_checks", "breakpoints": true },
     { "idx": 25, "version": "7", "when": 1791475212000, "tag": "0025_bank_statement_scope", "breakpoints": true },
-    { "idx": 26, "version": "7", "when": 1791475213000, "tag": "0026_subledger_reconciliation_checks", "breakpoints": true }
+    { "idx": 26, "version": "7", "when": 1791475213000, "tag": "0026_subledger_reconciliation_checks", "breakpoints": true },
+    { "idx": 27, "version": "7", "when": 1791475214000, "tag": "0027_period_reopen_decisions", "breakpoints": true }
   ]
 }

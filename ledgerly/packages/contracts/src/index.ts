@@ -364,9 +364,12 @@ export const financialReportsResponseSchema=z.object({
 export type FinancialReportsResponse=z.infer<typeof financialReportsResponseSchema>;
 export const periodReopenRequestInputSchema=z.object({reason:z.string().trim().min(5).max(500)});
 export type PeriodReopenRequestInput=z.infer<typeof periodReopenRequestInputSchema>;
+export const periodReopenDecisionInputSchema=z.object({decision:z.enum(['approve','reject']),reason:z.string().trim().min(5).max(500),expectedVersion:z.number().int().positive()});
+export type PeriodReopenDecisionInput=z.infer<typeof periodReopenDecisionInputSchema>;
 export const periodReopenRequestResponseSchema=z.object({
   id:z.string().uuid(),companyId:z.string().uuid(),periodId:z.string().uuid(),periodStart:z.iso.date(),periodEnd:z.iso.date(),
-  reason:z.string(),status:z.literal('pending'),version:z.number().int().positive(),requestedAt:z.string().datetime(),requestedBy:z.string().uuid(),
+  reason:z.string(),status:z.enum(['pending','approved','rejected']),version:z.number().int().positive(),requestedAt:z.string().datetime(),requestedBy:z.string().uuid(),
+  decisionReason:z.string().optional(),decidedAt:z.string().datetime().optional(),decidedBy:z.string().uuid().optional(),
 });
 export type PeriodReopenRequestResponse=z.infer<typeof periodReopenRequestResponseSchema>;
 export const periodReopenRequestListResponseSchema=z.object({items:z.array(periodReopenRequestResponseSchema)});

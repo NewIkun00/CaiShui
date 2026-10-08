@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   bootstrapTenantResponseSchema,
   ledgerSetupResponseSchema,
+  periodReopenDecisionInputSchema,
   periodReopenRequestCreationResponseSchema,
+  periodReopenRequestResponseSchema,
   reconciliationOverviewSchema,
   scopeEvaluationSchema,
 } from '../src/index.js';
@@ -60,6 +62,14 @@ describe('onboarding and review response contracts', () => {
         requestedAt: now, requestedBy: '90000000-0000-4000-8000-000000000009',
       },
     }).created).toBe(true);
+    expect(periodReopenDecisionInputSchema.parse({decision:'approve',reason:'已完成凭证证据复核',expectedVersion:1}).decision).toBe('approve');
+    expect(periodReopenRequestResponseSchema.parse({
+      id:'80000000-0000-4000-8000-000000000008',companyId,
+      periodId:'70000000-0000-4000-8000-000000000007',periodStart:'2026-10-01',periodEnd:'2026-12-31',
+      reason:'发现需复核的原始凭证',status:'approved',version:2,requestedAt:now,
+      requestedBy:'90000000-0000-4000-8000-000000000009',decisionReason:'已完成凭证证据复核',
+      decidedAt:now,decidedBy:'a0000000-0000-4000-8000-000000000010',
+    }).status).toBe('approved');
     expect(reconciliationOverviewSchema.parse({ invoices: [], payments: [], settlements: [] }))
       .toEqual({ invoices: [], payments: [], settlements: [] });
   });

@@ -42,6 +42,8 @@ export class MemoryLedgerSetupStore implements LedgerSetupStore {
 
   lockCurrentPeriod(record:{readonly tenantId:string;readonly companyId:string;readonly actorId:string;readonly traceId:string;readonly lockedAt:Date}):Promise<SavedLedgerSetup|null>{const key=this.key(record.tenantId,record.companyId),current=this.records.get(key);if(!current)return Promise.resolve(null);if(current.periodStatus==='locked')return Promise.resolve(current);const locked=Object.freeze({...current,periodStatus:'locked' as const});this.records.set(key,locked);return Promise.resolve(locked);}
 
+  reopenCurrentPeriod(record:{readonly tenantId:string;readonly companyId:string;readonly periodId:string}):Promise<SavedLedgerSetup|null>{const key=this.key(record.tenantId,record.companyId),current=this.records.get(key);if(!current||current.periodId!==record.periodId||current.periodStatus!=='locked')return Promise.resolve(null);const reopened=Object.freeze({...current,periodStatus:'open' as const});this.records.set(key,reopened);return Promise.resolve(reopened);}
+
   private key(tenantId: string, companyId: string): string {
     return `${tenantId}:${companyId}`;
   }

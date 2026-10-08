@@ -1,6 +1,9 @@
 export { Money, MoneyError } from './money.js';
 export { Rate, RateError } from './rate.js';
-export { TaxPeriod, TaxPeriodError } from './tax-period.js';
+export {
+  TaxPeriod, TaxPeriodError, decidePeriodReopen,
+  type PeriodReopenDecision, type PeriodReopenStatus,
+} from './tax-period.js';
 export type { Company, CompanyRepository, Tenant, TenantRepository } from './tenant.js';
 export { CompanyStatus, createCompany, createTenant } from './tenant.js';
 export {

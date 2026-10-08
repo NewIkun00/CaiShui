@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { createOpeningBalanceEntries } from '@ledgerly/domain';
 import { randomUUID } from 'node:crypto';
 import { DATABASE, type Database } from '../../../infrastructure/database/database.provider.js';
@@ -118,4 +118,6 @@ export class PostgresLedgerSetupStore implements LedgerSetupStore {
   }
 
   async lockCurrentPeriod(record:{readonly tenantId:string;readonly companyId:string;readonly actorId:string;readonly traceId:string;readonly lockedAt:Date}):Promise<SavedLedgerSetup|null>{const current=await this.find(record.tenantId,record.companyId);if(!current)return null;if(current.periodStatus==='locked')return current;await this.db.transaction(async tx=>{await tx.update(accountingPeriods).set({status:'locked',version:2,updatedAt:record.lockedAt,updatedBy:record.actorId}).where(and(eq(accountingPeriods.id,current.periodId),eq(accountingPeriods.tenantId,record.tenantId),eq(accountingPeriods.companyId,record.companyId),eq(accountingPeriods.status,'open')));await tx.insert(auditEvents).values({id:randomUUID(),tenantId:record.tenantId,actorId:record.actorId,action:'accounting_period.lock',resourceType:'accounting_period',resourceId:current.periodId,outcome:'success',traceId:record.traceId,metadata:{periodStart:current.periodStart,periodEnd:current.periodEnd}});await tx.insert(outboxEvents).values({id:randomUUID(),tenantId:record.tenantId,eventType:'accounting_period.locked.v1',aggregateType:'accounting_period',aggregateId:current.periodId,payload:{companyId:record.companyId,periodStart:current.periodStart,periodEnd:current.periodEnd},occurredAt:record.lockedAt});});return{...current,periodStatus:'locked'};}
+
+  async reopenCurrentPeriod(record:{readonly tenantId:string;readonly companyId:string;readonly periodId:string}):Promise<SavedLedgerSetup|null>{const current=await this.find(record.tenantId,record.companyId);if(!current||current.periodId!==record.periodId||current.periodStatus!=='locked')return null;const[updated]=await this.db.update(accountingPeriods).set({status:'open',version:sql`${accountingPeriods.version} + 1`}).where(and(eq(accountingPeriods.id,record.periodId),eq(accountingPeriods.tenantId,record.tenantId),eq(accountingPeriods.companyId,record.companyId),eq(accountingPeriods.status,'locked'))).returning({id:accountingPeriods.id});return updated?{...current,periodStatus:'open'}:null;}
 }

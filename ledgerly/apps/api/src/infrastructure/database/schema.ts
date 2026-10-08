@@ -179,6 +179,7 @@ export const periodReopenRequests = pgTable(
     periodStart:date('period_start').notNull(),periodEnd:date('period_end').notNull(),
     reason:text('reason').notNull(),status:text('status').notNull().default('pending'),
     requestedAt:timestamp('requested_at',{withTimezone:true}).notNull(),requestedBy:uuid('requested_by').notNull(),
+    decisionReason:text('decision_reason'),decidedAt:timestamp('decided_at',{withTimezone:true}),decidedBy:uuid('decided_by'),
     ...auditColumns,
   },
   (table)=>[
