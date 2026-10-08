@@ -381,8 +381,8 @@ export type ReconciliationOverview=z.infer<typeof reconciliationOverviewSchema>;
 
 export const reconciliationIssueTriageStatusSchema=z.enum(['open','investigating','needs_documents','ready_for_recheck']);
 export const reconciliationCheckIssueSchema=z.object({
-  id:z.string().uuid(),code:z.enum(['INVOICE_OUTSTANDING','PAYMENT_UNALLOCATED']),severity:z.enum(['yellow','red']),
-  subjectType:z.enum(['invoice','payment']),subjectId:z.string().uuid(),amount:z.string(),message:z.string(),suggestedAction:z.string(),
+  id:z.string().uuid(),code:z.enum(['INVOICE_OUTSTANDING','PAYMENT_UNALLOCATED','ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH','TRIAL_BALANCE_UNBALANCED']),severity:z.enum(['yellow','red']),
+  subjectType:z.enum(['invoice','payment','account','ledger']),subjectId:z.string().min(1),amount:z.string(),message:z.string(),suggestedAction:z.string(),
   triageStatus:reconciliationIssueTriageStatusSchema,triageVersion:z.number().int().positive(),triageNote:z.string().optional(),
   triagedBy:z.string().uuid().optional(),triagedAt:z.string().datetime().optional(),
 }).strict();
@@ -391,6 +391,7 @@ export const reconciliationCheckRunResponseSchema=z.object({
   inputSnapshot:z.object({
     invoices:z.array(z.object({invoiceId:z.string().uuid(),invoiceNumber:z.string(),outstandingAmount:z.string()}).strict()),
     payments:z.array(z.object({paymentEventId:z.string().uuid(),description:z.string(),unallocatedAmount:z.string()}).strict()),
+    accounts:z.array(z.object({accountCode:z.string(),accountName:z.string(),openingDebit:z.string(),openingCredit:z.string(),debitMovement:z.string(),creditMovement:z.string(),endingDebit:z.string(),endingCredit:z.string()}).strict()),
   }).strict(),
   inputHash:z.string().regex(/^[0-9a-f]{64}$/),grade:z.enum(['green','yellow','red']),blocksFiling:z.boolean(),
   totalIssues:z.number().int().nonnegative(),yellowIssues:z.number().int().nonnegative(),redIssues:z.number().int().nonnegative(),

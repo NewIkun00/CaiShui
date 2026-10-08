@@ -24,7 +24,7 @@ async function fixture() {
   const organizations = new MemoryOrganizationStore(); const scopes = new MemoryScopeStore();
   const setups = new MemoryLedgerSetupStore(); const parties = new MemoryCounterpartyStore();
   const events = new MemoryBusinessEventStore(); const invoices = new MemoryInvoiceStore();
-  const settlements = new MemorySettlementStore(); const checks = new MemoryReconciliationCheckStore();
+  const settlements = new MemorySettlementStore(); const checks = new MemoryReconciliationCheckStore(); const vouchers = new MemoryVoucherStore();
   const created = await new OrganizationService(organizations).bootstrap({
     tenantName: '测试', company: { name: '常州市测试科技有限公司', unifiedSocialCreditCode: '913204001234567890', provinceCode: '32', cityCode: '3204' },
   }, { actorId, traceId: 'create' });
@@ -45,8 +45,8 @@ async function fixture() {
     .create(created.company.id, { name: '示例客户', type: 'customer' }, context);
   const invoiceService = new InvoiceService(setups, parties, invoices, new MockInvoiceExtractionProvider());
   const eventService = new BusinessEventService(setups, parties, events);
-  const service = new ReconciliationService(invoices, events, settlements, setups, checks);
-  const accounting = new AccountingService(setups, events, new MemoryVoucherStore(), settlements);
+  const service = new ReconciliationService(invoices, events, settlements, setups, checks, vouchers);
+  const accounting = new AccountingService(setups, events, vouchers, settlements);
   async function invoice(number: string, total = '106.00') {
     const draft = await invoiceService.create(created.company.id, {
       direction: 'output', kind: 'ordinary', color: 'blue', invoiceNumber: number, issuedOn: '2026-10-08',
@@ -73,6 +73,10 @@ describe('ReconciliationService', () => {
     expect(overview.invoices[0]?.status).toBe('settled'); expect(overview.payments[0]?.status).toBe('settled');
     const generated = await accounting.generate(created.company.id, pay.id, context);
     expect(generated.voucher.entries.map((item) => item.accountCode)).toEqual(['1002', '1122']);
+    await accounting.confirm(created.company.id, generated.voucher.id, generated.voucher.version, context);
+    const check = await service.runCheck(created.company.id, context);
+    expect(check).toMatchObject({ grade: 'green', blocksFiling: false, totalIssues: 0 });
+    expect(check.inputSnapshot.accounts.map((item) => item.accountCode)).toEqual(['1002', '1122']);
   });
 
   it('supports one invoice settled by multiple payments', async () => {

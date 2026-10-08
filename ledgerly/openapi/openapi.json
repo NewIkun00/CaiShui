@@ -4971,11 +4971,55 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "accounts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accountCode": {
+                                "type": "string"
+                              },
+                              "accountName": {
+                                "type": "string"
+                              },
+                              "openingDebit": {
+                                "type": "string"
+                              },
+                              "openingCredit": {
+                                "type": "string"
+                              },
+                              "debitMovement": {
+                                "type": "string"
+                              },
+                              "creditMovement": {
+                                "type": "string"
+                              },
+                              "endingDebit": {
+                                "type": "string"
+                              },
+                              "endingCredit": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "accountCode",
+                              "accountName",
+                              "openingDebit",
+                              "openingCredit",
+                              "debitMovement",
+                              "creditMovement",
+                              "endingDebit",
+                              "endingCredit"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "invoices",
-                        "payments"
+                        "payments",
+                        "accounts"
                       ],
                       "additionalProperties": false
                     },
@@ -5023,7 +5067,9 @@
                             "type": "string",
                             "enum": [
                               "INVOICE_OUTSTANDING",
-                              "PAYMENT_UNALLOCATED"
+                              "PAYMENT_UNALLOCATED",
+                              "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH",
+                              "TRIAL_BALANCE_UNBALANCED"
                             ]
                           },
                           "severity": {
@@ -5037,13 +5083,14 @@
                             "type": "string",
                             "enum": [
                               "invoice",
-                              "payment"
+                              "payment",
+                              "account",
+                              "ledger"
                             ]
                           },
                           "subjectId": {
                             "type": "string",
-                            "format": "uuid",
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            "minLength": 1
                           },
                           "amount": {
                             "type": "string"
@@ -5251,11 +5298,55 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "accounts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "accountCode": {
+                                "type": "string"
+                              },
+                              "accountName": {
+                                "type": "string"
+                              },
+                              "openingDebit": {
+                                "type": "string"
+                              },
+                              "openingCredit": {
+                                "type": "string"
+                              },
+                              "debitMovement": {
+                                "type": "string"
+                              },
+                              "creditMovement": {
+                                "type": "string"
+                              },
+                              "endingDebit": {
+                                "type": "string"
+                              },
+                              "endingCredit": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "accountCode",
+                              "accountName",
+                              "openingDebit",
+                              "openingCredit",
+                              "debitMovement",
+                              "creditMovement",
+                              "endingDebit",
+                              "endingCredit"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "invoices",
-                        "payments"
+                        "payments",
+                        "accounts"
                       ],
                       "additionalProperties": false
                     },
@@ -5303,7 +5394,9 @@
                             "type": "string",
                             "enum": [
                               "INVOICE_OUTSTANDING",
-                              "PAYMENT_UNALLOCATED"
+                              "PAYMENT_UNALLOCATED",
+                              "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH",
+                              "TRIAL_BALANCE_UNBALANCED"
                             ]
                           },
                           "severity": {
@@ -5317,13 +5410,14 @@
                             "type": "string",
                             "enum": [
                               "invoice",
-                              "payment"
+                              "payment",
+                              "account",
+                              "ledger"
                             ]
                           },
                           "subjectId": {
                             "type": "string",
-                            "format": "uuid",
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            "minLength": 1
                           },
                           "amount": {
                             "type": "string"
@@ -5515,7 +5609,9 @@
                       "type": "string",
                       "enum": [
                         "INVOICE_OUTSTANDING",
-                        "PAYMENT_UNALLOCATED"
+                        "PAYMENT_UNALLOCATED",
+                        "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH",
+                        "TRIAL_BALANCE_UNBALANCED"
                       ]
                     },
                     "severity": {
@@ -5529,13 +5625,14 @@
                       "type": "string",
                       "enum": [
                         "invoice",
-                        "payment"
+                        "payment",
+                        "account",
+                        "ledger"
                       ]
                     },
                     "subjectId": {
                       "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      "minLength": 1
                     },
                     "amount": {
                       "type": "string"

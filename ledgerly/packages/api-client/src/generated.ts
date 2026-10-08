@@ -2817,6 +2817,16 @@ export interface operations {
                         readonly id: string;
                         readonly inputHash: string;
                         readonly inputSnapshot: {
+                            readonly accounts: readonly {
+                                readonly accountCode: string;
+                                readonly accountName: string;
+                                readonly creditMovement: string;
+                                readonly debitMovement: string;
+                                readonly endingCredit: string;
+                                readonly endingDebit: string;
+                                readonly openingCredit: string;
+                                readonly openingDebit: string;
+                            }[];
                             readonly invoices: readonly {
                                 /** Format: uuid */
                                 readonly invoiceId: string;
@@ -2833,16 +2843,15 @@ export interface operations {
                         readonly issues: readonly {
                             readonly amount: string;
                             /** @enum {string} */
-                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED";
+                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED";
                             /** Format: uuid */
                             readonly id: string;
                             readonly message: string;
                             /** @enum {string} */
                             readonly severity: "yellow" | "red";
-                            /** Format: uuid */
                             readonly subjectId: string;
                             /** @enum {string} */
-                            readonly subjectType: "invoice" | "payment";
+                            readonly subjectType: "invoice" | "payment" | "account" | "ledger";
                             readonly suggestedAction: string;
                             /** Format: date-time */
                             readonly triagedAt?: string;
@@ -2900,16 +2909,15 @@ export interface operations {
                     readonly "application/json": {
                         readonly amount: string;
                         /** @enum {string} */
-                        readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED";
+                        readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED";
                         /** Format: uuid */
                         readonly id: string;
                         readonly message: string;
                         /** @enum {string} */
                         readonly severity: "yellow" | "red";
-                        /** Format: uuid */
                         readonly subjectId: string;
                         /** @enum {string} */
-                        readonly subjectType: "invoice" | "payment";
+                        readonly subjectType: "invoice" | "payment" | "account" | "ledger";
                         readonly suggestedAction: string;
                         /** Format: date-time */
                         readonly triagedAt?: string;
@@ -2957,6 +2965,16 @@ export interface operations {
                         readonly id: string;
                         readonly inputHash: string;
                         readonly inputSnapshot: {
+                            readonly accounts: readonly {
+                                readonly accountCode: string;
+                                readonly accountName: string;
+                                readonly creditMovement: string;
+                                readonly debitMovement: string;
+                                readonly endingCredit: string;
+                                readonly endingDebit: string;
+                                readonly openingCredit: string;
+                                readonly openingDebit: string;
+                            }[];
                             readonly invoices: readonly {
                                 /** Format: uuid */
                                 readonly invoiceId: string;
@@ -2973,16 +2991,15 @@ export interface operations {
                         readonly issues: readonly {
                             readonly amount: string;
                             /** @enum {string} */
-                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED";
+                            readonly code: "INVOICE_OUTSTANDING" | "PAYMENT_UNALLOCATED" | "ACCOUNT_BALANCE_ROLLFORWARD_MISMATCH" | "TRIAL_BALANCE_UNBALANCED";
                             /** Format: uuid */
                             readonly id: string;
                             readonly message: string;
                             /** @enum {string} */
                             readonly severity: "yellow" | "red";
-                            /** Format: uuid */
                             readonly subjectId: string;
                             /** @enum {string} */
-                            readonly subjectType: "invoice" | "payment";
+                            readonly subjectType: "invoice" | "payment" | "account" | "ledger";
                             readonly suggestedAction: string;
                             /** Format: date-time */
                             readonly triagedAt?: string;

@@ -4,7 +4,7 @@ import type {
 
 export interface SavedReconciliationCheckIssue {
   readonly id:string;readonly code:ReconciliationIssueCode;readonly severity:'yellow'|'red';
-  readonly subjectType:'invoice'|'payment';readonly subjectId:string;readonly amount:string;
+  readonly subjectType:'invoice'|'payment'|'account'|'ledger';readonly subjectId:string;readonly amount:string;
   readonly message:string;readonly suggestedAction:string;readonly triageStatus:ReconciliationIssueTriageStatus;
   readonly triageVersion:number;readonly triageNote?:string|undefined;readonly triagedBy?:string|undefined;
   readonly triagedAt?:Date|undefined;
@@ -12,6 +12,7 @@ export interface SavedReconciliationCheckIssue {
 export interface ReconciliationCheckInputSnapshot {
   readonly invoices:readonly {readonly invoiceId:string;readonly invoiceNumber:string;readonly outstandingAmount:string}[];
   readonly payments:readonly {readonly paymentEventId:string;readonly description:string;readonly unallocatedAmount:string}[];
+  readonly accounts:readonly {readonly accountCode:string;readonly accountName:string;readonly openingDebit:string;readonly openingCredit:string;readonly debitMovement:string;readonly creditMovement:string;readonly endingDebit:string;readonly endingCredit:string}[];
 }
 export interface SavedReconciliationCheckRun {
   readonly id:string;readonly tenantId:string;readonly companyId:string;readonly periodId:string;

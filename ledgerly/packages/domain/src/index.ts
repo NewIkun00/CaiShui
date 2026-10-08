@@ -93,6 +93,7 @@ export {
   ReconciliationError,
   ReconciliationIssueTriageStatus,
   type ReconciliationCheckIssue,
+  type ReconciliationCheckAccount,
   type ReconciliationCheckResult,
   type ReconciliationIssueCode,
   type Settlement,

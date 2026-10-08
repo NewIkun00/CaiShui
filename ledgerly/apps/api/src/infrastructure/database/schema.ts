@@ -455,7 +455,7 @@ export const reconciliationCheckRuns=pgTable('reconciliation_check_runs',{
 export const reconciliationCheckIssues=pgTable('reconciliation_check_issues',{
   id:uuid('id').primaryKey(),runId:uuid('run_id').notNull().references(()=>reconciliationCheckRuns.id),
   code:text('code').notNull(),severity:text('severity').notNull(),subjectType:text('subject_type').notNull(),
-  subjectId:uuid('subject_id').notNull(),amount:numeric('amount',{precision:20,scale:2}).notNull(),message:text('message').notNull(),
+  subjectId:text('subject_id').notNull(),amount:numeric('amount',{precision:20,scale:2}).notNull(),message:text('message').notNull(),
   suggestedAction:text('suggested_action').notNull(),triageStatus:text('triage_status').notNull().default('open'),
   triageVersion:integer('triage_version').notNull().default(1),triageNote:text('triage_note'),triagedBy:uuid('triaged_by'),
   triagedAt:timestamp('triaged_at',{withTimezone:true}),

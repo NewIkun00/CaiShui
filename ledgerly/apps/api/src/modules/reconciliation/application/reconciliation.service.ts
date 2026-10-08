@@ -6,6 +6,8 @@ import {
 } from '@ledgerly/domain';
 import { createHash, randomUUID } from 'node:crypto';
 import { BUSINESS_EVENT_STORE, type BusinessEventStore } from '../../business-event/application/business-event-store.js';
+import { buildLedger } from '../../accounting/application/build-ledger.js';
+import { VOUCHER_STORE, type VoucherStore } from '../../accounting/application/voucher-store.js';
 import { INVOICE_STORE, type InvoiceStore } from '../../invoice/application/invoice-store.js';
 import { assertAccountingPeriodOpen } from '../../ledger-setup/application/accounting-period-guard.js';
 import { LEDGER_SETUP_STORE, type LedgerSetupStore } from '../../ledger-setup/application/ledger-setup-store.js';
@@ -23,6 +25,7 @@ export class ReconciliationService {
     @Inject(SETTLEMENT_STORE) private readonly settlements: SettlementStore,
     @Inject(LEDGER_SETUP_STORE) private readonly ledgerSetups: LedgerSetupStore,
     @Inject(RECONCILIATION_CHECK_STORE) private readonly checks: ReconciliationCheckStore,
+    @Inject(VOUCHER_STORE) private readonly vouchers: VoucherStore,
   ) {}
 
   async create(companyId: string, input: SettlementInputRequest, context: RequestContext) {
@@ -95,12 +98,14 @@ export class ReconciliationService {
     if(!context.tenantId)throw new NotFoundException('Company not found');
     const setup=await this.ledgerSetups.find(context.tenantId,companyId);
     if(!setup)throw new ConflictException({code:'LEDGER_SETUP_REQUIRED',message:'Ledger setup is required'});
-    const overview=await this.overview(companyId,context);
+    const [overview,vouchers]=await Promise.all([this.overview(companyId,context),this.vouchers.list(context.tenantId,companyId)]);
+    const ledger=buildLedger(setup,vouchers);
     const snapshot={
       invoices:overview.invoices.map(item=>({invoiceId:item.invoiceId,invoiceNumber:item.invoiceNumber,outstandingAmount:item.outstandingAmount})).sort((a,b)=>a.invoiceId.localeCompare(b.invoiceId)),
       payments:overview.payments.map(item=>({paymentEventId:item.paymentEventId,description:item.description,unallocatedAmount:item.unallocatedAmount})).sort((a,b)=>a.paymentEventId.localeCompare(b.paymentEventId)),
+      accounts:[...ledger.trialBalance].sort((a,b)=>a.accountCode.localeCompare(b.accountCode)),
     };
-    const result=runReconciliationChecks(snapshot),createdAt=new Date();
+    const result=runReconciliationChecks({...snapshot,periodId:setup.periodId}),createdAt=new Date();
     return this.checks.save({run:{id:randomUUID(),tenantId:context.tenantId,companyId,periodId:setup.periodId,
       periodStart:setup.periodStart,periodEnd:setup.periodEnd,inputSnapshot:snapshot,
       inputHash:createHash('sha256').update(JSON.stringify(snapshot)).digest('hex'),

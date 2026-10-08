@@ -14,6 +14,7 @@ describe('reconciliation check contracts', () => {
       periodStart: '2026-10-01', periodEnd: '2026-10-31', inputSnapshot: {
         invoices: [{ invoiceId: '60000000-0000-4000-8000-000000000006', invoiceNumber: '12345678', outstandingAmount: '106.00' }],
         payments: [],
+        accounts: [],
       }, inputHash: 'a'.repeat(64),
       grade: 'yellow', blocksFiling: true, totalIssues: 1, yellowIssues: 1, redIssues: 0,
       issues: [{
