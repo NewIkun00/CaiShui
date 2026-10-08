@@ -387,6 +387,13 @@ export const policySourceInputSchema = z.object({
 });
 export type PolicySourceInputRequest = z.infer<typeof policySourceInputSchema>;
 
+export const policySourceResponseSchema = z.intersection(policySourceInputSchema, z.object({
+  id: z.string().uuid(), version: z.number().int().positive(),
+  createdAt: z.string().datetime(), createdBy: z.string().uuid(),
+}));
+export const policySourceListResponseSchema = z.object({ items: z.array(policySourceResponseSchema) }).strict();
+export type PolicySourceResponse = z.infer<typeof policySourceResponseSchema>;
+
 export const rulePackageInputSchema = z.object({
   code: z.string().trim().regex(/^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/),
   name: z.string().trim().min(1).max(200),

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   goldenFixtureExecutionResponseSchema,
   goldenFixtureSetListResponseSchema,
+  policySourceListResponseSchema,
   rulePackageListResponseSchema,
   ruleVersionListResponseSchema,
 } from '../src/index.js';
@@ -13,6 +14,16 @@ const fixtureSetId = '40000000-0000-4000-8000-000000000004';
 const now = '2026-10-08T00:00:00.000Z';
 
 describe('policy-rule workbench response contracts', () => {
+  it('parses official policy source snapshots serialized over HTTP', () => {
+    const result = policySourceListResponseSchema.parse({ items: [{
+      id: '80000000-0000-4000-8000-000000000008', documentNumber: '测试公告〔2026〕1号',
+      title: '测试政策来源', officialUrl: 'https://www.chinatax.gov.cn/test', issuingAuthority: '国家税务总局',
+      publishedOn: '2026-01-01', effectiveFrom: '2026-01-01', summary: '仅用于验证严格 HTTP 契约。',
+      contentHash: 'd'.repeat(64), lastVerifiedOn: '2026-10-08', version: 1, createdAt: now, createdBy: actorId,
+    }] });
+    expect(result.items[0]?.officialUrl).toContain('.gov.cn');
+  });
+
   it('parses package and version list responses serialized over HTTP', () => {
     expect(rulePackageListResponseSchema.parse({ items: [{
       id: packageId, code: 'vat.cn.test', name: '测试规则包', taxType: 'vat',
