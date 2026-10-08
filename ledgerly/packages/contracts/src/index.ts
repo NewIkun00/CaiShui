@@ -26,6 +26,11 @@ export const companySchema = z.object({
 
 export type CompanyResponse = z.infer<typeof companySchema>;
 
+export const bootstrapTenantResponseSchema = z.object({
+  tenantId: z.string().uuid(),
+  company: companySchema,
+});
+
 export const errorSchema = z.object({
   error: z.object({
     code: z.string(),
@@ -58,7 +63,9 @@ export type CompanyProfileInput = z.infer<typeof companyProfileSchema>;
 
 export const scopeEvaluationSchema = z.object({
   id: z.string().uuid(),
+  profileId: z.string().uuid(),
   companyId: z.string().uuid(),
+  profile: companyProfileSchema,
   decision: z.enum(['green', 'yellow', 'red']),
   reasons: z.array(z.object({
     code: z.string(),

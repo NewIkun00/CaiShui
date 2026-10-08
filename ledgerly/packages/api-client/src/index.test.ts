@@ -121,4 +121,27 @@ describe('generated API client', () => {
 
     expect(batch.rows[0]?.businessEventId).toBe(eventId);
   });
+
+  it('infers onboarding profile requests and complete evaluation responses', async () => {
+    const profile = {
+      entityType: 'one_person_llc', vatTaxpayerStatus: 'small_scale', vatFilingCycle: 'quarterly',
+      incomeTaxCollection: 'audit', industry: 'modern_service', hasInventory: false, hasBranches: false,
+      hasImportExport: false, hasForeignCurrency: false, hasSpecialVatFivePercent: false,
+      hasDifferenceTax: false, hasCrossRegionPrepayment: false, hasComplexPayroll: false,
+      hasShareholderTransactions: false, hasComplexTaxAdjustments: false, sourceDocumentsComplete: true,
+    } as const;
+    const client = createApiClient({
+      baseUrl: 'https://api.example.test',
+      fetch: (() => Promise.resolve(new Response(JSON.stringify({
+        decision: 'green', profile, nextAction: 'continue_setup',
+      }), { headers: { 'content-type': 'application/json' } }))) as typeof fetch,
+    });
+
+    const evaluation = await client('/v1/companies/{companyId}/scope-evaluations', {
+      method: 'post', path: { companyId: '10000000-0000-4000-8000-000000000001' }, body: profile,
+    });
+
+    expect(evaluation.profile.vatTaxpayerStatus).toBe('small_scale');
+    expect(evaluation.nextAction).toBe('continue_setup');
+  });
 });

@@ -1,9 +1,13 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { counterpartyInputSchema, type CounterpartyInputRequest } from '@ledgerly/contracts';
+import {
+  counterpartyInputSchema, counterpartyListResponseSchema, counterpartyResponseSchema,
+  type CounterpartyInputRequest,
+} from '@ledgerly/contracts';
 import type { FastifyRequest } from 'fastify';
 import { requestContext } from '../../../shared/request-context.js';
 import { ZodValidationPipe } from '../../../shared/zod-validation.pipe.js';
+import { ApiZodBody, ApiZodCreatedResponse, ApiZodOkResponse } from '../../../shared/zod-openapi.js';
 import { CounterpartyService } from '../application/counterparty.service.js';
 import type { SavedCounterparty } from '../application/counterparty-store.js';
 
@@ -16,6 +20,8 @@ export class CounterpartyController {
 
   @Post()
   @ApiOperation({ summary: '新增客户、供应商、股东或员工' })
+  @ApiZodBody(counterpartyInputSchema)
+  @ApiZodCreatedResponse(counterpartyResponseSchema)
   async create(@Param('companyId', new ParseUUIDPipe()) companyId: string,
     @Body(new ZodValidationPipe(counterpartyInputSchema)) input: CounterpartyInputRequest,
     @Req() request: FastifyRequest) {
@@ -24,6 +30,7 @@ export class CounterpartyController {
 
   @Get()
   @ApiOperation({ summary: '列出当前公司的往来单位' })
+  @ApiZodOkResponse(counterpartyListResponseSchema)
   async list(@Param('companyId', new ParseUUIDPipe()) companyId: string, @Req() request: FastifyRequest) {
     const items = await this.service.list(companyId, requestContext(request, true));
     return { items: items.map((item) => this.present(item)) };
