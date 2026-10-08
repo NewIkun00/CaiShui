@@ -1,0 +1,2225 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/tenants/bootstrap": {
+      "post": {
+        "operationId": "OrganizationController_bootstrap",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "开发态用户 UUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "tenantName",
+                  "company"
+                ],
+                "properties": {
+                  "tenantName": {
+                    "type": "string"
+                  },
+                  "company": {
+                    "type": "object",
+                    "required": [
+                      "name",
+                      "unifiedSocialCreditCode",
+                      "provinceCode",
+                      "cityCode"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "unifiedSocialCreditCode": {
+                        "type": "string",
+                        "pattern": "^\\d{18}$"
+                      },
+                      "provinceCode": {
+                        "type": "string",
+                        "enum": [
+                          "32"
+                        ]
+                      },
+                      "cityCode": {
+                        "type": "string",
+                        "pattern": "^32\\d{2}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "创建租户、所有者成员和首家公司",
+        "tags": [
+          "organization"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}": {
+      "get": {
+        "operationId": "OrganizationController_getCompany",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "开发态用户 UUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "description": "当前租户 UUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "读取当前租户内的公司",
+        "tags": [
+          "organization"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/scope-evaluations": {
+      "post": {
+        "operationId": "ProfileScopeController_evaluate",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "保存主体画像并生成适用性结论",
+        "tags": [
+          "profile-scope"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/scope-evaluations/latest": {
+      "get": {
+        "operationId": "ProfileScopeController_latest",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "读取最近一次适用性结论",
+        "tags": [
+          "profile-scope"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/ledger-setup": {
+      "post": {
+        "operationId": "LedgerSetupController_create",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "创建资金账户、期初余额和首个会计期间",
+        "tags": [
+          "ledger-setup"
+        ]
+      },
+      "get": {
+        "operationId": "LedgerSetupController_get",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "读取账套初始化结果",
+        "tags": [
+          "ledger-setup"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/accounting-period/reopen-requests": {
+      "post": {
+        "operationId": "AccountingPeriodController_request",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "申请反结账；仅创建待复核工单，不直接解锁",
+        "tags": [
+          "accounting-periods"
+        ]
+      },
+      "get": {
+        "operationId": "AccountingPeriodController_list",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出反结账申请",
+        "tags": [
+          "accounting-periods"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/counterparties": {
+      "post": {
+        "operationId": "CounterpartyController_create",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "新增客户、供应商、股东或员工",
+        "tags": [
+          "counterparties"
+        ]
+      },
+      "get": {
+        "operationId": "CounterpartyController_list",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出当前公司的往来单位",
+        "tags": [
+          "counterparties"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/business-events": {
+      "post": {
+        "operationId": "BusinessEventController_create",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "手工创建业务事件草稿",
+        "tags": [
+          "business-events"
+        ]
+      },
+      "get": {
+        "operationId": "BusinessEventController_list",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出业务事件",
+        "tags": [
+          "business-events"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/business-events/{eventId}/confirm": {
+      "post": {
+        "operationId": "BusinessEventController_confirm",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "确认业务事件并冻结该版本",
+        "tags": [
+          "business-events"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/imports/bank-csv": {
+      "post": {
+        "operationId": "BankImportController_upload",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "上传并校验银行 CSV V1 模板",
+        "tags": [
+          "bank-imports"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/imports/bank-csv/{batchId}": {
+      "get": {
+        "operationId": "BankImportController_get",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "batchId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "bank-imports"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/imports/bank-csv/{batchId}/confirm": {
+      "post": {
+        "operationId": "BankImportController_confirm",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "batchId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "确认有效银行流水并生成已确认业务事件",
+        "tags": [
+          "bank-imports"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/invoices": {
+      "post": {
+        "operationId": "InvoiceController_create",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "新增发票草稿",
+        "tags": [
+          "invoices"
+        ]
+      },
+      "get": {
+        "operationId": "InvoiceController_list",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出当前公司的发票",
+        "tags": [
+          "invoices"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/invoices/extractions/mock": {
+      "post": {
+        "operationId": "InvoiceController_extract",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "使用确定性模拟适配器提取发票字段",
+        "tags": [
+          "invoices"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/invoices/{invoiceId}/confirm": {
+      "post": {
+        "operationId": "InvoiceController_confirm",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "invoiceId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "确认发票事实",
+        "tags": [
+          "invoices"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/documents": {
+      "post": {
+        "operationId": "DocumentController_upload",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "上传私有单据并建立首个版本",
+        "tags": [
+          "documents"
+        ]
+      },
+      "get": {
+        "operationId": "DocumentController_list",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出单据档案",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/documents/{documentId}/versions": {
+      "post": {
+        "operationId": "DocumentController_addVersion",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "为单据增加不可覆盖的新版本",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/documents/{documentId}/versions/{versionId}/content": {
+      "get": {
+        "operationId": "DocumentController_content",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "读取私有单据版本内容",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/documents/{documentId}/links/business-events/{eventId}": {
+      "post": {
+        "operationId": "DocumentController_link",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "将单据证据关联到业务事项",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/reconciliation": {
+      "get": {
+        "operationId": "ReconciliationController_overview",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "读取发票与收付款核销概览",
+        "tags": [
+          "reconciliation"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/reconciliation/settlements": {
+      "post": {
+        "operationId": "ReconciliationController_create",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "创建发票与收付款的部分或完整核销",
+        "tags": [
+          "reconciliation"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/accounting/chart-of-accounts": {
+      "get": {
+        "operationId": "AccountingController_chart",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "读取版本化 V1 科目模板",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/accounting/vouchers": {
+      "get": {
+        "operationId": "AccountingController_list",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出凭证草稿",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/accounting/vouchers/from-business-event/{eventId}": {
+      "post": {
+        "operationId": "AccountingController_generate",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "从已确认业务事项确定性生成凭证草稿",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/accounting/vouchers/{voucherId}/confirm": {
+      "post": {
+        "operationId": "AccountingController_confirm",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "voucherId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "确认平衡凭证并正式入账",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/accounting/vouchers/{voucherId}/reverse": {
+      "post": {
+        "operationId": "AccountingController_reverse",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "voucherId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "通过相反分录冲销已确认凭证",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/accounting/ledger": {
+      "get": {
+        "operationId": "AccountingController_ledger",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "读取正式凭证明细账和本期科目余额",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/accounting/reports": {
+      "get": {
+        "operationId": "AccountingController_reports",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "基于正式账簿生成利润表和资产负债表",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/accounting/period/lock": {
+      "post": {
+        "operationId": "AccountingController_lock",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "锁定当前会计期间",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/v1/policy-sources": {
+      "post": {
+        "operationId": "PolicyRuleController_createPolicySource",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "收录经过官方来源校验的政策文件",
+        "tags": [
+          "policy-rules"
+        ]
+      },
+      "get": {
+        "operationId": "PolicyRuleController_listPolicySources",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出政策来源",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages": {
+      "post": {
+        "operationId": "PolicyRuleController_createRulePackage",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "创建稳定标识的税务规则包",
+        "tags": [
+          "policy-rules"
+        ]
+      },
+      "get": {
+        "operationId": "PolicyRuleController_listRulePackages",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出税务规则包",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/versions": {
+      "post": {
+        "operationId": "PolicyRuleController_createRuleVersion",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "创建不可执行的规则草稿版本",
+        "tags": [
+          "policy-rules"
+        ]
+      },
+      "get": {
+        "operationId": "PolicyRuleController_listRuleVersions",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出规则包的全部版本",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/versions/{ruleVersionId}/reviews": {
+      "post": {
+        "operationId": "PolicyRuleController_reviewRuleVersion",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ruleVersionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "执行工程复核或财税复核，强制职责分离",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/versions/{ruleVersionId}/test-evidence": {
+      "post": {
+        "operationId": "PolicyRuleController_recordRuleTestEvidence",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ruleVersionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "登记财税审核人签署的全量黄金样本测试证据",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/versions/{ruleVersionId}/fixture-sets": {
+      "post": {
+        "operationId": "PolicyRuleController_createGoldenFixtureSet",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ruleVersionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "由财税复核人登记脱敏、签审且不可变的黄金样本集",
+        "tags": [
+          "policy-rules"
+        ]
+      },
+      "get": {
+        "operationId": "PolicyRuleController_listGoldenFixtureSets",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ruleVersionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出规则版本的专业签审黄金样本集",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/versions/{ruleVersionId}/fixture-sets/{fixtureSetId}/executions": {
+      "post": {
+        "operationId": "PolicyRuleController_executeGoldenFixtureSet",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ruleVersionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fixtureSetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "使用版本化计算实现逐例执行黄金样本并生成证据哈希",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/shadow-runs": {
+      "post": {
+        "operationId": "PolicyRuleController_executeRuleShadowRun",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "用同一签审样本对比基准与候选规则版本并固化差异证据",
+        "tags": [
+          "policy-rules"
+        ]
+      },
+      "get": {
+        "operationId": "PolicyRuleController_listRuleShadowRuns",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出规则包的不可变影子计算记录",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/shadow-runs/{runId}": {
+      "get": {
+        "operationId": "PolicyRuleController_findRuleShadowRun",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "读取影子计算逐样例差异和不可变证据哈希",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/versions/{ruleVersionId}/approval": {
+      "post": {
+        "operationId": "PolicyRuleController_approveRuleVersion",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ruleVersionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "由独立审批人批准已通过测试的规则版本",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/versions/{ruleVersionId}/schedule": {
+      "post": {
+        "operationId": "PolicyRuleController_scheduleRuleVersion",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ruleVersionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "由审批人安排规则版本的未来激活时间",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/versions/{ruleVersionId}/activation": {
+      "post": {
+        "operationId": "PolicyRuleController_activateRuleVersion",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ruleVersionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "在计划时间到期后激活规则，并自动替代同规则包的旧活动版本",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/rule-packages/{rulePackageId}/versions/{ruleVersionId}/withdrawal": {
+      "post": {
+        "operationId": "PolicyRuleController_withdrawRuleVersion",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rulePackageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ruleVersionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "紧急撤回活动规则版本并保留不可变发布记录",
+        "tags": [
+          "policy-rules"
+        ]
+      }
+    },
+    "/v1/companies/{companyId}/calculation-runs": {
+      "post": {
+        "operationId": "CalculationController_create",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "冻结计算输入并选择唯一活动规则；无法确定时返回 DecisionRequired",
+        "tags": [
+          "calculation-runs"
+        ]
+      },
+      "get": {
+        "operationId": "CalculationController_list",
+        "parameters": [
+          {
+            "name": "x-tenant-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "列出公司的不可变计算运行快照",
+        "tags": [
+          "calculation-runs"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Ledgerly API",
+    "description": "一人公司记账报税平台 V1 API",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {}
+  }
+}

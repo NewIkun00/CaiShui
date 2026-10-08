@@ -21,4 +21,6 @@
 pnpm check
 ```
 
+`pnpm openapi:generate` 会从当前 API 源码启动隔离的内存实例，更新 `openapi/openapi.json` 和 `packages/api-client/src/generated.ts`。`pnpm openapi:check` 会在 CI 中拦截未同步的 Controller 契约变更；不要手工修改生成文件。
+
 业务规则不得写在 Controller、React 组件、ORM Hook 或队列 Processor 中。架构决策见 `docs/architecture/adr`。
