@@ -1577,7 +1577,35 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly ({
+                            readonly contentHash: string;
+                            readonly documentNumber: string;
+                            /** Format: date */
+                            readonly effectiveFrom: string;
+                            /** Format: date */
+                            readonly effectiveTo?: string;
+                            readonly issuingAuthority: string;
+                            /** Format: date */
+                            readonly lastVerifiedOn: string;
+                            /** Format: uri */
+                            readonly officialUrl: string;
+                            /** Format: date */
+                            readonly publishedOn: string;
+                            readonly summary: string;
+                            readonly title: string;
+                        } & {
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly version: number;
+                        })[];
+                    };
+                };
             };
         };
     };
@@ -1590,13 +1618,59 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly contentHash: string;
+                    readonly documentNumber: string;
+                    /** Format: date */
+                    readonly effectiveFrom: string;
+                    /** Format: date */
+                    readonly effectiveTo?: string;
+                    readonly issuingAuthority: string;
+                    /** Format: date */
+                    readonly lastVerifiedOn: string;
+                    /** Format: uri */
+                    readonly officialUrl: string;
+                    /** Format: date */
+                    readonly publishedOn: string;
+                    readonly summary: string;
+                    readonly title: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly contentHash: string;
+                        readonly documentNumber: string;
+                        /** Format: date */
+                        readonly effectiveFrom: string;
+                        /** Format: date */
+                        readonly effectiveTo?: string;
+                        readonly issuingAuthority: string;
+                        /** Format: date */
+                        readonly lastVerifiedOn: string;
+                        /** Format: uri */
+                        readonly officialUrl: string;
+                        /** Format: date */
+                        readonly publishedOn: string;
+                        readonly summary: string;
+                        readonly title: string;
+                    } & {
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly version: number;
+                    };
+                };
             };
         };
     };
@@ -1615,7 +1689,25 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            readonly code: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly description: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly jurisdictions: readonly string[];
+                            readonly name: string;
+                            /** @enum {string} */
+                            readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                            readonly version: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -1628,13 +1720,40 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly code: string;
+                    readonly description: string;
+                    readonly jurisdictions: readonly string[];
+                    readonly name: string;
+                    /** @enum {string} */
+                    readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly code: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        readonly description: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly jurisdictions: readonly string[];
+                        readonly name: string;
+                        /** @enum {string} */
+                        readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                        readonly version: number;
+                    };
+                };
             };
         };
     };
@@ -1655,7 +1774,63 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            readonly artifactHash: string;
+                            readonly baselineImplementationKey: string;
+                            /** Format: uuid */
+                            readonly baselineRuleVersionId: string;
+                            readonly candidateImplementationKey: string;
+                            /** Format: uuid */
+                            readonly candidateRuleVersionId: string;
+                            readonly changedFixtures: number;
+                            readonly differences: readonly {
+                                readonly baseline: {
+                                    readonly caseId: string;
+                                    readonly error?: string;
+                                    readonly output?: {
+                                        readonly [key: string]: unknown;
+                                    };
+                                    readonly steps: readonly {
+                                        readonly [key: string]: unknown;
+                                    }[];
+                                };
+                                readonly candidate: {
+                                    readonly caseId: string;
+                                    readonly error?: string;
+                                    readonly output?: {
+                                        readonly [key: string]: unknown;
+                                    };
+                                    readonly steps: readonly {
+                                        readonly [key: string]: unknown;
+                                    }[];
+                                };
+                                readonly caseId: string;
+                                readonly outputChanged: boolean;
+                                /** @enum {string} */
+                                readonly status: "identical" | "output_changed" | "steps_changed" | "output_and_steps_changed" | "baseline_failed" | "candidate_failed" | "both_failed";
+                                readonly stepsChanged: boolean;
+                            }[];
+                            /** Format: date-time */
+                            readonly executedAt: string;
+                            /** Format: uuid */
+                            readonly executedBy: string;
+                            readonly failedFixtures: number;
+                            readonly fixtureSetContentHash: string;
+                            /** Format: uuid */
+                            readonly fixtureSetId: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly identicalFixtures: number;
+                            /** Format: uuid */
+                            readonly rulePackageId: string;
+                            /** @enum {string} */
+                            readonly status: "identical" | "differences_found" | "execution_failed";
+                            readonly totalFixtures: number;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -1670,13 +1845,81 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: uuid */
+                    readonly baselineRuleVersionId: string;
+                    /** Format: uuid */
+                    readonly candidateRuleVersionId: string;
+                    /** Format: uuid */
+                    readonly fixtureSetId: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly created: boolean;
+                        readonly run: {
+                            readonly artifactHash: string;
+                            readonly baselineImplementationKey: string;
+                            /** Format: uuid */
+                            readonly baselineRuleVersionId: string;
+                            readonly candidateImplementationKey: string;
+                            /** Format: uuid */
+                            readonly candidateRuleVersionId: string;
+                            readonly changedFixtures: number;
+                            readonly differences: readonly {
+                                readonly baseline: {
+                                    readonly caseId: string;
+                                    readonly error?: string;
+                                    readonly output?: {
+                                        readonly [key: string]: unknown;
+                                    };
+                                    readonly steps: readonly {
+                                        readonly [key: string]: unknown;
+                                    }[];
+                                };
+                                readonly candidate: {
+                                    readonly caseId: string;
+                                    readonly error?: string;
+                                    readonly output?: {
+                                        readonly [key: string]: unknown;
+                                    };
+                                    readonly steps: readonly {
+                                        readonly [key: string]: unknown;
+                                    }[];
+                                };
+                                readonly caseId: string;
+                                readonly outputChanged: boolean;
+                                /** @enum {string} */
+                                readonly status: "identical" | "output_changed" | "steps_changed" | "output_and_steps_changed" | "baseline_failed" | "candidate_failed" | "both_failed";
+                                readonly stepsChanged: boolean;
+                            }[];
+                            /** Format: date-time */
+                            readonly executedAt: string;
+                            /** Format: uuid */
+                            readonly executedBy: string;
+                            readonly failedFixtures: number;
+                            readonly fixtureSetContentHash: string;
+                            /** Format: uuid */
+                            readonly fixtureSetId: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly identicalFixtures: number;
+                            /** Format: uuid */
+                            readonly rulePackageId: string;
+                            /** @enum {string} */
+                            readonly status: "identical" | "differences_found" | "execution_failed";
+                            readonly totalFixtures: number;
+                        };
+                    };
+                };
             };
         };
     };
@@ -1698,7 +1941,61 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly artifactHash: string;
+                        readonly baselineImplementationKey: string;
+                        /** Format: uuid */
+                        readonly baselineRuleVersionId: string;
+                        readonly candidateImplementationKey: string;
+                        /** Format: uuid */
+                        readonly candidateRuleVersionId: string;
+                        readonly changedFixtures: number;
+                        readonly differences: readonly {
+                            readonly baseline: {
+                                readonly caseId: string;
+                                readonly error?: string;
+                                readonly output?: {
+                                    readonly [key: string]: unknown;
+                                };
+                                readonly steps: readonly {
+                                    readonly [key: string]: unknown;
+                                }[];
+                            };
+                            readonly candidate: {
+                                readonly caseId: string;
+                                readonly error?: string;
+                                readonly output?: {
+                                    readonly [key: string]: unknown;
+                                };
+                                readonly steps: readonly {
+                                    readonly [key: string]: unknown;
+                                }[];
+                            };
+                            readonly caseId: string;
+                            readonly outputChanged: boolean;
+                            /** @enum {string} */
+                            readonly status: "identical" | "output_changed" | "steps_changed" | "output_and_steps_changed" | "baseline_failed" | "candidate_failed" | "both_failed";
+                            readonly stepsChanged: boolean;
+                        }[];
+                        /** Format: date-time */
+                        readonly executedAt: string;
+                        /** Format: uuid */
+                        readonly executedBy: string;
+                        readonly failedFixtures: number;
+                        readonly fixtureSetContentHash: string;
+                        /** Format: uuid */
+                        readonly fixtureSetId: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly identicalFixtures: number;
+                        /** Format: uuid */
+                        readonly rulePackageId: string;
+                        /** @enum {string} */
+                        readonly status: "identical" | "differences_found" | "execution_failed";
+                        readonly totalFixtures: number;
+                    };
+                };
             };
         };
     };
@@ -1719,7 +2016,73 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly ({
+                            readonly applicability: {
+                                readonly excludedTags: readonly string[];
+                                readonly filingCycles: readonly string[];
+                                readonly industries: readonly string[];
+                                readonly requiredTags: readonly string[];
+                                readonly taxpayerStatuses: readonly string[];
+                            };
+                            readonly calculationImplementation: string;
+                            /** Format: date */
+                            readonly effectiveFrom: string;
+                            /** Format: date */
+                            readonly effectiveTo?: string;
+                            readonly explanation: string;
+                            readonly parameters: {
+                                readonly [key: string]: string | boolean | readonly string[];
+                            };
+                            readonly sourceIds: readonly string[];
+                            readonly versionTag: string;
+                        } & {
+                            /** Format: date-time */
+                            readonly activatedAt?: string;
+                            /** Format: uuid */
+                            readonly activatedBy?: string;
+                            /** Format: date-time */
+                            readonly activationAt?: string;
+                            /** Format: date-time */
+                            readonly approvedAt?: string;
+                            /** Format: uuid */
+                            readonly approvedBy?: string;
+                            readonly contentHash: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly recordVersion: number;
+                            /** Format: uuid */
+                            readonly rulePackageId: string;
+                            /** Format: date-time */
+                            readonly scheduledAt?: string;
+                            /** Format: uuid */
+                            readonly scheduledBy?: string;
+                            /** @enum {string} */
+                            readonly status: "draft" | "technical_reviewed" | "tax_reviewed" | "tested" | "approved" | "scheduled" | "active" | "superseded" | "withdrawn";
+                            /** Format: date-time */
+                            readonly supersededAt?: string;
+                            /** Format: uuid */
+                            readonly supersededByRuleVersionId?: string;
+                            /** Format: uuid */
+                            readonly taxReviewedBy?: string;
+                            /** Format: uuid */
+                            readonly technicalReviewedBy?: string;
+                            /** Format: date-time */
+                            readonly testedAt?: string;
+                            /** Format: uuid */
+                            readonly testedBy?: string;
+                            /** Format: date-time */
+                            readonly withdrawnAt?: string;
+                            /** Format: uuid */
+                            readonly withdrawnBy?: string;
+                        })[];
+                    };
+                };
             };
         };
     };
@@ -1734,13 +2097,100 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly applicability: {
+                        readonly excludedTags: readonly string[];
+                        readonly filingCycles: readonly string[];
+                        readonly industries: readonly string[];
+                        readonly requiredTags: readonly string[];
+                        readonly taxpayerStatuses: readonly string[];
+                    };
+                    readonly calculationImplementation: string;
+                    /** Format: date */
+                    readonly effectiveFrom: string;
+                    /** Format: date */
+                    readonly effectiveTo?: string;
+                    readonly explanation: string;
+                    readonly parameters: {
+                        readonly [key: string]: string | boolean | readonly string[];
+                    };
+                    readonly sourceIds: readonly string[];
+                    readonly versionTag: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly applicability: {
+                            readonly excludedTags: readonly string[];
+                            readonly filingCycles: readonly string[];
+                            readonly industries: readonly string[];
+                            readonly requiredTags: readonly string[];
+                            readonly taxpayerStatuses: readonly string[];
+                        };
+                        readonly calculationImplementation: string;
+                        /** Format: date */
+                        readonly effectiveFrom: string;
+                        /** Format: date */
+                        readonly effectiveTo?: string;
+                        readonly explanation: string;
+                        readonly parameters: {
+                            readonly [key: string]: string | boolean | readonly string[];
+                        };
+                        readonly sourceIds: readonly string[];
+                        readonly versionTag: string;
+                    } & {
+                        /** Format: date-time */
+                        readonly activatedAt?: string;
+                        /** Format: uuid */
+                        readonly activatedBy?: string;
+                        /** Format: date-time */
+                        readonly activationAt?: string;
+                        /** Format: date-time */
+                        readonly approvedAt?: string;
+                        /** Format: uuid */
+                        readonly approvedBy?: string;
+                        readonly contentHash: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly recordVersion: number;
+                        /** Format: uuid */
+                        readonly rulePackageId: string;
+                        /** Format: date-time */
+                        readonly scheduledAt?: string;
+                        /** Format: uuid */
+                        readonly scheduledBy?: string;
+                        /** @enum {string} */
+                        readonly status: "draft" | "technical_reviewed" | "tax_reviewed" | "tested" | "approved" | "scheduled" | "active" | "superseded" | "withdrawn";
+                        /** Format: date-time */
+                        readonly supersededAt?: string;
+                        /** Format: uuid */
+                        readonly supersededByRuleVersionId?: string;
+                        /** Format: uuid */
+                        readonly taxReviewedBy?: string;
+                        /** Format: uuid */
+                        readonly technicalReviewedBy?: string;
+                        /** Format: date-time */
+                        readonly testedAt?: string;
+                        /** Format: uuid */
+                        readonly testedBy?: string;
+                        /** Format: date-time */
+                        readonly withdrawnAt?: string;
+                        /** Format: uuid */
+                        readonly withdrawnBy?: string;
+                    };
+                };
             };
         };
     };
@@ -1756,13 +2206,84 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly expectedVersion: number;
+                    readonly note: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly applicability: {
+                            readonly excludedTags: readonly string[];
+                            readonly filingCycles: readonly string[];
+                            readonly industries: readonly string[];
+                            readonly requiredTags: readonly string[];
+                            readonly taxpayerStatuses: readonly string[];
+                        };
+                        readonly calculationImplementation: string;
+                        /** Format: date */
+                        readonly effectiveFrom: string;
+                        /** Format: date */
+                        readonly effectiveTo?: string;
+                        readonly explanation: string;
+                        readonly parameters: {
+                            readonly [key: string]: string | boolean | readonly string[];
+                        };
+                        readonly sourceIds: readonly string[];
+                        readonly versionTag: string;
+                    } & {
+                        /** Format: date-time */
+                        readonly activatedAt?: string;
+                        /** Format: uuid */
+                        readonly activatedBy?: string;
+                        /** Format: date-time */
+                        readonly activationAt?: string;
+                        /** Format: date-time */
+                        readonly approvedAt?: string;
+                        /** Format: uuid */
+                        readonly approvedBy?: string;
+                        readonly contentHash: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly recordVersion: number;
+                        /** Format: uuid */
+                        readonly rulePackageId: string;
+                        /** Format: date-time */
+                        readonly scheduledAt?: string;
+                        /** Format: uuid */
+                        readonly scheduledBy?: string;
+                        /** @enum {string} */
+                        readonly status: "draft" | "technical_reviewed" | "tax_reviewed" | "tested" | "approved" | "scheduled" | "active" | "superseded" | "withdrawn";
+                        /** Format: date-time */
+                        readonly supersededAt?: string;
+                        /** Format: uuid */
+                        readonly supersededByRuleVersionId?: string;
+                        /** Format: uuid */
+                        readonly taxReviewedBy?: string;
+                        /** Format: uuid */
+                        readonly technicalReviewedBy?: string;
+                        /** Format: date-time */
+                        readonly testedAt?: string;
+                        /** Format: uuid */
+                        readonly testedBy?: string;
+                        /** Format: date-time */
+                        readonly withdrawnAt?: string;
+                        /** Format: uuid */
+                        readonly withdrawnBy?: string;
+                    };
+                };
             };
         };
     };
@@ -1778,13 +2299,84 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly expectedVersion: number;
+                    readonly note: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly applicability: {
+                            readonly excludedTags: readonly string[];
+                            readonly filingCycles: readonly string[];
+                            readonly industries: readonly string[];
+                            readonly requiredTags: readonly string[];
+                            readonly taxpayerStatuses: readonly string[];
+                        };
+                        readonly calculationImplementation: string;
+                        /** Format: date */
+                        readonly effectiveFrom: string;
+                        /** Format: date */
+                        readonly effectiveTo?: string;
+                        readonly explanation: string;
+                        readonly parameters: {
+                            readonly [key: string]: string | boolean | readonly string[];
+                        };
+                        readonly sourceIds: readonly string[];
+                        readonly versionTag: string;
+                    } & {
+                        /** Format: date-time */
+                        readonly activatedAt?: string;
+                        /** Format: uuid */
+                        readonly activatedBy?: string;
+                        /** Format: date-time */
+                        readonly activationAt?: string;
+                        /** Format: date-time */
+                        readonly approvedAt?: string;
+                        /** Format: uuid */
+                        readonly approvedBy?: string;
+                        readonly contentHash: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly recordVersion: number;
+                        /** Format: uuid */
+                        readonly rulePackageId: string;
+                        /** Format: date-time */
+                        readonly scheduledAt?: string;
+                        /** Format: uuid */
+                        readonly scheduledBy?: string;
+                        /** @enum {string} */
+                        readonly status: "draft" | "technical_reviewed" | "tax_reviewed" | "tested" | "approved" | "scheduled" | "active" | "superseded" | "withdrawn";
+                        /** Format: date-time */
+                        readonly supersededAt?: string;
+                        /** Format: uuid */
+                        readonly supersededByRuleVersionId?: string;
+                        /** Format: uuid */
+                        readonly taxReviewedBy?: string;
+                        /** Format: uuid */
+                        readonly technicalReviewedBy?: string;
+                        /** Format: date-time */
+                        readonly testedAt?: string;
+                        /** Format: uuid */
+                        readonly testedBy?: string;
+                        /** Format: date-time */
+                        readonly withdrawnAt?: string;
+                        /** Format: uuid */
+                        readonly withdrawnBy?: string;
+                    };
+                };
             };
         };
     };
@@ -1806,7 +2398,37 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            readonly contentHash: string;
+                            readonly fixtures: readonly {
+                                readonly caseId: string;
+                                readonly expected: {
+                                    readonly [key: string]: unknown;
+                                };
+                                readonly explanation: string;
+                                readonly input: {
+                                    readonly [key: string]: unknown;
+                                };
+                                /** @enum {string} */
+                                readonly scenario: "normal" | "boundary" | "cross_period" | "red_invoice" | "correction" | "exception";
+                            }[];
+                            readonly fixtureSetVersion: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly professionalNote: string;
+                            /** @enum {boolean} */
+                            readonly redactionAttested: true;
+                            /** Format: uuid */
+                            readonly ruleVersionId: string;
+                            /** Format: date-time */
+                            readonly signedOffAt: string;
+                            /** Format: uuid */
+                            readonly signedOffBy: string;
+                        }[];
+                    };
+                };
             };
         };
     };
@@ -1822,13 +2444,62 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly fixtures: readonly {
+                        readonly caseId: string;
+                        readonly expected: {
+                            readonly [key: string]: unknown;
+                        };
+                        readonly explanation: string;
+                        readonly input: {
+                            readonly [key: string]: unknown;
+                        };
+                        /** @enum {string} */
+                        readonly scenario: "normal" | "boundary" | "cross_period" | "red_invoice" | "correction" | "exception";
+                    }[];
+                    readonly fixtureSetVersion: string;
+                    readonly professionalNote: string;
+                    /** @enum {boolean} */
+                    readonly redactionAttested: true;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly contentHash: string;
+                        readonly fixtures: readonly {
+                            readonly caseId: string;
+                            readonly expected: {
+                                readonly [key: string]: unknown;
+                            };
+                            readonly explanation: string;
+                            readonly input: {
+                                readonly [key: string]: unknown;
+                            };
+                            /** @enum {string} */
+                            readonly scenario: "normal" | "boundary" | "cross_period" | "red_invoice" | "correction" | "exception";
+                        }[];
+                        readonly fixtureSetVersion: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly professionalNote: string;
+                        /** @enum {boolean} */
+                        readonly redactionAttested: true;
+                        /** Format: uuid */
+                        readonly ruleVersionId: string;
+                        /** Format: date-time */
+                        readonly signedOffAt: string;
+                        /** Format: uuid */
+                        readonly signedOffBy: string;
+                    };
+                };
             };
         };
     };
@@ -1851,7 +2522,40 @@ export interface operations {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly artifactHash: string;
+                        /** Format: date-time */
+                        readonly executedAt: string;
+                        /** Format: uuid */
+                        readonly executedBy: string;
+                        /** Format: uuid */
+                        readonly fixtureSetId: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly implementationKey: string;
+                        readonly passedFixtures: number;
+                        readonly results: readonly {
+                            readonly actual?: {
+                                readonly [key: string]: unknown;
+                            };
+                            readonly caseId: string;
+                            readonly error?: string;
+                            readonly expected: {
+                                readonly [key: string]: unknown;
+                            };
+                            readonly passed: boolean;
+                            readonly steps: readonly {
+                                readonly [key: string]: unknown;
+                            }[];
+                        }[];
+                        /** Format: uuid */
+                        readonly ruleVersionId: string;
+                        /** @enum {string} */
+                        readonly status: "passed" | "failed";
+                        readonly totalFixtures: number;
+                    };
+                };
             };
         };
     };
@@ -1867,13 +2571,86 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly expectedVersion: number;
+                    /** @enum {string} */
+                    readonly kind: "technical" | "tax";
+                    readonly note: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly applicability: {
+                            readonly excludedTags: readonly string[];
+                            readonly filingCycles: readonly string[];
+                            readonly industries: readonly string[];
+                            readonly requiredTags: readonly string[];
+                            readonly taxpayerStatuses: readonly string[];
+                        };
+                        readonly calculationImplementation: string;
+                        /** Format: date */
+                        readonly effectiveFrom: string;
+                        /** Format: date */
+                        readonly effectiveTo?: string;
+                        readonly explanation: string;
+                        readonly parameters: {
+                            readonly [key: string]: string | boolean | readonly string[];
+                        };
+                        readonly sourceIds: readonly string[];
+                        readonly versionTag: string;
+                    } & {
+                        /** Format: date-time */
+                        readonly activatedAt?: string;
+                        /** Format: uuid */
+                        readonly activatedBy?: string;
+                        /** Format: date-time */
+                        readonly activationAt?: string;
+                        /** Format: date-time */
+                        readonly approvedAt?: string;
+                        /** Format: uuid */
+                        readonly approvedBy?: string;
+                        readonly contentHash: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly recordVersion: number;
+                        /** Format: uuid */
+                        readonly rulePackageId: string;
+                        /** Format: date-time */
+                        readonly scheduledAt?: string;
+                        /** Format: uuid */
+                        readonly scheduledBy?: string;
+                        /** @enum {string} */
+                        readonly status: "draft" | "technical_reviewed" | "tax_reviewed" | "tested" | "approved" | "scheduled" | "active" | "superseded" | "withdrawn";
+                        /** Format: date-time */
+                        readonly supersededAt?: string;
+                        /** Format: uuid */
+                        readonly supersededByRuleVersionId?: string;
+                        /** Format: uuid */
+                        readonly taxReviewedBy?: string;
+                        /** Format: uuid */
+                        readonly technicalReviewedBy?: string;
+                        /** Format: date-time */
+                        readonly testedAt?: string;
+                        /** Format: uuid */
+                        readonly testedBy?: string;
+                        /** Format: date-time */
+                        readonly withdrawnAt?: string;
+                        /** Format: uuid */
+                        readonly withdrawnBy?: string;
+                    };
+                };
             };
         };
     };
@@ -1889,13 +2666,86 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: date-time */
+                    readonly activationAt: string;
+                    readonly expectedVersion: number;
+                    readonly note: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly applicability: {
+                            readonly excludedTags: readonly string[];
+                            readonly filingCycles: readonly string[];
+                            readonly industries: readonly string[];
+                            readonly requiredTags: readonly string[];
+                            readonly taxpayerStatuses: readonly string[];
+                        };
+                        readonly calculationImplementation: string;
+                        /** Format: date */
+                        readonly effectiveFrom: string;
+                        /** Format: date */
+                        readonly effectiveTo?: string;
+                        readonly explanation: string;
+                        readonly parameters: {
+                            readonly [key: string]: string | boolean | readonly string[];
+                        };
+                        readonly sourceIds: readonly string[];
+                        readonly versionTag: string;
+                    } & {
+                        /** Format: date-time */
+                        readonly activatedAt?: string;
+                        /** Format: uuid */
+                        readonly activatedBy?: string;
+                        /** Format: date-time */
+                        readonly activationAt?: string;
+                        /** Format: date-time */
+                        readonly approvedAt?: string;
+                        /** Format: uuid */
+                        readonly approvedBy?: string;
+                        readonly contentHash: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly recordVersion: number;
+                        /** Format: uuid */
+                        readonly rulePackageId: string;
+                        /** Format: date-time */
+                        readonly scheduledAt?: string;
+                        /** Format: uuid */
+                        readonly scheduledBy?: string;
+                        /** @enum {string} */
+                        readonly status: "draft" | "technical_reviewed" | "tax_reviewed" | "tested" | "approved" | "scheduled" | "active" | "superseded" | "withdrawn";
+                        /** Format: date-time */
+                        readonly supersededAt?: string;
+                        /** Format: uuid */
+                        readonly supersededByRuleVersionId?: string;
+                        /** Format: uuid */
+                        readonly taxReviewedBy?: string;
+                        /** Format: uuid */
+                        readonly technicalReviewedBy?: string;
+                        /** Format: date-time */
+                        readonly testedAt?: string;
+                        /** Format: uuid */
+                        readonly testedBy?: string;
+                        /** Format: date-time */
+                        readonly withdrawnAt?: string;
+                        /** Format: uuid */
+                        readonly withdrawnBy?: string;
+                    };
+                };
             };
         };
     };
@@ -1911,13 +2761,89 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly artifactHash: string;
+                    readonly coveredScenarios: readonly ("normal" | "boundary" | "cross_period" | "red_invoice" | "correction" | "exception")[];
+                    readonly expectedVersion: number;
+                    readonly fixtureSetVersion: string;
+                    readonly note: string;
+                    readonly passedFixtures: number;
+                    readonly totalFixtures: number;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly applicability: {
+                            readonly excludedTags: readonly string[];
+                            readonly filingCycles: readonly string[];
+                            readonly industries: readonly string[];
+                            readonly requiredTags: readonly string[];
+                            readonly taxpayerStatuses: readonly string[];
+                        };
+                        readonly calculationImplementation: string;
+                        /** Format: date */
+                        readonly effectiveFrom: string;
+                        /** Format: date */
+                        readonly effectiveTo?: string;
+                        readonly explanation: string;
+                        readonly parameters: {
+                            readonly [key: string]: string | boolean | readonly string[];
+                        };
+                        readonly sourceIds: readonly string[];
+                        readonly versionTag: string;
+                    } & {
+                        /** Format: date-time */
+                        readonly activatedAt?: string;
+                        /** Format: uuid */
+                        readonly activatedBy?: string;
+                        /** Format: date-time */
+                        readonly activationAt?: string;
+                        /** Format: date-time */
+                        readonly approvedAt?: string;
+                        /** Format: uuid */
+                        readonly approvedBy?: string;
+                        readonly contentHash: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly recordVersion: number;
+                        /** Format: uuid */
+                        readonly rulePackageId: string;
+                        /** Format: date-time */
+                        readonly scheduledAt?: string;
+                        /** Format: uuid */
+                        readonly scheduledBy?: string;
+                        /** @enum {string} */
+                        readonly status: "draft" | "technical_reviewed" | "tax_reviewed" | "tested" | "approved" | "scheduled" | "active" | "superseded" | "withdrawn";
+                        /** Format: date-time */
+                        readonly supersededAt?: string;
+                        /** Format: uuid */
+                        readonly supersededByRuleVersionId?: string;
+                        /** Format: uuid */
+                        readonly taxReviewedBy?: string;
+                        /** Format: uuid */
+                        readonly technicalReviewedBy?: string;
+                        /** Format: date-time */
+                        readonly testedAt?: string;
+                        /** Format: uuid */
+                        readonly testedBy?: string;
+                        /** Format: date-time */
+                        readonly withdrawnAt?: string;
+                        /** Format: uuid */
+                        readonly withdrawnBy?: string;
+                    };
+                };
             };
         };
     };
@@ -1933,13 +2859,84 @@ export interface operations {
             };
             readonly cookie?: never;
         };
-        readonly requestBody?: never;
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly expectedVersion: number;
+                    readonly note: string;
+                };
+            };
+        };
         readonly responses: {
             readonly 201: {
                 headers: {
                     readonly [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    readonly "application/json": {
+                        readonly applicability: {
+                            readonly excludedTags: readonly string[];
+                            readonly filingCycles: readonly string[];
+                            readonly industries: readonly string[];
+                            readonly requiredTags: readonly string[];
+                            readonly taxpayerStatuses: readonly string[];
+                        };
+                        readonly calculationImplementation: string;
+                        /** Format: date */
+                        readonly effectiveFrom: string;
+                        /** Format: date */
+                        readonly effectiveTo?: string;
+                        readonly explanation: string;
+                        readonly parameters: {
+                            readonly [key: string]: string | boolean | readonly string[];
+                        };
+                        readonly sourceIds: readonly string[];
+                        readonly versionTag: string;
+                    } & {
+                        /** Format: date-time */
+                        readonly activatedAt?: string;
+                        /** Format: uuid */
+                        readonly activatedBy?: string;
+                        /** Format: date-time */
+                        readonly activationAt?: string;
+                        /** Format: date-time */
+                        readonly approvedAt?: string;
+                        /** Format: uuid */
+                        readonly approvedBy?: string;
+                        readonly contentHash: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly recordVersion: number;
+                        /** Format: uuid */
+                        readonly rulePackageId: string;
+                        /** Format: date-time */
+                        readonly scheduledAt?: string;
+                        /** Format: uuid */
+                        readonly scheduledBy?: string;
+                        /** @enum {string} */
+                        readonly status: "draft" | "technical_reviewed" | "tax_reviewed" | "tested" | "approved" | "scheduled" | "active" | "superseded" | "withdrawn";
+                        /** Format: date-time */
+                        readonly supersededAt?: string;
+                        /** Format: uuid */
+                        readonly supersededByRuleVersionId?: string;
+                        /** Format: uuid */
+                        readonly taxReviewedBy?: string;
+                        /** Format: uuid */
+                        readonly technicalReviewedBy?: string;
+                        /** Format: date-time */
+                        readonly testedAt?: string;
+                        /** Format: uuid */
+                        readonly testedBy?: string;
+                        /** Format: date-time */
+                        readonly withdrawnAt?: string;
+                        /** Format: uuid */
+                        readonly withdrawnBy?: string;
+                    };
+                };
             };
         };
     };

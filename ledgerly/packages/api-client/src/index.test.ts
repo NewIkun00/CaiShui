@@ -53,4 +53,27 @@ describe('generated API client', () => {
       payload: { code: 'NOT_FOUND' },
     }));
   });
+
+  it('infers documented JSON response bodies', async () => {
+    const client = createApiClient({
+      baseUrl: 'https://api.example.test',
+      fetch: (() => Promise.resolve(new Response(JSON.stringify({ items: [{
+        id: '10000000-0000-4000-8000-000000000001',
+        version: 1,
+        code: 'vat.cn-js.small-scale',
+        name: '增值税规则',
+        taxType: 'vat',
+        jurisdictions: ['CN-JS'],
+        description: '测试规则包',
+        createdAt: '2026-10-08T00:00:00.000Z',
+        createdBy: '20000000-0000-4000-8000-000000000002',
+      }] }), {
+        headers: { 'content-type': 'application/json' },
+      }))) as typeof fetch,
+    });
+
+    const result = await client('/v1/rule-packages', { method: 'get' });
+
+    expect(result.items[0]?.taxType).toBe('vat');
+  });
 });

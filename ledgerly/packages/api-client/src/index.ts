@@ -12,6 +12,13 @@ type ParametersOf<Op, Location extends 'path' | 'query'> = Op extends {
 type BodyOf<Op> = Op extends {
   requestBody: { content: { 'application/json': infer Body } };
 } ? Body : never;
+type SuccessStatus = 200 | 201 | 202 | 204;
+type JsonContent<Response> = Response extends {
+  content: { 'application/json': infer Payload };
+} ? Payload : unknown;
+type ResponseOf<Op> = Op extends { responses: infer Responses }
+  ? JsonContent<Responses[Extract<keyof Responses, SuccessStatus>]>
+  : unknown;
 
 export type ApiRequestOptions<Path extends keyof paths, Method extends HttpMethod> = {
   readonly method: Method;
@@ -43,7 +50,7 @@ export function createApiClient(options: ApiClientOptions) {
   return async function request<Path extends keyof paths, Method extends HttpMethod>(
     pathTemplate: Path,
     requestOptions: ApiRequestOptions<Path, Method>,
-  ): Promise<unknown> {
+  ): Promise<ResponseOf<Operation<Path, Method>>> {
     let path = String(pathTemplate);
     for (const [key, value] of Object.entries(requestOptions.path ?? {})) {
       path = path.replace(`{${key}}`, encodeURIComponent(serializeParameter(value)));
@@ -69,7 +76,7 @@ export function createApiClient(options: ApiClientOptions) {
         ? await response.json()
         : await response.arrayBuffer();
     if (!response.ok) throw new ApiClientError(response.status, payload);
-    return payload;
+    return payload as ResponseOf<Operation<Path, Method>>;
   };
 }
 
