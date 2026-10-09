@@ -332,6 +332,58 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/companies/{companyId}/filing-adjustments": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 列出公司的申报调整工单及不可变证据引用 */
+        readonly get: operations["FilingAdjustmentController_list"];
+        readonly put?: never;
+        /** 为冻结申报包建立作废、更正、补税或退税工单 */
+        readonly post: operations["FilingAdjustmentController_create"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/filing-adjustments/{workOrderId}/transitions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 按受控状态机复核、解决或取消申报调整工单 */
+        readonly post: operations["FilingAdjustmentController_transition"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/filing-archives/{year}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 生成含原始文件、账簿、报表、申报与校验和的年度可移植 JSON 档案 */
+        readonly get: operations["FilingArchiveController_generate"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/companies/{companyId}/filing-packages": {
         readonly parameters: {
             readonly query?: never;
@@ -367,6 +419,41 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/companies/{companyId}/filing-packages/{packageId}/close": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 核对冻结结果、回执和完税凭证后创建不可变关闭记录 */
+        readonly post: operations["FilingPackageController_close"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/filing-packages/{packageId}/evidence": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 列出申报包的追加式回执与完税凭证 */
+        readonly get: operations["FilingPackageController_listEvidence"];
+        readonly put?: never;
+        /** 为冻结申报包追加不可变申报回执或完税凭证 */
+        readonly post: operations["FilingPackageController_archiveEvidence"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/companies/{companyId}/filing-packages/{packageId}/freeze": {
         readonly parameters: {
             readonly query?: never;
@@ -378,6 +465,23 @@ export interface paths {
         readonly put?: never;
         /** 重新校验最新引用、红色阻断和哈希后冻结申报包 */
         readonly post: operations["FilingPackageController_freeze"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/filing-packages/closures/all": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 列出公司的不可变申报关闭记录 */
+        readonly get: operations["FilingPackageController_listClosures"];
+        readonly put?: never;
+        readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -2497,6 +2601,275 @@ export interface operations {
             };
         };
     };
+    readonly FilingAdjustmentController_list: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            readonly evidence: readonly {
+                                readonly documentHash: string;
+                                /** Format: uuid */
+                                readonly documentId: string;
+                                readonly documentVersion: number;
+                            }[];
+                            /** Format: uuid */
+                            readonly filingTaskId: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** Format: date-time */
+                            readonly openedAt: string;
+                            /** Format: uuid */
+                            readonly openedBy: string;
+                            readonly reason: string;
+                            readonly resolutionEvidence: readonly {
+                                readonly documentHash: string;
+                                /** Format: uuid */
+                                readonly documentId: string;
+                                readonly documentVersion: number;
+                            }[];
+                            readonly resolutionNote?: string;
+                            /** Format: uuid */
+                            readonly resolutionPackageId?: string;
+                            /** Format: uuid */
+                            readonly reviewedBy?: string;
+                            /** Format: uuid */
+                            readonly sourcePackageId: string;
+                            /** @enum {string} */
+                            readonly status: "open" | "in_review" | "resolved" | "cancelled";
+                            /** @enum {string} */
+                            readonly type: "void" | "correction" | "additional_tax" | "refund";
+                            /** Format: date-time */
+                            readonly updatedAt: string;
+                            /** Format: uuid */
+                            readonly updatedBy: string;
+                            readonly version: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingAdjustmentController_create: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @default [] */
+                    readonly evidenceDocumentIds?: readonly string[];
+                    readonly reason: string;
+                    /** Format: uuid */
+                    readonly sourcePackageId: string;
+                    /** @enum {string} */
+                    readonly type: "void" | "correction" | "additional_tax" | "refund";
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        readonly evidence: readonly {
+                            readonly documentHash: string;
+                            /** Format: uuid */
+                            readonly documentId: string;
+                            readonly documentVersion: number;
+                        }[];
+                        /** Format: uuid */
+                        readonly filingTaskId: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        /** Format: date-time */
+                        readonly openedAt: string;
+                        /** Format: uuid */
+                        readonly openedBy: string;
+                        readonly reason: string;
+                        readonly resolutionEvidence: readonly {
+                            readonly documentHash: string;
+                            /** Format: uuid */
+                            readonly documentId: string;
+                            readonly documentVersion: number;
+                        }[];
+                        readonly resolutionNote?: string;
+                        /** Format: uuid */
+                        readonly resolutionPackageId?: string;
+                        /** Format: uuid */
+                        readonly reviewedBy?: string;
+                        /** Format: uuid */
+                        readonly sourcePackageId: string;
+                        /** @enum {string} */
+                        readonly status: "open" | "in_review" | "resolved" | "cancelled";
+                        /** @enum {string} */
+                        readonly type: "void" | "correction" | "additional_tax" | "refund";
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingAdjustmentController_transition: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly workOrderId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @enum {string} */
+                    readonly action: "start_review" | "resolve" | "cancel";
+                    readonly expectedVersion: number;
+                    readonly note: string;
+                    /** @default [] */
+                    readonly resolutionEvidenceDocumentIds?: readonly string[];
+                    /** Format: uuid */
+                    readonly resolutionPackageId?: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        readonly evidence: readonly {
+                            readonly documentHash: string;
+                            /** Format: uuid */
+                            readonly documentId: string;
+                            readonly documentVersion: number;
+                        }[];
+                        /** Format: uuid */
+                        readonly filingTaskId: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        /** Format: date-time */
+                        readonly openedAt: string;
+                        /** Format: uuid */
+                        readonly openedBy: string;
+                        readonly reason: string;
+                        readonly resolutionEvidence: readonly {
+                            readonly documentHash: string;
+                            /** Format: uuid */
+                            readonly documentId: string;
+                            readonly documentVersion: number;
+                        }[];
+                        readonly resolutionNote?: string;
+                        /** Format: uuid */
+                        readonly resolutionPackageId?: string;
+                        /** Format: uuid */
+                        readonly reviewedBy?: string;
+                        /** Format: uuid */
+                        readonly sourcePackageId: string;
+                        /** @enum {string} */
+                        readonly status: "open" | "in_review" | "resolved" | "cancelled";
+                        /** @enum {string} */
+                        readonly type: "void" | "correction" | "additional_tax" | "refund";
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingArchiveController_generate: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly year: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly archiveHash: string;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        readonly files: readonly {
+                            readonly contentBase64: string;
+                            readonly mediaType: string;
+                            readonly path: string;
+                            readonly sha256: string;
+                        }[];
+                        /** @enum {string} */
+                        readonly format: "ledgerly-portable-archive.v1";
+                        /** Format: date-time */
+                        readonly generatedAt: string;
+                        readonly manifest: {
+                            readonly entries: readonly {
+                                readonly byteSize: number;
+                                readonly mediaType: string;
+                                readonly path: string;
+                                readonly sha256: string;
+                            }[];
+                            readonly entryCount: number;
+                        };
+                        readonly year: number;
+                    };
+                };
+            };
+        };
+    };
     readonly FilingPackageController_list: {
         readonly parameters: {
             readonly query?: never;
@@ -2742,6 +3115,184 @@ export interface operations {
             };
         };
     };
+    readonly FilingPackageController_close: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly packageId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly note: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: date-time */
+                        readonly closedAt: string;
+                        /** Format: uuid */
+                        readonly closedBy: string;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        readonly contentHash: string;
+                        readonly evidenceIds: readonly string[];
+                        /** Format: uuid */
+                        readonly filingPackageId: string;
+                        /** Format: uuid */
+                        readonly filingTaskId: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly note: string;
+                        readonly packageContentHash: string;
+                        readonly resultHash: string;
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingPackageController_listEvidence: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly packageId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            readonly contentHash: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly documentHash: string;
+                            /** Format: uuid */
+                            readonly documentId: string;
+                            readonly documentVersion: number;
+                            readonly externalReference: string;
+                            /** Format: uuid */
+                            readonly filingPackageId: string;
+                            /** Format: uuid */
+                            readonly filingTaskId: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** @enum {string} */
+                            readonly kind: "filing_receipt" | "tax_payment_proof";
+                            readonly note: string;
+                            /** Format: date-time */
+                            readonly occurredAt: string;
+                            readonly reportedResultHash?: string;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingPackageController_archiveEvidence: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly packageId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly documentHash: string;
+                    /** Format: uuid */
+                    readonly documentId: string;
+                    readonly documentVersion: number;
+                    readonly externalReference: string;
+                    /** @enum {string} */
+                    readonly kind: "filing_receipt";
+                    readonly note: string;
+                    /** Format: date-time */
+                    readonly occurredAt: string;
+                    readonly reportedResultHash: string;
+                } | {
+                    readonly documentHash: string;
+                    /** Format: uuid */
+                    readonly documentId: string;
+                    readonly documentVersion: number;
+                    readonly externalReference: string;
+                    /** @enum {string} */
+                    readonly kind: "tax_payment_proof";
+                    readonly note: string;
+                    /** Format: date-time */
+                    readonly occurredAt: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        readonly contentHash: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        readonly documentHash: string;
+                        /** Format: uuid */
+                        readonly documentId: string;
+                        readonly documentVersion: number;
+                        readonly externalReference: string;
+                        /** Format: uuid */
+                        readonly filingPackageId: string;
+                        /** Format: uuid */
+                        readonly filingTaskId: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        /** @enum {string} */
+                        readonly kind: "filing_receipt" | "tax_payment_proof";
+                        readonly note: string;
+                        /** Format: date-time */
+                        readonly occurredAt: string;
+                        readonly reportedResultHash?: string;
+                    };
+                };
+            };
+        };
+    };
     readonly FilingPackageController_freeze: {
         readonly parameters: {
             readonly query?: never;
@@ -2821,6 +3372,50 @@ export interface operations {
                         /** Format: uuid */
                         readonly updatedBy: string;
                         readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingPackageController_listClosures: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** Format: date-time */
+                            readonly closedAt: string;
+                            /** Format: uuid */
+                            readonly closedBy: string;
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            readonly contentHash: string;
+                            readonly evidenceIds: readonly string[];
+                            /** Format: uuid */
+                            readonly filingPackageId: string;
+                            /** Format: uuid */
+                            readonly filingTaskId: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly note: string;
+                            readonly packageContentHash: string;
+                            readonly resultHash: string;
+                        }[];
                     };
                 };
             };

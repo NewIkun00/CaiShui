@@ -1,8 +1,11 @@
 export { Money, MoneyError } from './money.js';
 export { Rate, RateError } from './rate.js';
 export {
-  TaxPeriod, TaxPeriodError, decidePeriodReopen,
-  type PeriodReopenDecision, type PeriodReopenStatus,
+  TaxPeriod,
+  TaxPeriodError,
+  decidePeriodReopen,
+  type PeriodReopenDecision,
+  type PeriodReopenStatus,
 } from './tax-period.js';
 export type { Company, CompanyRepository, Tenant, TenantRepository } from './tenant.js';
 export { CompanyStatus, createCompany, createTenant } from './tenant.js';
@@ -191,3 +194,22 @@ export {
   type FilingPackageFreezeContext,
   type FilingPackageStatus,
 } from './filing-package.js';
+export {
+  assertFilingClosable,
+  filingClosureBlockers,
+  filingEvidenceKinds,
+  FilingReceiptError,
+  type FilingClosureBlockerCode,
+  type FilingClosureContext,
+  type FilingEvidenceKind,
+} from './filing-receipt.js';
+export {
+  assertIndependentAdjustmentResolution,
+  filingAdjustmentStatuses,
+  filingAdjustmentTypes,
+  transitionFilingAdjustment,
+  FilingAdjustmentError,
+  type FilingAdjustmentAction,
+  type FilingAdjustmentStatus,
+  type FilingAdjustmentType,
+} from './filing-adjustment.js';
