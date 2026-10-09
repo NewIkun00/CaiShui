@@ -128,6 +128,7 @@ export const tenantInvitations = pgTable(
     id: uuid('id').primaryKey(),
     tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
     identifierHash: text('identifier_hash').notNull(),
+    identifierHint: text('identifier_hint').notNull(),
     tokenHash: text('token_hash').notNull(),
     roles: jsonb('roles').notNull(),
     companyIds: jsonb('company_ids').notNull().default([]),

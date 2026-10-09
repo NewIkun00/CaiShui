@@ -1177,6 +1177,74 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/tenant-invitations/accept": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 已验证身份接受租户邀请 */
+        readonly post: operations["IdentityController_accept"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/tenants/{tenantId}/invitations": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 由租户管理员邀请成员并限定公司范围 */
+        readonly post: operations["IdentityController_invite"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/tenants/{tenantId}/members": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 租户管理员查看成员与公司权限范围 */
+        readonly get: operations["IdentityController_list"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/tenants/{tenantId}/members/{userId}/deactivate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 租户管理员停用成员 */
+        readonly post: operations["IdentityController_deactivate"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/tenants/bootstrap": {
         readonly parameters: {
             readonly query?: never;
@@ -7099,6 +7167,195 @@ export interface operations {
                         readonly withdrawnAt?: string;
                         /** Format: uuid */
                         readonly withdrawnBy?: string;
+                    };
+                };
+            };
+        };
+    };
+    readonly IdentityController_accept: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description 开发态用户 UUID；R5 OIDC 接入后由可信会话提供 */
+                readonly "x-user-id": string;
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly token: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: date-time */
+                        readonly activatedAt?: string;
+                        readonly companyIds: readonly string[];
+                        /** Format: date-time */
+                        readonly deactivatedAt?: string;
+                        readonly displayName: string;
+                        readonly roles: readonly ("tenant_owner" | "tenant_admin" | "bookkeeper" | "member")[];
+                        /** @enum {string} */
+                        readonly status: "invited" | "active" | "suspended" | "removed";
+                        /** Format: uuid */
+                        readonly tenantId: string;
+                        /** Format: uuid */
+                        readonly userId: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly IdentityController_invite: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description 当前租户 UUID */
+                readonly "x-tenant-id": string;
+                /** @description 开发态用户 UUID；R5 OIDC 接入后由可信会话提供 */
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly tenantId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @default [] */
+                    readonly companyIds?: readonly string[];
+                    /** @default 48 */
+                    readonly expiresInHours?: number;
+                    readonly identifier: string;
+                    readonly roles: readonly ("tenant_owner" | "tenant_admin" | "bookkeeper" | "member")[];
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly companyIds: readonly string[];
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        readonly developmentToken?: string;
+                        /** Format: date-time */
+                        readonly expiresAt: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly identifierHint: string;
+                        readonly roles: readonly ("tenant_owner" | "tenant_admin" | "bookkeeper" | "member")[];
+                        /** @enum {string} */
+                        readonly status: "pending" | "accepted" | "revoked" | "expired";
+                        /** Format: uuid */
+                        readonly tenantId: string;
+                    };
+                };
+            };
+        };
+    };
+    readonly IdentityController_list: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description 当前租户 UUID */
+                readonly "x-tenant-id": string;
+                /** @description 开发态用户 UUID；R5 OIDC 接入后由可信会话提供 */
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly tenantId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** Format: date-time */
+                            readonly activatedAt?: string;
+                            readonly companyIds: readonly string[];
+                            /** Format: date-time */
+                            readonly deactivatedAt?: string;
+                            readonly displayName: string;
+                            readonly roles: readonly ("tenant_owner" | "tenant_admin" | "bookkeeper" | "member")[];
+                            /** @enum {string} */
+                            readonly status: "invited" | "active" | "suspended" | "removed";
+                            /** Format: uuid */
+                            readonly tenantId: string;
+                            /** Format: uuid */
+                            readonly userId: string;
+                            readonly version: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly IdentityController_deactivate: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /** @description 当前租户 UUID */
+                readonly "x-tenant-id": string;
+                /** @description 开发态用户 UUID；R5 OIDC 接入后由可信会话提供 */
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly tenantId: string;
+                readonly userId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly expectedVersion: number;
+                    readonly reason: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: date-time */
+                        readonly activatedAt?: string;
+                        readonly companyIds: readonly string[];
+                        /** Format: date-time */
+                        readonly deactivatedAt?: string;
+                        readonly displayName: string;
+                        readonly roles: readonly ("tenant_owner" | "tenant_admin" | "bookkeeper" | "member")[];
+                        /** @enum {string} */
+                        readonly status: "invited" | "active" | "suspended" | "removed";
+                        /** Format: uuid */
+                        readonly tenantId: string;
+                        /** Format: uuid */
+                        readonly userId: string;
+                        readonly version: number;
                     };
                 };
             };

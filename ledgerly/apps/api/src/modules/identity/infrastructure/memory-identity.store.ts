@@ -10,9 +10,14 @@ import {
 } from '@ledgerly/domain';
 import type {
   EstablishedIdentity,
+  AcceptInvitationRecord,
+  CreateInvitationRecord,
+  DeactivateMemberRecord,
   EstablishIdentityRecord,
   IdentityStore,
   RevokeIdentitySessionRecord,
+  SavedTenantInvitation,
+  SavedTenantMember,
 } from '../application/identity-store.js';
 
 @Injectable()
@@ -20,6 +25,9 @@ export class MemoryIdentityStore implements IdentityStore {
   private readonly users = new Map<string, AppUser>();
   private readonly identities = new Map<string, ExternalIdentity>();
   private readonly sessions = new Map<string, AuthSession>();
+  private readonly invitations = new Map<string, SavedTenantInvitation>();
+  private readonly members = new Map<string, SavedTenantMember>();
+  private readonly companies = new Map<string, Set<string>>();
 
   establish(record: EstablishIdentityRecord): Promise<EstablishedIdentity> {
     const identityKey = this.identityKey(record.principal.issuer, record.principal.subject);
@@ -66,7 +74,76 @@ export class MemoryIdentityStore implements IdentityStore {
     return Promise.resolve(revoked);
   }
 
+  bootstrapOwner(tenantId: string, userId: string, companyId: string, occurredAt: Date): Promise<void> {
+    if (!this.users.has(userId)) {
+      this.users.set(userId, activateAppUser(createAppUser({ id: userId, displayName: '初始所有者' }, occurredAt), occurredAt));
+    }
+    const key = this.memberKey(tenantId, userId);
+    const current = this.members.get(key);
+    this.members.set(key, current ?? {
+      tenantId, userId, displayName: this.users.get(userId)!.displayName, status: 'active',
+      roles: ['tenant_owner'], companyIds: [companyId], version: 1, activatedAt: occurredAt,
+    });
+    const companyIds = this.companies.get(tenantId) ?? new Set<string>();
+    companyIds.add(companyId);
+    this.companies.set(tenantId, companyIds);
+    return Promise.resolve();
+  }
+
+  findMember(tenantId: string, userId: string): Promise<SavedTenantMember | null> {
+    return Promise.resolve(this.members.get(this.memberKey(tenantId, userId)) ?? null);
+  }
+
+  listMembers(tenantId: string): Promise<readonly SavedTenantMember[]> {
+    return Promise.resolve([...this.members.values()].filter((member) => member.tenantId === tenantId));
+  }
+
+  companyScopeExists(tenantId: string, companyIds: readonly string[]): Promise<boolean> {
+    const known = this.companies.get(tenantId) ?? new Set<string>();
+    return Promise.resolve(companyIds.every((companyId) => known.has(companyId)));
+  }
+
+  createInvitation(record: CreateInvitationRecord): Promise<SavedTenantInvitation> {
+    this.invitations.set(record.invitation.id, Object.freeze({ ...record.invitation }));
+    return Promise.resolve(record.invitation);
+  }
+
+  findInvitationByTokenHash(tokenHash: string): Promise<SavedTenantInvitation | null> {
+    return Promise.resolve([...this.invitations.values()].find((invitation) => invitation.tokenHash === tokenHash) ?? null);
+  }
+
+  acceptInvitation(record: AcceptInvitationRecord): Promise<SavedTenantMember | null> {
+    const invitation = this.invitations.get(record.invitationId);
+    const user = this.users.get(record.userId);
+    if (!invitation || invitation.status !== 'pending' || invitation.version !== record.expectedVersion || !user || user.status !== 'active') {
+      return Promise.resolve(null);
+    }
+    if (this.members.has(this.memberKey(invitation.tenantId, record.userId))) return Promise.resolve(null);
+    const member: SavedTenantMember = Object.freeze({
+      tenantId: invitation.tenantId, userId: record.userId, displayName: user.displayName, status: 'active',
+      roles: [...invitation.roles], companyIds: [...invitation.companyIds], version: 1, activatedAt: record.occurredAt,
+    });
+    this.members.set(this.memberKey(member.tenantId, member.userId), member);
+    this.invitations.set(invitation.id, Object.freeze({ ...invitation, status: 'accepted', version: invitation.version + 1 }));
+    return Promise.resolve(member);
+  }
+
+  deactivateMember(record: DeactivateMemberRecord): Promise<SavedTenantMember | null> {
+    const key = this.memberKey(record.tenantId, record.userId);
+    const current = this.members.get(key);
+    if (!current || current.status !== 'active' || current.version !== record.expectedVersion) return Promise.resolve(null);
+    const changed: SavedTenantMember = Object.freeze({
+      ...current, status: 'suspended', version: current.version + 1, deactivatedAt: record.occurredAt,
+    });
+    this.members.set(key, changed);
+    return Promise.resolve(changed);
+  }
+
   private identityKey(issuer: string, subject: string) {
     return `${issuer.replace(/\/$/, '')}:${subject}`;
+  }
+
+  private memberKey(tenantId: string, userId: string) {
+    return `${tenantId}:${userId}`;
   }
 }

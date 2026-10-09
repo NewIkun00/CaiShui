@@ -1677,3 +1677,45 @@ export const annualFilingArchiveResponseSchema=z.object({
   files:z.array(z.object({path:z.string(),mediaType:z.string(),sha256:z.string().regex(/^[0-9a-f]{64}$/),contentBase64:z.string()}).strict()),
 }).strict();
 export type AnnualFilingArchiveResponse=z.infer<typeof annualFilingArchiveResponseSchema>;
+
+export const customerRoleSchema = z.enum(['tenant_owner', 'tenant_admin', 'bookkeeper', 'member']);
+export const tenantInvitationInputSchema = z.object({
+  identifier: z.string().trim().min(3).max(254),
+  roles: z.array(customerRoleSchema).min(1).max(4),
+  companyIds: z.array(z.string().uuid()).max(100).default([]),
+  expiresInHours: z.number().int().min(1).max(168).default(48),
+}).strict();
+export type TenantInvitationInput = z.infer<typeof tenantInvitationInputSchema>;
+export const tenantInvitationAcceptSchema = z.object({ token: z.string().min(32).max(512) }).strict();
+export type TenantInvitationAcceptInput = z.infer<typeof tenantInvitationAcceptSchema>;
+export const tenantMemberDeactivateSchema = z.object({
+  expectedVersion: z.number().int().positive(),
+  reason: z.string().trim().min(5).max(500),
+}).strict();
+export type TenantMemberDeactivateInput = z.infer<typeof tenantMemberDeactivateSchema>;
+export const tenantInvitationResponseSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  identifierHint: z.string(),
+  roles: z.array(customerRoleSchema),
+  companyIds: z.array(z.string().uuid()),
+  status: z.enum(['pending', 'accepted', 'revoked', 'expired']),
+  expiresAt: z.string().datetime(),
+  createdAt: z.string().datetime(),
+  createdBy: z.string().uuid(),
+  developmentToken: z.string().optional(),
+}).strict();
+export const tenantMemberResponseSchema = z.object({
+  tenantId: z.string().uuid(),
+  userId: z.string().uuid(),
+  displayName: z.string(),
+  status: z.enum(['invited', 'active', 'suspended', 'removed']),
+  roles: z.array(customerRoleSchema),
+  companyIds: z.array(z.string().uuid()),
+  version: z.number().int().positive(),
+  activatedAt: z.string().datetime().optional(),
+  deactivatedAt: z.string().datetime().optional(),
+}).strict();
+export const tenantMemberListResponseSchema = z.object({ items: z.array(tenantMemberResponseSchema) }).strict();
+export type TenantInvitationResponse = z.infer<typeof tenantInvitationResponseSchema>;
+export type TenantMemberResponse = z.infer<typeof tenantMemberResponseSchema>;

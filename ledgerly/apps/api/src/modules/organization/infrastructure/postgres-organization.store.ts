@@ -6,9 +6,11 @@ import type { Database } from '../../../infrastructure/database/database.provide
 import { DATABASE } from '../../../infrastructure/database/database.provider.js';
 import { Inject } from '@nestjs/common';
 import {
+  appUsers,
   auditEvents,
   companies,
   outboxEvents,
+  tenantMemberRoles,
   tenantMembers,
   tenants,
 } from '../../../infrastructure/database/schema.js';
@@ -46,10 +48,32 @@ export class PostgresOrganizationStore implements OrganizationStore {
         updatedAt: record.company.createdAt,
         updatedBy: record.company.createdBy,
       });
+      await tx.insert(appUsers).values({
+        id: record.ownerUserId,
+        status: 'active',
+        displayName: '初始所有者',
+        createdAt: record.tenant.createdAt,
+        createdBy: record.ownerUserId,
+        updatedAt: record.tenant.createdAt,
+        updatedBy: record.ownerUserId,
+      }).onConflictDoNothing();
       await tx.insert(tenantMembers).values({
         tenantId: record.tenant.id,
         userId: record.ownerUserId,
         role: 'owner',
+        status: 'active',
+        roles: ['tenant_owner'],
+        companyIds: [record.company.id],
+        activatedAt: record.tenant.createdAt,
+        createdAt: record.tenant.createdAt,
+        createdBy: record.ownerUserId,
+        updatedAt: record.tenant.createdAt,
+        updatedBy: record.ownerUserId,
+      });
+      await tx.insert(tenantMemberRoles).values({
+        tenantId: record.tenant.id,
+        userId: record.ownerUserId,
+        role: 'tenant_owner',
         createdAt: record.tenant.createdAt,
         createdBy: record.ownerUserId,
         updatedAt: record.tenant.createdAt,

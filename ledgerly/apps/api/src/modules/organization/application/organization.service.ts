@@ -1,7 +1,8 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import type { BootstrapTenantInput } from '@ledgerly/contracts';
 import { createCompany, createTenant, type Company } from '@ledgerly/domain';
 import { randomUUID } from 'node:crypto';
+import { IdentityService } from '../../identity/application/identity.service.js';
 import {
   ORGANIZATION_STORE,
   type OrganizationStore,
@@ -20,7 +21,10 @@ export interface BootstrapResult {
 
 @Injectable()
 export class OrganizationService {
-  constructor(@Inject(ORGANIZATION_STORE) private readonly store: OrganizationStore) {}
+  constructor(
+    @Inject(ORGANIZATION_STORE) private readonly store: OrganizationStore,
+    @Optional() private readonly identities?: IdentityService,
+  ) {}
 
   async bootstrap(input: BootstrapTenantInput, context: RequestContext): Promise<BootstrapResult> {
     const now = new Date();
@@ -47,6 +51,7 @@ export class OrganizationService {
       ownerUserId: context.actorId,
       traceId: context.traceId,
     });
+    await this.identities?.bootstrapOwner(tenant.id, context.actorId, company.id);
     return { tenantId: tenant.id, company };
   }
 

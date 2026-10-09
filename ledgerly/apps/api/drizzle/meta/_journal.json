@@ -36,6 +36,7 @@
     { "idx": 31, "version": "7", "when": 1791561603000, "tag": "0031_filing_packages", "breakpoints": true },
     { "idx": 32, "version": "7", "when": 1791561604000, "tag": "0032_filing_receipts_closures", "breakpoints": true },
     { "idx": 33, "version": "7", "when": 1791561605000, "tag": "0033_filing_adjustment_work_orders", "breakpoints": true },
-    { "idx": 34, "version": "7", "when": 1791561606000, "tag": "0034_identity_foundation", "breakpoints": true }
+    { "idx": 34, "version": "7", "when": 1791561606000, "tag": "0034_identity_foundation", "breakpoints": true },
+    { "idx": 35, "version": "7", "when": 1791561607000, "tag": "0035_tenant_membership_workflow", "breakpoints": true }
   ]
 }
