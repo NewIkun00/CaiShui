@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/app/lib/api-fetch';
+
 import { companyProfileSchema, scopeEvaluationSchema, type ScopeEvaluationResponse } from '@ledgerly/contracts';
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
@@ -68,7 +70,7 @@ export function ProfileForm() {
     if (!parsed.success) { setState({ kind: 'error', message: '请完成所有必填问题。' }); return; }
     setState({ kind: 'submitting' });
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/companies/${context.companyId}/scope-evaluations`, {
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/companies/${context.companyId}/scope-evaluations`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',

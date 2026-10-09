@@ -50,6 +50,8 @@ const titles: Readonly<Record<string, readonly [string, string]>> = {
   '/onboarding/profile': ['适用性筛查', '确认企业是否进入 V1 服务范围'],
   '/setup/financial-account': ['资金与首期', '设置资金账户和会计期间'],
   '/setup/counterparties': ['往来单位', '建立客户、供应商和关联方档案'],
+  '/login': ['安全登录', '通过企业身份服务进入账税通'],
+  '/auth/callback': ['正在登录', '正在验证身份并建立安全会话'],
 };
 
 function active(pathname: string, href: string) {
@@ -86,7 +88,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
         <div className="header-tools">
           <span className="global-status"><i />受控试点环境</span>
           <button type="button" aria-label="帮助">?</button>
-          <span className="user-avatar" title="开发态操作人">开</span>
+          <Link className="user-avatar" href="/login" title="身份与会话">身</Link>
         </div>
       </header>
       <div className="app-content">{children}</div>

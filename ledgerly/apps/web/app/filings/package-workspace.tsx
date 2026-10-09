@@ -1,4 +1,6 @@
 'use client';
+
+import { apiFetch } from '@/app/lib/api-fetch';
 import {
   calculationRunListResponseSchema,
   filingPackageListResponseSchema,
@@ -95,11 +97,11 @@ export function PackageWorkspace() {
       base = `${api()}/v1/companies/${current.companyId}`,
       [sopResponse, taskResponse, runResponse, reviewResponse, packageResponse] = await Promise.all(
         [
-          fetch(`${api()}/v1/filing-sops`, { headers: h }),
-          fetch(`${base}/filing-tasks`, { headers: h }),
-          fetch(`${base}/calculation-runs`, { headers: h }),
-          fetch(`${base}/review-cases`, { headers: h }),
-          fetch(`${base}/filing-packages`, { headers: h }),
+          apiFetch(`${api()}/v1/filing-sops`, { headers: h }),
+          apiFetch(`${base}/filing-tasks`, { headers: h }),
+          apiFetch(`${base}/calculation-runs`, { headers: h }),
+          apiFetch(`${base}/review-cases`, { headers: h }),
+          apiFetch(`${base}/filing-packages`, { headers: h }),
         ],
       );
     if (
@@ -150,7 +152,7 @@ export function PackageWorkspace() {
     const form = new FormData(event.currentTarget);
     setPending(true);
     try {
-      const response = await fetch(`${api()}/v1/filing-sops`, {
+      const response = await apiFetch(`${api()}/v1/filing-sops`, {
         method: 'POST',
         headers: headers(context, true),
         body: JSON.stringify({
@@ -180,7 +182,7 @@ export function PackageWorkspace() {
     if (!context || !runId) return;
     setPending(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${api()}/v1/companies/${context.companyId}/filing-packages/test-result-fixtures`,
         {
           method: 'POST',
@@ -203,7 +205,7 @@ export function PackageWorkspace() {
     if (!context || !taskId || !runId || !sopId || !reviewId) return;
     setPending(true);
     try {
-      const response = await fetch(`${api()}/v1/companies/${context.companyId}/filing-packages`, {
+      const response = await apiFetch(`${api()}/v1/companies/${context.companyId}/filing-packages`, {
         method: 'POST',
         headers: headers(context, true),
         body: JSON.stringify({
@@ -232,7 +234,7 @@ export function PackageWorkspace() {
     if (!context) return;
     setPending(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${api()}/v1/companies/${context.companyId}/filing-packages/${item.id}/freeze`,
         {
           method: 'POST',

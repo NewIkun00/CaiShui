@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/app/lib/api-fetch';
+
 import {
   businessEventListResponseSchema, chartOfAccountsResponseSchema, ledgerResponseSchema,
   periodReopenRequestCreationResponseSchema, periodReopenRequestListResponseSchema,
@@ -54,7 +56,7 @@ export function AccountingManager() {
   const [reviewerId,setReviewerId] = useState('20000000-0000-4000-8000-000000000002');
 
   async function loadLedger(current: WorkspaceContext) {
-    const response = await fetch(`${api()}/v1/companies/${current.companyId}/accounting/ledger`,{ headers:headers(current) });
+    const response = await apiFetch(`${api()}/v1/companies/${current.companyId}/accounting/ledger`,{ headers:headers(current) });
     if (!response.ok) throw new Error(await errorMessage(response,'账簿读取失败。'));
     setLedger(ledgerResponseSchema.parse(await response.json()));
   }
@@ -64,11 +66,11 @@ export function AccountingManager() {
     if (!current) { setReady(true); return; }
     const h=headers(current);
     void Promise.all([
-      fetch(`${api()}/v1/companies/${current.companyId}/business-events`,{headers:h}).then(r=>r.json()),
-      fetch(`${api()}/v1/companies/${current.companyId}/accounting/vouchers`,{headers:h}).then(r=>r.json()),
-      fetch(`${api()}/v1/companies/${current.companyId}/accounting/chart-of-accounts`,{headers:h}).then(r=>r.json()),
-      fetch(`${api()}/v1/companies/${current.companyId}/accounting/ledger`,{headers:h}).then(r=>r.json()),
-      fetch(`${api()}/v1/companies/${current.companyId}/accounting-period/reopen-requests`,{headers:h}).then(r=>r.json()),
+      apiFetch(`${api()}/v1/companies/${current.companyId}/business-events`,{headers:h}).then(r=>r.json()),
+      apiFetch(`${api()}/v1/companies/${current.companyId}/accounting/vouchers`,{headers:h}).then(r=>r.json()),
+      apiFetch(`${api()}/v1/companies/${current.companyId}/accounting/chart-of-accounts`,{headers:h}).then(r=>r.json()),
+      apiFetch(`${api()}/v1/companies/${current.companyId}/accounting/ledger`,{headers:h}).then(r=>r.json()),
+      apiFetch(`${api()}/v1/companies/${current.companyId}/accounting-period/reopen-requests`,{headers:h}).then(r=>r.json()),
     ]).then(([eventPayload,voucherPayload,chartPayload,ledgerPayload,reopenPayload]:unknown[]) => {
       const e=businessEventListResponseSchema.safeParse(eventPayload),v=voucherListResponseSchema.safeParse(voucherPayload),c=chartOfAccountsResponseSchema.safeParse(chartPayload),l=ledgerResponseSchema.safeParse(ledgerPayload),r=periodReopenRequestListResponseSchema.safeParse(reopenPayload);
       if(e.success)setEvents(e.data.items); if(v.success)setVouchers(v.data.items); if(c.success){setTemplateVersion(c.data.templateVersion);setAccountCount(c.data.items.length);} if(l.success)setLedger(l.data);if(r.success)setReopenRequests(r.data.items);
@@ -83,7 +85,7 @@ export function AccountingManager() {
   async function generate() {
     if(!workspace||!selected)return; setPending(true); setMessage('正在应用确定性记账规则…');
     try {
-      const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting/vouchers/from-business-event/${selected}`,{method:'POST',headers:headers(workspace,true),body:'{}'});
+      const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/accounting/vouchers/from-business-event/${selected}`,{method:'POST',headers:headers(workspace,true),body:'{}'});
       if(!response.ok)throw new Error(await errorMessage(response,'凭证生成失败。'));
       const result=voucherGenerationResponseSchema.parse(await response.json());
       setVouchers(current=>result.generated?[result.voucher,...current]:current); setSelected('');
@@ -94,7 +96,7 @@ export function AccountingManager() {
   async function confirm(voucher: VoucherResponse) {
     if(!workspace)return; setPending(true); setMessage('正在确认入账…');
     try {
-      const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting/vouchers/${voucher.id}/confirm`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({expectedVersion:voucher.version})});
+      const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/accounting/vouchers/${voucher.id}/confirm`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({expectedVersion:voucher.version})});
       if(!response.ok)throw new Error(await errorMessage(response,'确认入账失败。'));
       const saved=voucherResponseSchema.parse(await response.json()); setVouchers(current=>current.map(item=>item.id===saved.id?saved:item)); await loadLedger(workspace); setMessage('凭证已正式入账，账簿与科目余额已更新。');
     } catch(error:unknown){setMessage(error instanceof Error?error.message:'确认失败。');} finally{setPending(false);}
@@ -105,7 +107,7 @@ export function AccountingManager() {
     if(!window.confirm('冲销不会删除原凭证，而会生成一张相反分录。确定继续吗？'))return;
     setPending(true); setMessage('正在生成冲销凭证…');
     try {
-      const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting/vouchers/${voucher.id}/reverse`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({reversalDate:voucher.voucherDate,reason:reason.trim(),expectedVersion:voucher.version})});
+      const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/accounting/vouchers/${voucher.id}/reverse`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({reversalDate:voucher.voucherDate,reason:reason.trim(),expectedVersion:voucher.version})});
       if(!response.ok)throw new Error(await errorMessage(response,'冲销失败。'));
       const reversal=voucherResponseSchema.parse(await response.json()); setVouchers(current=>[reversal,...current.map(item=>item.id===voucher.id?{...item,status:'reversed' as const,version:item.version+1}:item)]); await loadLedger(workspace); setMessage('冲销完成：原凭证已保留，并生成相反分录。');
     } catch(error:unknown){setMessage(error instanceof Error?error.message:'冲销失败。');} finally{setPending(false);}
@@ -115,7 +117,7 @@ export function AccountingManager() {
     if(!workspace||!ledger||!window.confirm(`锁定 ${ledger.period.start} 至 ${ledger.period.end} 后，普通写操作将被阻止。确定锁账吗？`))return;
     setPending(true); setMessage('正在执行锁账检查…');
     try {
-      const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting/period/lock`,{method:'POST',headers:headers(workspace,true),body:'{}'});
+      const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/accounting/period/lock`,{method:'POST',headers:headers(workspace,true),body:'{}'});
       if(!response.ok)throw new Error(await errorMessage(response,'锁账失败。')); await loadLedger(workspace); setMessage('会计期间已锁定，后续修改需走反结账审批。');
     } catch(error:unknown){setMessage(error instanceof Error?error.message:'锁账失败。');} finally{setPending(false);}
   }
@@ -123,12 +125,12 @@ export function AccountingManager() {
   async function requestReopen() {
     if(!workspace)return;const reason=window.prompt('请说明反结账原因（至少 5 个字，将进入审计记录）');if(!reason?.trim())return;
     setPending(true);setMessage('正在提交反结账申请…');
-    try{const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting-period/reopen-requests`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({reason:reason.trim()})});if(!response.ok)throw new Error(await errorMessage(response,'反结账申请提交失败。'));const result=periodReopenRequestCreationResponseSchema.parse(await response.json());setReopenRequests(current=>[result.request,...current.filter(item=>item.id!==result.request.id)]);const reviewResponse=await fetch(`${api()}/v1/companies/${workspace.companyId}/review-cases`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({sourceType:'period_reopen_request',sourceId:result.request.id})});if(!reviewResponse.ok)throw new Error('反结账申请已保存，但进入统一复核队列失败，请重试。');reviewCaseCreationResponseSchema.parse(await reviewResponse.json());setMessage(result.created?'反结账申请已提交，并进入统一人工复核队列。':'本期已有待复核申请，已确认关联统一复核案件。');}catch(error:unknown){setMessage(error instanceof Error?error.message:'申请提交失败。');}finally{setPending(false);}
+    try{const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/accounting-period/reopen-requests`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({reason:reason.trim()})});if(!response.ok)throw new Error(await errorMessage(response,'反结账申请提交失败。'));const result=periodReopenRequestCreationResponseSchema.parse(await response.json());setReopenRequests(current=>[result.request,...current.filter(item=>item.id!==result.request.id)]);const reviewResponse=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/review-cases`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({sourceType:'period_reopen_request',sourceId:result.request.id})});if(!reviewResponse.ok)throw new Error('反结账申请已保存，但进入统一复核队列失败，请重试。');reviewCaseCreationResponseSchema.parse(await reviewResponse.json());setMessage(result.created?'反结账申请已提交，并进入统一人工复核队列。':'本期已有待复核申请，已确认关联统一复核案件。');}catch(error:unknown){setMessage(error instanceof Error?error.message:'申请提交失败。');}finally{setPending(false);}
   }
 
   async function decideReopen(decision:'approve'|'reject') {
     if(!workspace||!reopenRequest)return;const reason=window.prompt(decision==='approve'?'请输入批准依据（批准后会立即解锁期间）':'请输入驳回原因（期间将保持锁定）');if(!reason?.trim())return;if(!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(reviewerId)){setMessage('复核人 ID 必须是 UUID。');return;}setPending(true);setMessage('正在记录专业复核决定…');
-    try{const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting-period/reopen-requests/${reopenRequest.id}/decision`,{method:'POST',headers:{'x-user-id':reviewerId,'x-tenant-id':workspace.tenantId,'content-type':'application/json'},body:JSON.stringify({decision,reason:reason.trim(),expectedVersion:reopenRequest.version})});if(!response.ok)throw new Error(await errorMessage(response,'反结账复核失败。'));const result=periodReopenRequestResponseSchema.parse(await response.json());setReopenRequests(current=>current.map(item=>item.id===result.id?result:item));await loadLedger(workspace);setMessage(decision==='approve'?'反结账已批准，会计期间已重新开放。':'申请已驳回，会计期间保持锁定。');}catch(error:unknown){setMessage(error instanceof Error?error.message:'反结账复核失败。');}finally{setPending(false);}
+    try{const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/accounting-period/reopen-requests/${reopenRequest.id}/decision`,{method:'POST',headers:{'x-user-id':reviewerId,'x-tenant-id':workspace.tenantId,'content-type':'application/json'},body:JSON.stringify({decision,reason:reason.trim(),expectedVersion:reopenRequest.version})});if(!response.ok)throw new Error(await errorMessage(response,'反结账复核失败。'));const result=periodReopenRequestResponseSchema.parse(await response.json());setReopenRequests(current=>current.map(item=>item.id===result.id?result:item));await loadLedger(workspace);setMessage(decision==='approve'?'反结账已批准，会计期间已重新开放。':'申请已驳回，会计期间保持锁定。');}catch(error:unknown){setMessage(error instanceof Error?error.message:'反结账复核失败。');}finally{setPending(false);}
   }
 
   if(!ready)return <section className="accounting-workspace"><div className="onboarding-card">正在读取账务数据…</div></section>;

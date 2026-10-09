@@ -122,6 +122,18 @@ export const authSessions = pgTable(
   ],
 );
 
+export const oidcLoginStates = pgTable(
+  'oidc_login_states',
+  {
+    stateHash: text('state_hash').primaryKey(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    traceId: text('trace_id').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [index('oidc_login_states_expiry_idx').on(table.expiresAt, table.consumedAt)],
+);
+
 export const tenantInvitations = pgTable(
   'tenant_invitations',
   {

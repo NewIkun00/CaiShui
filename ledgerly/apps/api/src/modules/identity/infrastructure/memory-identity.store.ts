@@ -11,10 +11,12 @@ import {
 import type {
   EstablishedIdentity,
   AcceptInvitationRecord,
+  AuthenticatedSession,
   CreateInvitationRecord,
   DeactivateMemberRecord,
   EstablishIdentityRecord,
   IdentityStore,
+  LoginStateRecord,
   RevokeIdentitySessionRecord,
   SavedTenantInvitation,
   SavedTenantMember,
@@ -28,6 +30,7 @@ export class MemoryIdentityStore implements IdentityStore {
   private readonly invitations = new Map<string, SavedTenantInvitation>();
   private readonly members = new Map<string, SavedTenantMember>();
   private readonly companies = new Map<string, Set<string>>();
+  private readonly loginStates = new Map<string, LoginStateRecord & { consumedAt?: Date }>();
 
   establish(record: EstablishIdentityRecord): Promise<EstablishedIdentity> {
     const identityKey = this.identityKey(record.principal.issuer, record.principal.subject);
@@ -72,6 +75,30 @@ export class MemoryIdentityStore implements IdentityStore {
     const revoked = revokeAuthSession(current, { actorId: record.actorId, reason: record.reason }, record.occurredAt);
     this.sessions.set(record.sessionId, revoked);
     return Promise.resolve(revoked);
+  }
+
+  findAuthenticatedSession(sessionId: string, now: Date): Promise<AuthenticatedSession | null> {
+    const session = this.sessions.get(sessionId);
+    if (!session || session.revokedAt || session.expiresAt <= now) return Promise.resolve(null);
+    const user = this.users.get(session.userId);
+    if (!user || user.status !== 'active') return Promise.resolve(null);
+    return Promise.resolve({ user, session });
+  }
+
+  listMembershipsForUser(userId: string): Promise<readonly SavedTenantMember[]> {
+    return Promise.resolve([...this.members.values()].filter((member) => member.userId === userId && member.status === 'active'));
+  }
+
+  createLoginState(record: LoginStateRecord): Promise<void> {
+    this.loginStates.set(record.stateHash, Object.freeze({ ...record }));
+    return Promise.resolve();
+  }
+
+  consumeLoginState(stateHash: string, occurredAt: Date): Promise<boolean> {
+    const current = this.loginStates.get(stateHash);
+    if (!current || current.consumedAt || current.expiresAt <= occurredAt) return Promise.resolve(false);
+    this.loginStates.set(stateHash, Object.freeze({ ...current, consumedAt: occurredAt }));
+    return Promise.resolve(true);
   }
 
   bootstrapOwner(tenantId: string, userId: string, companyId: string, occurredAt: Date): Promise<void> {

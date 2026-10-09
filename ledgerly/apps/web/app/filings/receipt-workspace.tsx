@@ -1,4 +1,6 @@
 'use client';
+
+import { apiFetch } from '@/app/lib/api-fetch';
 import {
   documentListResponseSchema,
   filingClosureListResponseSchema,
@@ -89,7 +91,7 @@ export function ReceiptWorkspace() {
       setEvidence([]);
       return;
     }
-    const response = await fetch(
+    const response = await apiFetch(
       `${api()}/v1/companies/${current.companyId}/filing-packages/${nextPackageId}/evidence`,
       { headers: headers(current) },
     );
@@ -100,9 +102,9 @@ export function ReceiptWorkspace() {
     async (current: Workspace) => {
       const base = `${api()}/v1/companies/${current.companyId}`;
       const [packageResponse, documentResponse, closureResponse] = await Promise.all([
-        fetch(`${base}/filing-packages`, { headers: headers(current) }),
-        fetch(`${base}/documents`, { headers: headers(current) }),
-        fetch(`${base}/filing-packages/closures/all`, { headers: headers(current) }),
+        apiFetch(`${base}/filing-packages`, { headers: headers(current) }),
+        apiFetch(`${base}/documents`, { headers: headers(current) }),
+        apiFetch(`${base}/filing-packages/closures/all`, { headers: headers(current) }),
       ]);
       if (!packageResponse.ok || !documentResponse.ok || !closureResponse.ok)
         throw new Error('无法读取 R4 回执工作区。');
@@ -160,7 +162,7 @@ export function ReceiptWorkspace() {
           ? { reportedResultHash: selectedPackage.snapshot.resultHash }
           : {}),
       };
-      const response = await fetch(
+      const response = await apiFetch(
         `${api()}/v1/companies/${context.companyId}/filing-packages/${selectedPackage.id}/evidence`,
         { method: 'POST', headers: headers(context, true), body: JSON.stringify(body) },
       );
@@ -183,7 +185,7 @@ export function ReceiptWorkspace() {
     setPending(true);
     setMessage(null);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${api()}/v1/companies/${context.companyId}/filing-packages/${selectedPackage.id}/close`,
         {
           method: 'POST',

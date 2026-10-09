@@ -4,6 +4,74 @@
  */
 
 export interface paths {
+    readonly "/v1/auth/callback": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 完成 OIDC 回调并建立 HttpOnly BFF 会话 */
+        readonly post: operations["AuthenticationController_callback"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/auth/login": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 创建 OIDC Authorization Code + PKCE 登录事务 */
+        readonly post: operations["AuthenticationController_login"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/auth/logout": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 撤销本地会话并请求撤销 Provider 会话 */
+        readonly post: operations["AuthenticationController_logout"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/auth/me": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 读取当前正式用户、会话和活动租户成员关系 */
+        readonly get: operations["AuthenticationController_me"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/companies/{companyId}": {
         readonly parameters: {
             readonly query?: never;
@@ -1274,6 +1342,171 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    readonly AuthenticationController_callback: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly code: string;
+                    readonly state: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly memberships: readonly {
+                            /** Format: date-time */
+                            readonly activatedAt?: string;
+                            readonly companyIds: readonly string[];
+                            /** Format: date-time */
+                            readonly deactivatedAt?: string;
+                            readonly displayName: string;
+                            readonly roles: readonly ("tenant_owner" | "tenant_admin" | "bookkeeper" | "member")[];
+                            /** @enum {string} */
+                            readonly status: "invited" | "active" | "suspended" | "removed";
+                            /** Format: uuid */
+                            readonly tenantId: string;
+                            /** Format: uuid */
+                            readonly userId: string;
+                            readonly version: number;
+                        }[];
+                        readonly returnTo?: string;
+                        readonly session: {
+                            /** Format: date-time */
+                            readonly authenticatedAt: string;
+                            readonly authMethods: readonly ("pwd" | "otp" | "webauthn" | "federated")[];
+                            /** Format: date-time */
+                            readonly expiresAt: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                        };
+                        readonly user: {
+                            readonly displayName: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** @enum {string} */
+                            readonly status: "pending_identity" | "active" | "disabled";
+                        };
+                    };
+                };
+            };
+        };
+    };
+    readonly AuthenticationController_login: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @default /dashboard */
+                    readonly returnTo?: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uri */
+                        readonly authorizationUrl: string;
+                        /** Format: date-time */
+                        readonly expiresAt: string;
+                    };
+                };
+            };
+        };
+    };
+    readonly AuthenticationController_logout: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly providerRevoked: boolean;
+                    };
+                };
+            };
+        };
+    };
+    readonly AuthenticationController_me: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly memberships: readonly {
+                            /** Format: date-time */
+                            readonly activatedAt?: string;
+                            readonly companyIds: readonly string[];
+                            /** Format: date-time */
+                            readonly deactivatedAt?: string;
+                            readonly displayName: string;
+                            readonly roles: readonly ("tenant_owner" | "tenant_admin" | "bookkeeper" | "member")[];
+                            /** @enum {string} */
+                            readonly status: "invited" | "active" | "suspended" | "removed";
+                            /** Format: uuid */
+                            readonly tenantId: string;
+                            /** Format: uuid */
+                            readonly userId: string;
+                            readonly version: number;
+                        }[];
+                        readonly returnTo?: string;
+                        readonly session: {
+                            /** Format: date-time */
+                            readonly authenticatedAt: string;
+                            readonly authMethods: readonly ("pwd" | "otp" | "webauthn" | "federated")[];
+                            /** Format: date-time */
+                            readonly expiresAt: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                        };
+                        readonly user: {
+                            readonly displayName: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** @enum {string} */
+                            readonly status: "pending_identity" | "active" | "disabled";
+                        };
+                    };
+                };
+            };
+        };
+    };
     readonly OrganizationController_getCompany: {
         readonly parameters: {
             readonly query?: never;

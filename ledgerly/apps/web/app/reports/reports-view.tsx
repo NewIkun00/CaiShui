@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/app/lib/api-fetch';
+
 import { financialReportsResponseSchema, type FinancialReportsResponse } from '@ledgerly/contracts';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -27,7 +29,7 @@ export function ReportsView() {
   useEffect(()=>{
     const workspace=context();
     if(!workspace){setReady(true);return;}
-    void fetch(`${api()}/v1/companies/${workspace.companyId}/accounting/reports`,{headers:{'x-user-id':'10000000-0000-4000-8000-000000000001','x-tenant-id':workspace.tenantId}})
+    void apiFetch(`${api()}/v1/companies/${workspace.companyId}/accounting/reports`,{headers:{'x-user-id':'10000000-0000-4000-8000-000000000001','x-tenant-id':workspace.tenantId}})
       .then(async response=>{if(!response.ok)throw new Error('报表读取失败，请确认账套已经初始化。');return financialReportsResponseSchema.parse(await response.json());})
       .then(setReports).catch((reason:unknown)=>setError(reason instanceof Error?reason.message:'报表读取失败。')).finally(()=>setReady(true));
   },[]);

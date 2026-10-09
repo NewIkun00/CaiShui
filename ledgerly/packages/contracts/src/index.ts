@@ -1719,3 +1719,27 @@ export const tenantMemberResponseSchema = z.object({
 export const tenantMemberListResponseSchema = z.object({ items: z.array(tenantMemberResponseSchema) }).strict();
 export type TenantInvitationResponse = z.infer<typeof tenantInvitationResponseSchema>;
 export type TenantMemberResponse = z.infer<typeof tenantMemberResponseSchema>;
+
+export const authLoginInputSchema = z.object({
+  returnTo: z.string().regex(/^\/(?!\/)/).max(500).default('/dashboard'),
+}).strict();
+export type AuthLoginInput = z.infer<typeof authLoginInputSchema>;
+export const authLoginResponseSchema = z.object({
+  authorizationUrl: z.string().url(), expiresAt: z.string().datetime(),
+}).strict();
+export const authCallbackInputSchema = z.object({
+  code: z.string().min(1).max(4096), state: z.string().min(32).max(512),
+}).strict();
+export type AuthCallbackInput = z.infer<typeof authCallbackInputSchema>;
+export const authCurrentResponseSchema = z.object({
+  user: z.object({
+    id: z.string().uuid(), displayName: z.string(), status: z.enum(['pending_identity', 'active', 'disabled']),
+  }).strict(),
+  session: z.object({
+    id: z.string().uuid(), authMethods: z.array(z.enum(['pwd', 'otp', 'webauthn', 'federated'])),
+    authenticatedAt: z.string().datetime(), expiresAt: z.string().datetime(),
+  }).strict(),
+  memberships: z.array(tenantMemberResponseSchema),
+  returnTo: z.string().optional(),
+}).strict();
+export const authLogoutResponseSchema = z.object({ providerRevoked: z.boolean() }).strict();

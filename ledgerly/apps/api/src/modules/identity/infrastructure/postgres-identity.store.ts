@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { activateAppUser, createAppUser, type AppUser, type AuthMethod, type AuthSession, type ExternalIdentity } from '@ledgerly/domain';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNull } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { DATABASE, type Database } from '../../../infrastructure/database/database.provider.js';
 import {
@@ -10,17 +10,20 @@ import {
   companies,
   externalIdentities,
   outboxEvents,
+  oidcLoginStates,
   tenantInvitations,
   tenantMemberRoles,
   tenantMembers,
 } from '../../../infrastructure/database/schema.js';
 import type {
   AcceptInvitationRecord,
+  AuthenticatedSession,
   CreateInvitationRecord,
   DeactivateMemberRecord,
   EstablishedIdentity,
   EstablishIdentityRecord,
   IdentityStore,
+  LoginStateRecord,
   RevokeIdentitySessionRecord,
   SavedTenantInvitation,
   SavedTenantMember,
@@ -97,6 +100,43 @@ export class PostgresIdentityStore implements IdentityStore {
       });
       return this.session(row);
     });
+  }
+
+  async findAuthenticatedSession(sessionId: string, now: Date): Promise<AuthenticatedSession | null> {
+    const [sessionRow] = await this.db.select().from(authSessions).where(and(
+      eq(authSessions.id, sessionId),
+      isNull(authSessions.revokedAt),
+      gt(authSessions.expiresAt, now),
+    )).limit(1);
+    if (!sessionRow) return null;
+    const [userRow] = await this.db.select().from(appUsers).where(and(
+      eq(appUsers.id, sessionRow.userId),
+      eq(appUsers.status, 'active'),
+    )).limit(1);
+    return userRow ? { user: this.user(userRow), session: this.session(sessionRow) } : null;
+  }
+
+  async listMembershipsForUser(userId: string): Promise<readonly SavedTenantMember[]> {
+    const rows = await this.db.select().from(tenantMembers).where(and(
+      eq(tenantMembers.userId, userId),
+      eq(tenantMembers.status, 'active'),
+    ));
+    const [user] = await this.db.select().from(appUsers).where(eq(appUsers.id, userId)).limit(1);
+    if (!user) return [];
+    return rows.map((row) => this.member(row, user.displayName));
+  }
+
+  async createLoginState(record: LoginStateRecord): Promise<void> {
+    await this.db.insert(oidcLoginStates).values(record);
+  }
+
+  async consumeLoginState(stateHash: string, occurredAt: Date): Promise<boolean> {
+    const [row] = await this.db.update(oidcLoginStates).set({ consumedAt: occurredAt }).where(and(
+      eq(oidcLoginStates.stateHash, stateHash),
+      isNull(oidcLoginStates.consumedAt),
+      gt(oidcLoginStates.expiresAt, occurredAt),
+    )).returning({ stateHash: oidcLoginStates.stateHash });
+    return Boolean(row);
   }
 
   bootstrapOwner(tenantId: string, userId: string, companyId: string, occurredAt: Date): Promise<void> {

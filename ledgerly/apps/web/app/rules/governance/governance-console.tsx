@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/app/lib/api-fetch';
+
 import {
   policySourceInputSchema,
   policySourceListResponseSchema,
@@ -77,8 +79,8 @@ export function GovernanceConsole() {
   async function loadCatalog(actor = actorId) {
     try {
       const [sourceResponse, packageResponse] = await Promise.all([
-        fetch(`${api()}/v1/policy-sources`, { headers: authHeaders(actor) }),
-        fetch(`${api()}/v1/rule-packages`, { headers: authHeaders(actor) }),
+        apiFetch(`${api()}/v1/policy-sources`, { headers: authHeaders(actor) }),
+        apiFetch(`${api()}/v1/rule-packages`, { headers: authHeaders(actor) }),
       ]);
       if (!sourceResponse.ok) throw new Error(await errorMessage(sourceResponse, '政策来源读取失败。'));
       if (!packageResponse.ok) throw new Error(await errorMessage(packageResponse, '规则包读取失败。'));
@@ -92,7 +94,7 @@ export function GovernanceConsole() {
     if (!nextPackageId) return;
     setPending(true);
     try {
-      const response = await fetch(`${api()}/v1/rule-packages/${nextPackageId}/versions`, { headers: authHeaders(actor) });
+      const response = await apiFetch(`${api()}/v1/rule-packages/${nextPackageId}/versions`, { headers: authHeaders(actor) });
       if (!response.ok) throw new Error(await errorMessage(response, '规则版本读取失败。'));
       setVersions(ruleVersionListResponseSchema.parse(await response.json()).items);
     } catch (reason: unknown) { setMessage(reason instanceof Error ? reason.message : '规则版本读取失败。'); }
@@ -119,7 +121,7 @@ export function GovernanceConsole() {
     if (!parsed.success) { setMessage(parsed.error.issues.map((item) => item.message).join('；')); return; }
     setPending(true); setMessage('正在固化官方政策来源…');
     try {
-      const response = await fetch(`${api()}/v1/policy-sources`, { method: 'POST', headers: authHeaders(actorId, true), body: JSON.stringify(parsed.data) });
+      const response = await apiFetch(`${api()}/v1/policy-sources`, { method: 'POST', headers: authHeaders(actorId, true), body: JSON.stringify(parsed.data) });
       if (!response.ok) throw new Error(await errorMessage(response, '政策来源登记失败。'));
       const saved = policySourceResponseSchema.parse(await response.json()); setSources((current) => [...current, saved]);
       formElement.reset(); setMessage(`政策来源已固化，内容哈希 ${saved.contentHash}。`); setActivePanel('package');
@@ -136,7 +138,7 @@ export function GovernanceConsole() {
     if (!parsed.success) { setMessage(parsed.error.issues.map((item) => item.message).join('；')); return; }
     setPending(true); setMessage('正在创建稳定规则包…');
     try {
-      const response = await fetch(`${api()}/v1/rule-packages`, { method: 'POST', headers: authHeaders(actorId, true), body: JSON.stringify(parsed.data) });
+      const response = await apiFetch(`${api()}/v1/rule-packages`, { method: 'POST', headers: authHeaders(actorId, true), body: JSON.stringify(parsed.data) });
       if (!response.ok) throw new Error(await errorMessage(response, '规则包创建失败。'));
       const saved = rulePackageResponseSchema.parse(await response.json()); setPackages((current) => [...current, saved]); setPackageId(saved.id); setVersions([]);
       formElement.reset(); setMessage('规则包已创建，尚未包含可执行规则。'); setActivePanel('version');
@@ -158,7 +160,7 @@ export function GovernanceConsole() {
     if (!parsed.success) { setMessage(parsed.error.issues.map((item) => item.message).join('；')); return; }
     setPending(true); setMessage('正在创建不可执行的规则草稿…');
     try {
-      const response = await fetch(`${api()}/v1/rule-packages/${packageId}/versions`, { method: 'POST', headers: authHeaders(actorId, true), body: JSON.stringify(parsed.data) });
+      const response = await apiFetch(`${api()}/v1/rule-packages/${packageId}/versions`, { method: 'POST', headers: authHeaders(actorId, true), body: JSON.stringify(parsed.data) });
       if (!response.ok) throw new Error(await errorMessage(response, '规则草稿创建失败。'));
       const saved = ruleVersionResponseSchema.parse(await response.json()); setVersions((current) => [...current, saved]);
       formElement.reset(); setSourceIds([]); setMessage('规则草稿已创建。请切换到不同操作人完成工程复核。');
@@ -172,7 +174,7 @@ export function GovernanceConsole() {
     if (!parsed.success) { setMessage('复核说明至少 5 个字，并应写明检查范围和结论。'); return; }
     setPending(true); setMessage(kind === 'technical' ? '正在提交工程复核…' : '正在提交财税复核…');
     try {
-      const response = await fetch(`${api()}/v1/rule-packages/${packageId}/versions/${version.id}/reviews`, { method: 'POST', headers: authHeaders(actorId, true), body: JSON.stringify(parsed.data) });
+      const response = await apiFetch(`${api()}/v1/rule-packages/${packageId}/versions/${version.id}/reviews`, { method: 'POST', headers: authHeaders(actorId, true), body: JSON.stringify(parsed.data) });
       if (!response.ok) throw new Error(await errorMessage(response, '规则复核失败。'));
       const saved = ruleVersionResponseSchema.parse(await response.json()); setVersions((current) => current.map((item) => item.id === saved.id ? saved : item));
       setReviewNotes((current) => ({ ...current, [version.id]: '' }));
@@ -198,7 +200,7 @@ export function GovernanceConsole() {
     const pendingMessages = { approval: '正在提交独立批准…', schedule: '正在安排规则激活…', activation: '正在执行规则激活…', withdrawal: '正在执行紧急撤回…' };
     setPending(true); setMessage(pendingMessages[action]);
     try {
-      const response = await fetch(`${api()}/v1/rule-packages/${packageId}/versions/${version.id}/${action}`, {
+      const response = await apiFetch(`${api()}/v1/rule-packages/${packageId}/versions/${version.id}/${action}`, {
         method: 'POST', headers: authHeaders(actorId, true), body: JSON.stringify(parsed.data),
       });
       if (!response.ok) throw new Error(await errorMessage(response, '发布流程操作失败。'));

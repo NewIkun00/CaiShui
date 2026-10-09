@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/app/lib/api-fetch';
+
 import { useState, type FormEvent } from 'react';
 import { bootstrapTenantSchema } from '@ledgerly/contracts';
 import { useRouter } from 'next/navigation';
@@ -34,7 +36,7 @@ export function OnboardingForm() {
     }
     setState({ kind: 'pending' });
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/tenants/bootstrap`, {
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/tenants/bootstrap`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-user-id': '10000000-0000-4000-8000-000000000001' },
         body: JSON.stringify(parsed.data),

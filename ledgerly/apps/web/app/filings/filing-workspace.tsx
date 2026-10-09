@@ -1,4 +1,6 @@
 'use client';
+
+import { apiFetch } from '@/app/lib/api-fetch';
 import {
   filingCalendarCreationResponseSchema,
   filingCalendarListResponseSchema,
@@ -73,8 +75,8 @@ export function FilingWorkspace() {
   );
   const load = useCallback(async (current: Workspace) => {
     const [calendarResponse, taskResponse] = await Promise.all([
-      fetch(`${api()}/v1/filing-calendars`, { headers: headers(current) }),
-      fetch(`${api()}/v1/companies/${current.companyId}/filing-tasks`, {
+      apiFetch(`${api()}/v1/filing-calendars`, { headers: headers(current) }),
+      apiFetch(`${api()}/v1/companies/${current.companyId}/filing-tasks`, {
         headers: headers(current),
       }),
     ]);
@@ -107,7 +109,7 @@ export function FilingWorkspace() {
     setPending(true);
     setMessage(null);
     try {
-      const response = await fetch(`${api()}/v1/filing-calendars`, {
+      const response = await apiFetch(`${api()}/v1/filing-calendars`, {
         method: 'POST',
         headers: headers(context, true),
         body: JSON.stringify({
@@ -154,7 +156,7 @@ export function FilingWorkspace() {
     setPending(true);
     setMessage(null);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${api()}/v1/companies/${context.companyId}/filing-tasks/generate`,
         {
           method: 'POST',
@@ -191,7 +193,7 @@ export function FilingWorkspace() {
     setPending(true);
     setMessage(null);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${api()}/v1/companies/${context.companyId}/filing-tasks/${task.id}/transitions`,
         {
           method: 'POST',

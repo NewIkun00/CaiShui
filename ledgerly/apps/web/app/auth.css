@@ -1,0 +1,9 @@
+.auth-page{min-height:calc(100vh - 120px);display:grid;place-items:center;padding:40px 20px;background:radial-gradient(circle at 20% 10%,#e4f0ea 0,transparent 34%),linear-gradient(145deg,#f8faf7,#eef3f0)}
+.auth-card{width:min(480px,100%);background:#fff;border:1px solid #d7e2dc;border-radius:24px;padding:42px;box-shadow:0 24px 70px rgba(25,55,45,.1);display:grid;gap:16px;text-align:center}
+.auth-mark{width:58px;height:58px;margin:auto;display:grid;place-items:center;border-radius:17px;background:#1f5d4d;color:#fff;font:700 28px 'Songti SC',serif;box-shadow:0 10px 22px rgba(31,93,77,.24)}
+.auth-card h1{margin:0;color:#17352d;font:700 34px/1.2 'Songti SC',serif}
+.auth-card>p:not(.eyebrow){margin:0;color:#61736d;line-height:1.75}
+.auth-card ul{margin:4px 0;padding:16px 20px;text-align:left;background:#f4f8f5;border-radius:14px;color:#35564c;display:grid;gap:8px;list-style-position:inside;font-size:13px}
+.auth-card button{border:0;border-radius:12px;padding:14px 18px;background:#205f4e;color:#fff;font:700 15px inherit;cursor:pointer;box-shadow:0 8px 18px rgba(32,95,78,.2)}
+.auth-card button:disabled{opacity:.6;cursor:wait}.auth-card small{color:#7b8985;line-height:1.55}.auth-message{padding:11px;border-radius:10px;background:#f9e9e6;color:#8a4039;font-size:13px}.auth-card a{color:#276854;font-weight:700;text-decoration:none}.auth-spinner{width:42px;height:42px;margin:auto;border:3px solid #dce9e3;border-top-color:#276854;border-radius:50%;animation:auth-spin .9s linear infinite}@keyframes auth-spin{to{transform:rotate(360deg)}}
+@media(max-width:700px){.auth-page{padding:20px 12px}.auth-card{padding:30px 22px;border-radius:18px}.auth-card h1{font-size:28px}}

@@ -6,12 +6,11 @@ import { randomUUID } from 'node:crypto';
 import { AppModule } from './app.module.js';
 import { HttpExceptionFilter } from './shared/http-exception.filter.js';
 import { createOpenApiDocument } from './openapi/document.js';
+import { authMode, validateAuthConfiguration } from './modules/identity/infrastructure/auth-mode.js';
 
 async function bootstrap(): Promise<void> {
   const production = process.env['NODE_ENV'] === 'production';
-  if (production && process.env['AUTH_MODE'] === 'development-headers') {
-    throw new Error('development-headers authentication is forbidden in production');
-  }
+  validateAuthConfiguration();
   if (production && process.env['STORAGE_MODE'] === 'memory') {
     throw new Error('memory storage is forbidden in production');
   }
@@ -23,7 +22,10 @@ async function bootstrap(): Promise<void> {
   await app.register(helmet);
   app.enableCors({
     origin: production ? webOrigin ?? false : true,
-    allowedHeaders: ['content-type', 'x-user-id', 'x-tenant-id', 'x-request-id'],
+    credentials: true,
+    allowedHeaders: authMode() === 'development-headers'
+      ? ['content-type', 'x-user-id', 'x-tenant-id', 'x-request-id']
+      : ['content-type', 'x-tenant-id', 'x-request-id'],
     exposedHeaders: ['x-request-id'],
   });
   app.getHttpAdapter().getInstance().addHook('onRequest', (request, reply, done) => {

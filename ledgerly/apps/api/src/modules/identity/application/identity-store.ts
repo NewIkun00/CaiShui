@@ -26,6 +26,18 @@ export interface EstablishedIdentity {
   readonly created: boolean;
 }
 
+export interface AuthenticatedSession {
+  readonly user: AppUser;
+  readonly session: AuthSession;
+}
+
+export interface LoginStateRecord {
+  readonly stateHash: string;
+  readonly expiresAt: Date;
+  readonly createdAt: Date;
+  readonly traceId: string;
+}
+
 export interface SavedTenantInvitation {
   readonly id: string;
   readonly tenantId: string;
@@ -84,6 +96,10 @@ export interface IdentityStore {
   establish(record: EstablishIdentityRecord): Promise<EstablishedIdentity>;
   findSession(userId: string, sessionId: string): Promise<AuthSession | null>;
   revokeSession(record: RevokeIdentitySessionRecord): Promise<AuthSession | null>;
+  findAuthenticatedSession(sessionId: string, now: Date): Promise<AuthenticatedSession | null>;
+  listMembershipsForUser(userId: string): Promise<readonly SavedTenantMember[]>;
+  createLoginState(record: LoginStateRecord): Promise<void>;
+  consumeLoginState(stateHash: string, occurredAt: Date): Promise<boolean>;
   bootstrapOwner(tenantId: string, userId: string, companyId: string, occurredAt: Date): Promise<void>;
   findMember(tenantId: string, userId: string): Promise<SavedTenantMember | null>;
   listMembers(tenantId: string): Promise<readonly SavedTenantMember[]>;

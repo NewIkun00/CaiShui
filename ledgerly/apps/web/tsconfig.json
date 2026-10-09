@@ -3,6 +3,8 @@
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2023"],
     "allowJs": false,
+    "baseUrl": ".",
+    "paths": { "@/*": ["./*"] },
     "jsx": "preserve",
     "incremental": true,
     "plugins": [{ "name": "next" }],

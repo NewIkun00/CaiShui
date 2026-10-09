@@ -9,7 +9,9 @@
 3. 运行 `pnpm install`、`pnpm db:migrate`、`pnpm dev`。
 4. 用户 Web：<http://localhost:3020>；API 文档：<http://localhost:3001/docs>。
 
-开发态身份由 `x-user-id` 和 `x-tenant-id` 请求头提供，只能在 `AUTH_MODE=development-headers` 时启用。生产环境启动检查会拒绝该模式。
+开发态身份由 `x-user-id` 和 `x-tenant-id` 请求头提供，只能在 `AUTH_MODE=development-headers`、`STORAGE_MODE=memory` 且非生产环境时启用。生产及 PostgreSQL 模式会拒绝这种组合。
+
+正式身份使用 `AUTH_MODE=oidc`。API 实现 Authorization Code + PKCE、一次性 state、nonce、RS256/JWKS 验签和 HttpOnly BFF 会话 Cookie；浏览器不得保存 Provider 令牌。配置项见 `.env.example`，真实 Keycloak 部署与密钥生命周期在 R6/R7 完成。
 
 如果只是预览页面且本机没有 Docker，可使用 `STORAGE_MODE=memory` 启动 API。该模式的数据会在 API 重启时清空，且生产环境会拒绝启动。
 

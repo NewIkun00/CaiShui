@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/app/lib/api-fetch';
+
 import {
   counterpartyListResponseSchema, invoiceInputSchema, invoiceListResponseSchema,
   invoiceResponseSchema, mockInvoiceExtractionResponseSchema,
@@ -34,8 +36,8 @@ export function InvoiceManager() {
   const [pending,setPending]=useState(false);
 
   useEffect(()=>{ const current=readContext(); setWorkspace(current); if(!current){setReady(true);return;} const headers=authHeaders(current); void Promise.all([
-    fetch(`${api()}/v1/companies/${current.companyId}/counterparties`,{headers}).then(r=>r.json()),
-    fetch(`${api()}/v1/companies/${current.companyId}/invoices`,{headers}).then(r=>r.json()),
+    apiFetch(`${api()}/v1/companies/${current.companyId}/counterparties`,{headers}).then(r=>r.json()),
+    apiFetch(`${api()}/v1/companies/${current.companyId}/invoices`,{headers}).then(r=>r.json()),
   ]).then(([partyPayload,invoicePayload]:unknown[])=>{ const p=counterpartyListResponseSchema.safeParse(partyPayload); const i=invoiceListResponseSchema.safeParse(invoicePayload); if(p.success)setParties(p.data.items); if(i.success)setInvoices(i.data.items); }).catch(()=>setMessage('暂时无法读取发票数据。')).finally(()=>setReady(true)); },[]);
 
   const eligibleParties=useMemo(()=>parties.filter(p=>p.type===(fields.direction==='output'?'customer':'supplier')),[parties,fields.direction]);
@@ -44,18 +46,18 @@ export function InvoiceManager() {
 
   async function extract() {
     if(!workspace)return setMessage('请先完成企业建档。'); setPending(true); setWarnings([]); setMessage('正在运行模拟识别…');
-    try { const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/invoices/extractions/mock`,{method:'POST',headers:{...authHeaders(workspace),'content-type':'application/json'},body:JSON.stringify({text:mockText})}); const payload:unknown=await response.json(); if(!response.ok)throw new Error('模拟识别失败。'); const result=mockInvoiceExtractionResponseSchema.parse(payload); const c=result.candidate; setFields(current=>({...current,...(c.direction?{direction:c.direction}:{}),...(c.kind?{kind:c.kind}:{}),...(c.color?{color:c.color}:{}),...(c.invoiceNumber?{invoiceNumber:c.invoiceNumber}:{}),...(c.issuedOn?{issuedOn:c.issuedOn}:{}),...(c.counterpartyId?{counterpartyId:c.counterpartyId}:{}),...(c.amountExcludingTax?{amountExcludingTax:c.amountExcludingTax}:{}),...(c.taxAmount?{taxAmount:c.taxAmount}:{}),...(c.totalAmount?{totalAmount:c.totalAmount}:{}),...(c.remarks?{remarks:c.remarks}:{})})); setSource('mock_ocr'); setWarnings(result.warnings); setMessage(`模拟识别完成，置信度 ${Math.round(result.confidence*100)}%，请人工核对。`); }
+    try { const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/invoices/extractions/mock`,{method:'POST',headers:{...authHeaders(workspace),'content-type':'application/json'},body:JSON.stringify({text:mockText})}); const payload:unknown=await response.json(); if(!response.ok)throw new Error('模拟识别失败。'); const result=mockInvoiceExtractionResponseSchema.parse(payload); const c=result.candidate; setFields(current=>({...current,...(c.direction?{direction:c.direction}:{}),...(c.kind?{kind:c.kind}:{}),...(c.color?{color:c.color}:{}),...(c.invoiceNumber?{invoiceNumber:c.invoiceNumber}:{}),...(c.issuedOn?{issuedOn:c.issuedOn}:{}),...(c.counterpartyId?{counterpartyId:c.counterpartyId}:{}),...(c.amountExcludingTax?{amountExcludingTax:c.amountExcludingTax}:{}),...(c.taxAmount?{taxAmount:c.taxAmount}:{}),...(c.totalAmount?{totalAmount:c.totalAmount}:{}),...(c.remarks?{remarks:c.remarks}:{})})); setSource('mock_ocr'); setWarnings(result.warnings); setMessage(`模拟识别完成，置信度 ${Math.round(result.confidence*100)}%，请人工核对。`); }
     catch(error:unknown){setMessage(error instanceof Error?error.message:'模拟识别失败。');} finally{setPending(false);}
   }
 
   async function create(event:FormEvent<HTMLFormElement>) {
     event.preventDefault(); if(!workspace)return setMessage('请先完成企业建档。'); const parsed=invoiceInputSchema.safeParse({...fields,remarks:fields.remarks||undefined,source}); if(!parsed.success)return setMessage('请检查号码、日期、往来单位和金额，价税合计也必须正确。'); setPending(true); setMessage('正在保存发票草稿…');
-    try { const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/invoices`,{method:'POST',headers:{...authHeaders(workspace),'content-type':'application/json'},body:JSON.stringify(parsed.data)}); const payload:unknown=await response.json(); if(!response.ok)throw new Error(response.status===409?'发票号码重复，或往来单位类型不匹配。':'保存失败，请核对价税合计。'); const saved=invoiceResponseSchema.parse(payload); setInvoices(current=>[saved,...current]); setFields({...emptyFields,direction:fields.direction}); setSource('manual'); setWarnings([]); setMessage('发票草稿已保存，请在右侧列表确认。'); }
+    try { const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/invoices`,{method:'POST',headers:{...authHeaders(workspace),'content-type':'application/json'},body:JSON.stringify(parsed.data)}); const payload:unknown=await response.json(); if(!response.ok)throw new Error(response.status===409?'发票号码重复，或往来单位类型不匹配。':'保存失败，请核对价税合计。'); const saved=invoiceResponseSchema.parse(payload); setInvoices(current=>[saved,...current]); setFields({...emptyFields,direction:fields.direction}); setSource('manual'); setWarnings([]); setMessage('发票草稿已保存，请在右侧列表确认。'); }
     catch(error:unknown){setMessage(error instanceof Error?error.message:'保存失败。');} finally{setPending(false);}
   }
 
   async function confirm(invoice:InvoiceResponse) {
-    if(!workspace)return; setPending(true); setMessage('正在确认发票…'); try { const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/invoices/${invoice.id}/confirm`,{method:'POST',headers:{...authHeaders(workspace),'content-type':'application/json'},body:'{}'}); const payload:unknown=await response.json(); if(!response.ok)throw new Error('确认失败，请刷新后重试。'); const saved=invoiceResponseSchema.parse(payload); setInvoices(current=>current.map(item=>item.id===saved.id?saved:item)); setMessage('发票事实已确认。'); } catch(error:unknown){setMessage(error instanceof Error?error.message:'确认失败。');} finally{setPending(false);}
+    if(!workspace)return; setPending(true); setMessage('正在确认发票…'); try { const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/invoices/${invoice.id}/confirm`,{method:'POST',headers:{...authHeaders(workspace),'content-type':'application/json'},body:'{}'}); const payload:unknown=await response.json(); if(!response.ok)throw new Error('确认失败，请刷新后重试。'); const saved=invoiceResponseSchema.parse(payload); setInvoices(current=>current.map(item=>item.id===saved.id?saved:item)); setMessage('发票事实已确认。'); } catch(error:unknown){setMessage(error instanceof Error?error.message:'确认失败。');} finally{setPending(false);}
   }
 
   if(!ready)return <section className="invoice-workspace"><div className="onboarding-card">正在读取发票数据…</div></section>;
