@@ -181,3 +181,13 @@ export {
   type FilingTaskStatus,
   type FilingTaskTiming,
 } from './filing.js';
+export {
+  assertCorrectionParent,
+  filingPackageFreezeBlockers,
+  filingPackageStatuses,
+  freezeFilingPackage,
+  FilingPackageError,
+  type FilingPackageBlockerCode,
+  type FilingPackageFreezeContext,
+  type FilingPackageStatus,
+} from './filing-package.js';

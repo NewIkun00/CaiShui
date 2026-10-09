@@ -1,11 +1,14 @@
 import{Injectable}from'@nestjs/common';
-import type{CreateFilingCalendarRecord,FilingCalendar,FilingStore,FilingTask,GenerateFilingTasksRecord,TransitionFilingTaskRecord}from'../application/filing-store.js';
+import type{CreateFilingCalendarRecord,CreateFilingSopRecord,FilingCalendar,FilingSop,FilingStore,FilingTask,GenerateFilingTasksRecord,TransitionFilingTaskRecord}from'../application/filing-store.js';
 @Injectable()
 export class MemoryFilingStore implements FilingStore{
-  private readonly calendars=new Map<string,FilingCalendar[]>();private readonly tasks=new Map<string,FilingTask[]>();
+  private readonly calendars=new Map<string,FilingCalendar[]>();private readonly sops=new Map<string,FilingSop[]>();private readonly tasks=new Map<string,FilingTask[]>();
   createCalendar(record:CreateFilingCalendarRecord):Promise<{calendar:FilingCalendar;created:boolean}>{const items=this.calendars.get(record.tenantId)??[],existing=items.find(item=>item.jurisdictionCode===record.calendar.jurisdictionCode&&item.year===record.calendar.year&&item.versionTag===record.calendar.versionTag);if(existing)return Promise.resolve({calendar:existing,created:false});this.calendars.set(record.tenantId,[record.calendar,...items]);return Promise.resolve({calendar:record.calendar,created:true});}
   listCalendars(tenantId:string){return Promise.resolve(this.calendars.get(tenantId)??[]);}
   findCalendar(tenantId:string,id:string){return Promise.resolve((this.calendars.get(tenantId)??[]).find(item=>item.id===id)??null);}
+  createSop(record:CreateFilingSopRecord):Promise<{sop:FilingSop;created:boolean}>{const items=this.sops.get(record.tenantId)??[],existing=items.find(item=>item.jurisdictionCode===record.sop.jurisdictionCode&&item.versionTag===record.sop.versionTag);if(existing)return Promise.resolve({sop:existing,created:false});this.sops.set(record.tenantId,[record.sop,...items]);return Promise.resolve({sop:record.sop,created:true});}
+  listSops(tenantId:string){return Promise.resolve(this.sops.get(tenantId)??[]);}
+  findSop(tenantId:string,id:string){return Promise.resolve((this.sops.get(tenantId)??[]).find(item=>item.id===id)??null);}
   generateTasks(record:GenerateFilingTasksRecord):Promise<{items:readonly FilingTask[];createdCount:number}>{const key=this.key(record.tenantId,record.companyId),current=this.tasks.get(key)??[];let createdCount=0;const next=[...current];for(const task of record.tasks){if(!next.some(item=>item.calendarEntryId===task.calendarEntryId)){next.push(task);createdCount++;}}this.tasks.set(key,next);return Promise.resolve({items:next.filter(item=>item.calendarId===record.calendar.id).sort((a,b)=>a.dueDate.localeCompare(b.dueDate)),createdCount});}
   listTasks(tenantId:string,companyId:string){return Promise.resolve((this.tasks.get(this.key(tenantId,companyId))??[]).slice().sort((a,b)=>a.dueDate.localeCompare(b.dueDate)));}
   findTask(tenantId:string,companyId:string,id:string){return Promise.resolve((this.tasks.get(this.key(tenantId,companyId))??[]).find(item=>item.id===id)??null);}

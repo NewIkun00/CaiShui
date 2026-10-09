@@ -1,12 +1,12 @@
 import{BadRequestException,Body,Controller,Get,Param,ParseUUIDPipe,Post,Query,Req}from'@nestjs/common';
 import{ApiHeader,ApiOperation,ApiTags}from'@nestjs/swagger';
-import{filingCalendarCreationResponseSchema,filingCalendarInputSchema,filingCalendarListResponseSchema,filingTaskGenerationResponseSchema,filingTaskGenerationSchema,filingTaskListResponseSchema,filingTaskResponseSchema,filingTaskTransitionSchema,type FilingCalendarInput,type FilingTaskGenerationInput,type FilingTaskTransitionInput}from'@ledgerly/contracts';
+import{filingCalendarCreationResponseSchema,filingCalendarInputSchema,filingCalendarListResponseSchema,filingSopCreationResponseSchema,filingSopInputSchema,filingSopListResponseSchema,filingTaskGenerationResponseSchema,filingTaskGenerationSchema,filingTaskListResponseSchema,filingTaskResponseSchema,filingTaskTransitionSchema,type FilingCalendarInput,type FilingSopInput,type FilingTaskGenerationInput,type FilingTaskTransitionInput}from'@ledgerly/contracts';
 import type{FastifyRequest}from'fastify';
 import{requestContext}from'../../../shared/request-context.js';
 import{ApiZodBody,ApiZodCreatedResponse,ApiZodOkResponse}from'../../../shared/zod-openapi.js';
 import{ZodValidationPipe}from'../../../shared/zod-validation.pipe.js';
 import{FilingService}from'../application/filing.service.js';
-import type{FilingCalendar,FilingTask}from'../application/filing-store.js';
+import type{FilingCalendar,FilingSop,FilingTask}from'../application/filing-store.js';
 
 @ApiTags('filing-calendars')@ApiHeader({name:'x-user-id',required:true})@ApiHeader({name:'x-tenant-id',required:true})
 @Controller('v1/filing-calendars')
@@ -17,6 +17,17 @@ export class FilingCalendarController{
   @Get()@ApiOperation({summary:'列出当前租户的征期日历版本'})@ApiZodOkResponse(filingCalendarListResponseSchema)
   async list(@Req()request:FastifyRequest){return{items:(await this.service.listCalendars(requestContext(request,true))).map(item=>this.calendar(item))};}
   private calendar(item:FilingCalendar){return{...item,productionReady:item.source.type==='official_notice',createdAt:item.createdAt.toISOString(),entries:item.entries.map(entry=>({...entry}))};}
+}
+
+@ApiTags('filing-sops')@ApiHeader({name:'x-user-id',required:true})@ApiHeader({name:'x-tenant-id',required:true})
+@Controller('v1/filing-sops')
+export class FilingSopController{
+  constructor(private readonly service:FilingService){}
+  @Post()@ApiOperation({summary:'创建不可变版本化申报 SOP；正式 SOP 必须携带 gov.cn 来源'})@ApiZodBody(filingSopInputSchema)@ApiZodCreatedResponse(filingSopCreationResponseSchema)
+  async create(@Body(new ZodValidationPipe(filingSopInputSchema))input:FilingSopInput,@Req()request:FastifyRequest){const result=await this.service.createSop(input,requestContext(request,true));return{sop:this.sop(result.sop),created:result.created};}
+  @Get()@ApiOperation({summary:'列出当前租户的不可变申报 SOP 版本'})@ApiZodOkResponse(filingSopListResponseSchema)
+  async list(@Req()request:FastifyRequest){return{items:(await this.service.listSops(requestContext(request,true))).map(item=>this.sop(item))};}
+  private sop(item:FilingSop){return{...item,productionReady:item.source.type==='official_notice',createdAt:item.createdAt.toISOString(),steps:item.steps.map(step=>({...step}))};}
 }
 
 @ApiTags('filing-tasks')@ApiHeader({name:'x-user-id',required:true})@ApiHeader({name:'x-tenant-id',required:true})

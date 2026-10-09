@@ -760,6 +760,24 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/filing-sops": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 列出当前租户的不可变申报 SOP 版本 */
+        readonly get: operations["FilingSopController_list"];
+        readonly put?: never;
+        /** 创建不可变版本化申报 SOP；正式 SOP 必须携带 gov.cn 来源 */
+        readonly post: operations["FilingSopController_create"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/policy-sources": {
         readonly parameters: {
             readonly query?: never;
@@ -4520,6 +4538,153 @@ export interface operations {
                             readonly year: number;
                         };
                         readonly created: boolean;
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingSopController_list: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            readonly contentHash: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly jurisdictionCode: string;
+                            readonly name: string;
+                            readonly productionReady: boolean;
+                            readonly source: {
+                                readonly title: string;
+                                /** @enum {string} */
+                                readonly type: "test_fixture";
+                            } | {
+                                readonly contentHash: string;
+                                readonly documentNumber: string;
+                                /** Format: uri */
+                                readonly officialUrl: string;
+                                readonly title: string;
+                                /** @enum {string} */
+                                readonly type: "official_notice";
+                                /** Format: date-time */
+                                readonly verifiedAt: string;
+                                /** Format: uuid */
+                                readonly verifiedBy: string;
+                            };
+                            readonly steps: readonly {
+                                readonly code: string;
+                                readonly instruction: string;
+                                readonly title: string;
+                            }[];
+                            readonly versionTag: string;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingSopController_create: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly jurisdictionCode: string;
+                    readonly name: string;
+                    readonly source: {
+                        readonly title: string;
+                        /** @enum {string} */
+                        readonly type: "test_fixture";
+                    } | {
+                        readonly contentHash: string;
+                        readonly documentNumber: string;
+                        /** Format: uri */
+                        readonly officialUrl: string;
+                        readonly title: string;
+                        /** @enum {string} */
+                        readonly type: "official_notice";
+                        /** Format: date-time */
+                        readonly verifiedAt: string;
+                        /** Format: uuid */
+                        readonly verifiedBy: string;
+                    };
+                    readonly steps: readonly {
+                        readonly code: string;
+                        readonly instruction: string;
+                        readonly title: string;
+                    }[];
+                    readonly versionTag: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly created: boolean;
+                        readonly sop: {
+                            readonly contentHash: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly jurisdictionCode: string;
+                            readonly name: string;
+                            readonly productionReady: boolean;
+                            readonly source: {
+                                readonly title: string;
+                                /** @enum {string} */
+                                readonly type: "test_fixture";
+                            } | {
+                                readonly contentHash: string;
+                                readonly documentNumber: string;
+                                /** Format: uri */
+                                readonly officialUrl: string;
+                                readonly title: string;
+                                /** @enum {string} */
+                                readonly type: "official_notice";
+                                /** Format: date-time */
+                                readonly verifiedAt: string;
+                                /** Format: uuid */
+                                readonly verifiedBy: string;
+                            };
+                            readonly steps: readonly {
+                                readonly code: string;
+                                readonly instruction: string;
+                                readonly title: string;
+                            }[];
+                            readonly versionTag: string;
+                        };
                     };
                 };
             };

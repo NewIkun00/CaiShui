@@ -727,3 +727,35 @@ export const filingTaskResponseSchema=z.object({
 export const filingTaskGenerationResponseSchema=z.object({items:z.array(filingTaskResponseSchema),createdCount:z.number().int().nonnegative()}).strict();
 export const filingTaskListResponseSchema=z.object({items:z.array(filingTaskResponseSchema)}).strict();
 export type FilingTaskResponse=z.infer<typeof filingTaskResponseSchema>;
+
+export const filingSopInputSchema=z.object({
+  name:z.string().trim().min(3).max(200),versionTag:z.string().trim().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{1,39}$/),
+  jurisdictionCode:z.string().regex(/^CN(?:-[A-Z0-9]{2,6})?$/),source:filingCalendarSourceSchema,
+  steps:z.array(z.object({code:z.string().regex(/^[a-z][a-z0-9_-]{1,39}$/),title:z.string().trim().min(2).max(200),instruction:z.string().trim().min(5).max(2000)}).strict()).min(1).max(100),
+}).strict();
+export type FilingSopInput=z.infer<typeof filingSopInputSchema>;
+export const filingSopResponseSchema=filingSopInputSchema.extend({id:z.string().uuid(),contentHash:z.string().regex(/^[0-9a-f]{64}$/),productionReady:z.boolean(),createdAt:z.string().datetime(),createdBy:z.string().uuid()}).strict();
+export const filingSopCreationResponseSchema=z.object({sop:filingSopResponseSchema,created:z.boolean()}).strict();
+export const filingSopListResponseSchema=z.object({items:z.array(filingSopResponseSchema)}).strict();
+export type FilingSopResponse=z.infer<typeof filingSopResponseSchema>;
+
+export const filingPackageInputSchema=z.object({
+  filingTaskId:z.string().uuid(),calculationRunId:z.string().uuid(),sopVersionId:z.string().uuid(),reviewCaseIds:z.array(z.string().uuid()).min(1).max(100),correctionOfPackageId:z.string().uuid().optional(),
+}).strict();
+export type FilingPackageInput=z.infer<typeof filingPackageInputSchema>;
+export const filingPackageFreezeSchema=z.object({expectedVersion:z.number().int().positive(),note:z.string().trim().min(5).max(2000)}).strict();
+export type FilingPackageFreezeInput=z.infer<typeof filingPackageFreezeSchema>;
+export const filingPackageBlockerCodeSchema=z.enum(['PACKAGE_NOT_DRAFT','RED_REVIEW_BLOCKER','APPROVED_REVIEW_REQUIRED','CALCULATION_RESULT_REQUIRED','INPUT_HASH_REQUIRED','RULE_HASH_REQUIRED','RESULT_HASH_REQUIRED','SOP_HASH_REQUIRED','REFERENCE_HASH_MISMATCH']);
+const filingPackageSnapshotSchema=z.object({
+  filingTaskId:z.string().uuid(),filingCalendarId:z.string().uuid(),filingCalendarHash:z.string().regex(/^[0-9a-f]{64}$/),
+  calculationRunId:z.string().uuid(),inputHash:z.string().regex(/^[0-9a-f]{64}$/).optional(),ruleVersionId:z.string().uuid().optional(),ruleHash:z.string().regex(/^[0-9a-f]{64}$/).optional(),resultHash:z.string().regex(/^[0-9a-f]{64}$/).optional(),
+  reviewDecisions:z.array(z.object({reviewCaseId:z.string().uuid(),version:z.number().int().positive(),status:z.literal('approved'),decisionHash:z.string().regex(/^[0-9a-f]{64}$/)}).strict()),
+  sopVersionId:z.string().uuid(),sopHash:z.string().regex(/^[0-9a-f]{64}$/),
+}).strict();
+export const filingPackageResponseSchema=z.object({
+  id:z.string().uuid(),companyId:z.string().uuid(),packageNumber:z.number().int().positive(),status:z.enum(['draft','frozen']),version:z.number().int().positive(),correctionOfPackageId:z.string().uuid().optional(),
+  snapshot:filingPackageSnapshotSchema,contentHash:z.string().regex(/^[0-9a-f]{64}$/),blockers:z.array(filingPackageBlockerCodeSchema),
+  frozenAt:z.string().datetime().optional(),frozenBy:z.string().uuid().optional(),createdAt:z.string().datetime(),createdBy:z.string().uuid(),updatedAt:z.string().datetime(),updatedBy:z.string().uuid(),
+}).strict();
+export const filingPackageListResponseSchema=z.object({items:z.array(filingPackageResponseSchema)}).strict();
+export type FilingPackageResponse=z.infer<typeof filingPackageResponseSchema>;
