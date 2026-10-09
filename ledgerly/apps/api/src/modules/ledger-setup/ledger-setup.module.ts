@@ -11,6 +11,7 @@ import { PeriodReopenService } from './application/period-reopen.service.js';
 import { PERIOD_REOPEN_STORE } from './application/period-reopen-store.js';
 import { MemoryPeriodReopenStore } from './infrastructure/memory-period-reopen.store.js';
 import { PostgresPeriodReopenStore } from './infrastructure/postgres-period-reopen.store.js';
+import { ReviewCaseStoreModule } from '../review-case/review-case-store.module.js';
 
 const storageProviders = process.env['STORAGE_MODE'] === 'memory'
   ? [MemoryLedgerSetupStore, { provide: LEDGER_SETUP_STORE, useExisting: MemoryLedgerSetupStore }]
@@ -20,9 +21,9 @@ const reopenProviders=process.env['STORAGE_MODE']==='memory'
   :[PostgresPeriodReopenStore,{provide:PERIOD_REOPEN_STORE,useExisting:PostgresPeriodReopenStore}];
 
 @Module({
-  imports: [OrganizationModule, ProfileScopeModule],
+  imports: [OrganizationModule, ProfileScopeModule,ReviewCaseStoreModule],
   controllers: [LedgerSetupController,AccountingPeriodController],
   providers: [...storageProviders,...reopenProviders, LedgerSetupService,PeriodReopenService],
-  exports: [LEDGER_SETUP_STORE],
+  exports: [LEDGER_SETUP_STORE,PERIOD_REOPEN_STORE],
 })
 export class LedgerSetupModule {}

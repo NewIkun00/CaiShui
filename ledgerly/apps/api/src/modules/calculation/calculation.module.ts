@@ -17,5 +17,6 @@ const storageProviders = process.env['STORAGE_MODE'] === 'memory'
   imports: [OrganizationModule, ProfileScopeModule, BusinessEventModule, PolicyRuleModule],
   controllers: [CalculationController],
   providers: [...storageProviders, CalculationService],
+  exports: [CALCULATION_STORE],
 })
 export class CalculationModule {}

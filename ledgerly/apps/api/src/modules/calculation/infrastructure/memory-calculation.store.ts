@@ -15,5 +15,9 @@ export class MemoryCalculationStore implements CalculationStore {
     return Promise.resolve([...(this.records.get(this.key(tenantId, companyId)) ?? [])]);
   }
 
+  find(tenantId: string, companyId: string, id: string): Promise<SavedCalculationRun | null> {
+    return Promise.resolve((this.records.get(this.key(tenantId, companyId)) ?? []).find((item) => item.id === id) ?? null);
+  }
+
   private key(tenantId: string, companyId: string): string { return `${tenantId}:${companyId}`; }
 }

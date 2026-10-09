@@ -12,6 +12,7 @@ import{MemorySettlementStore}from'./infrastructure/memory-settlement.store.js';
 import{PostgresReconciliationCheckStore}from'./infrastructure/postgres-reconciliation-check.store.js';
 import{PostgresSettlementStore}from'./infrastructure/postgres-settlement.store.js';
 import{ReconciliationController}from'./presentation/reconciliation.controller.js';
+import{ReviewCaseStoreModule}from'../review-case/review-case-store.module.js';
 const providers=process.env['STORAGE_MODE']==='memory'?[MemorySettlementStore,{provide:SETTLEMENT_STORE,useExisting:MemorySettlementStore},MemoryReconciliationCheckStore,{provide:RECONCILIATION_CHECK_STORE,useExisting:MemoryReconciliationCheckStore}]:[PostgresSettlementStore,{provide:SETTLEMENT_STORE,useExisting:PostgresSettlementStore},PostgresReconciliationCheckStore,{provide:RECONCILIATION_CHECK_STORE,useExisting:PostgresReconciliationCheckStore}];
-@Module({imports:[InvoiceModule,BusinessEventModule,LedgerSetupModule,VoucherStoreModule,BankImportModule],controllers:[ReconciliationController],providers:[...providers,ReconciliationService],exports:[SETTLEMENT_STORE]})
+@Module({imports:[InvoiceModule,BusinessEventModule,LedgerSetupModule,VoucherStoreModule,BankImportModule,ReviewCaseStoreModule],controllers:[ReconciliationController],providers:[...providers,ReconciliationService],exports:[SETTLEMENT_STORE,RECONCILIATION_CHECK_STORE]})
 export class ReconciliationModule{}

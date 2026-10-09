@@ -4,6 +4,7 @@ import {
   businessEventListResponseSchema, chartOfAccountsResponseSchema, ledgerResponseSchema,
   periodReopenRequestCreationResponseSchema, periodReopenRequestListResponseSchema,
   periodReopenRequestResponseSchema,
+  reviewCaseCreationResponseSchema,
   voucherGenerationResponseSchema, voucherListResponseSchema, voucherResponseSchema,
   type BusinessEventResponse, type LedgerResponse, type PeriodReopenRequestResponse, type VoucherResponse,
 } from '@ledgerly/contracts';
@@ -122,7 +123,7 @@ export function AccountingManager() {
   async function requestReopen() {
     if(!workspace)return;const reason=window.prompt('请说明反结账原因（至少 5 个字，将进入审计记录）');if(!reason?.trim())return;
     setPending(true);setMessage('正在提交反结账申请…');
-    try{const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting-period/reopen-requests`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({reason:reason.trim()})});if(!response.ok)throw new Error(await errorMessage(response,'反结账申请提交失败。'));const result=periodReopenRequestCreationResponseSchema.parse(await response.json());setReopenRequests(current=>[result.request,...current.filter(item=>item.id!==result.request.id)]);setMessage(result.created?'反结账申请已提交，等待专业人员复核。':'本期已有待复核申请，没有重复创建。');}catch(error:unknown){setMessage(error instanceof Error?error.message:'申请提交失败。');}finally{setPending(false);}
+    try{const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/accounting-period/reopen-requests`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({reason:reason.trim()})});if(!response.ok)throw new Error(await errorMessage(response,'反结账申请提交失败。'));const result=periodReopenRequestCreationResponseSchema.parse(await response.json());setReopenRequests(current=>[result.request,...current.filter(item=>item.id!==result.request.id)]);const reviewResponse=await fetch(`${api()}/v1/companies/${workspace.companyId}/review-cases`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({sourceType:'period_reopen_request',sourceId:result.request.id})});if(!reviewResponse.ok)throw new Error('反结账申请已保存，但进入统一复核队列失败，请重试。');reviewCaseCreationResponseSchema.parse(await reviewResponse.json());setMessage(result.created?'反结账申请已提交，并进入统一人工复核队列。':'本期已有待复核申请，已确认关联统一复核案件。');}catch(error:unknown){setMessage(error instanceof Error?error.message:'申请提交失败。');}finally{setPending(false);}
   }
 
   async function decideReopen(decision:'approve'|'reject') {

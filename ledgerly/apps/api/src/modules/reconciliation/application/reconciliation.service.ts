@@ -17,6 +17,7 @@ import {
   RECONCILIATION_CHECK_STORE, type ReconciliationCheckStore, type SavedReconciliationCheckRun,
 } from './reconciliation-check-store.js';
 import { SETTLEMENT_STORE, type SettlementStore } from './settlement-store.js';
+import { ReviewCaseIntakeService } from '../../review-case/application/review-case-intake.service.js';
 
 @Injectable()
 export class ReconciliationService {
@@ -28,6 +29,7 @@ export class ReconciliationService {
     @Inject(RECONCILIATION_CHECK_STORE) private readonly checks: ReconciliationCheckStore,
     @Inject(VOUCHER_STORE) private readonly vouchers: VoucherStore,
     @Inject(BANK_IMPORT_STORE) private readonly bankImports: BankImportStore,
+    private readonly reviewIntake: ReviewCaseIntakeService,
   ) {}
 
   async create(companyId: string, input: SettlementInputRequest, context: RequestContext) {
@@ -115,13 +117,15 @@ export class ReconciliationService {
       subledgers:[{kind:'receivable' as const,accountCode:'1122' as const,subledgerBalance:subledgerBalance(InvoiceDirection.Output),ledgerBalance:accountBalance('1122')},{kind:'payable' as const,accountCode:'2202' as const,subledgerBalance:subledgerBalance(InvoiceDirection.Input),ledgerBalance:accountBalance('2202')}],
     };
     const result=runReconciliationChecks({...snapshot,periodId:setup.periodId}),createdAt=new Date();
-    return this.checks.save({run:{id:randomUUID(),tenantId:context.tenantId,companyId,periodId:setup.periodId,
+    const saved=await this.checks.save({run:{id:randomUUID(),tenantId:context.tenantId,companyId,periodId:setup.periodId,
       periodStart:setup.periodStart,periodEnd:setup.periodEnd,inputSnapshot:snapshot,
       inputHash:createHash('sha256').update(JSON.stringify(snapshot)).digest('hex'),
       grade:result.grade,blocksFiling:result.blocksFiling,totalIssues:result.totalIssues,yellowIssues:result.yellowIssues,
       redIssues:result.redIssues,issues:result.issues.map(issue=>({id:randomUUID(),...issue,
         triageStatus:ReconciliationIssueTriageStatus.Open,triageVersion:1})),createdAt,createdBy:context.actorId},
     traceId:context.traceId});
+    await Promise.all(saved.issues.map(issue=>this.reviewIntake.capture({tenantId:context.tenantId!,companyId,sourceType:'reconciliation_issue',sourceId:issue.id,riskLevel:issue.severity,blocksFiling:true,summary:issue.message,createdBy:saved.createdBy,traceId:context.traceId,occurredAt:saved.createdAt})));
+    return saved;
   }
 
   async latestCheck(companyId:string,context:RequestContext):Promise<SavedReconciliationCheckRun>{

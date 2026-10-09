@@ -4,6 +4,7 @@ const quickActions = [
   { href:'/onboarding', icon:'企', title:'建立企业档案', text:'录入基础信息并完成适用性筛查', tone:'jade' },
   { href:'/imports/bank', icon:'流', title:'导入银行流水', text:'上传本期 CSV 对账单并核验', tone:'blue' },
   { href:'/invoices', icon:'票', title:'录入发票', text:'建立进销项发票事实和证据链', tone:'amber' },
+  { href:'/filings', icon:'期', title:'申报待办', text:'查看到期、逾期和状态流转', tone:'violet' },
 ] as const;
 
 const flows = [

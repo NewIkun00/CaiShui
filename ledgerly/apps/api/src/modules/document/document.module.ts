@@ -29,5 +29,6 @@ const storageProviders = memory
     ...storageProviders, SignatureFileScanner,
     { provide: FILE_SCANNER, useExisting: SignatureFileScanner }, DocumentService,
   ],
+  exports: [DOCUMENT_STORE,OBJECT_STORAGE],
 })
 export class DocumentModule {}

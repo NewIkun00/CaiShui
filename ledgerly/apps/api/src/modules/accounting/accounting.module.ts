@@ -6,5 +6,5 @@ import { AccountingService } from './application/accounting.service.js';
 import { AccountingController } from './presentation/accounting.controller.js';
 import { VoucherStoreModule } from './voucher-store.module.js';
 
-@Module({imports:[LedgerSetupModule,BusinessEventModule,ReconciliationModule,VoucherStoreModule],controllers:[AccountingController],providers:[AccountingService]})
+@Module({imports:[LedgerSetupModule,BusinessEventModule,ReconciliationModule,VoucherStoreModule],controllers:[AccountingController],providers:[AccountingService],exports:[AccountingService]})
 export class AccountingModule{}

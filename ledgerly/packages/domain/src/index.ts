@@ -1,8 +1,11 @@
 export { Money, MoneyError } from './money.js';
 export { Rate, RateError } from './rate.js';
 export {
-  TaxPeriod, TaxPeriodError, decidePeriodReopen,
-  type PeriodReopenDecision, type PeriodReopenStatus,
+  TaxPeriod,
+  TaxPeriodError,
+  decidePeriodReopen,
+  type PeriodReopenDecision,
+  type PeriodReopenStatus,
 } from './tax-period.js';
 export type { Company, CompanyRepository, Tenant, TenantRepository } from './tenant.js';
 export { CompanyStatus, createCompany, createTenant } from './tenant.js';
@@ -157,3 +160,56 @@ export {
   type CalculationReady,
   type CalculationRuleCandidate,
 } from './calculation.js';
+export {
+  assertReviewWorkItemAllowed,
+  assignReviewCase,
+  decideReviewCase,
+  reviewCaseStatuses,
+  transitionReviewCase,
+  ReviewCaseError,
+  type ReviewCaseAction,
+  type ReviewCaseDecision,
+  type ReviewCaseState,
+  type ReviewCaseStatus,
+} from './review-case.js';
+export {
+  assertFilingCalendarSource,
+  deriveFilingTaskTiming,
+  filingTaskStatuses,
+  transitionFilingTask,
+  FilingError,
+  type FilingCalendarSource,
+  type FilingCalendarSourceType,
+  type FilingTaskAction,
+  type FilingTaskStatus,
+  type FilingTaskTiming,
+} from './filing.js';
+export {
+  assertCorrectionParent,
+  filingPackageFreezeBlockers,
+  filingPackageStatuses,
+  freezeFilingPackage,
+  FilingPackageError,
+  type FilingPackageBlockerCode,
+  type FilingPackageFreezeContext,
+  type FilingPackageStatus,
+} from './filing-package.js';
+export {
+  assertFilingClosable,
+  filingClosureBlockers,
+  filingEvidenceKinds,
+  FilingReceiptError,
+  type FilingClosureBlockerCode,
+  type FilingClosureContext,
+  type FilingEvidenceKind,
+} from './filing-receipt.js';
+export {
+  assertIndependentAdjustmentResolution,
+  filingAdjustmentStatuses,
+  filingAdjustmentTypes,
+  transitionFilingAdjustment,
+  FilingAdjustmentError,
+  type FilingAdjustmentAction,
+  type FilingAdjustmentStatus,
+  type FilingAdjustmentType,
+} from './filing-adjustment.js';

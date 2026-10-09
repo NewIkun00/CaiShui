@@ -1,0 +1,11 @@
+import type{ReviewCaseStatus}from'@ledgerly/domain';
+export type ReviewSourceType='reconciliation_issue'|'period_reopen_request';
+export type ReviewRiskLevel='yellow'|'red';
+export type ReviewWorkItemKind='workpaper'|'document_request';
+export interface ReviewWorkItem{readonly id:string;readonly kind:ReviewWorkItemKind;readonly content:string;readonly documentIds:readonly string[];readonly createdAt:Date;readonly createdBy:string}
+export interface ReviewCase{readonly id:string;readonly companyId:string;readonly sourceType:ReviewSourceType;readonly sourceId:string;readonly riskLevel:ReviewRiskLevel;readonly blocksFiling:boolean;readonly summary:string;readonly status:ReviewCaseStatus;readonly assignedTo?:string|undefined;readonly version:number;readonly createdAt:Date;readonly createdBy:string;readonly updatedAt:Date;readonly updatedBy:string;readonly items:readonly ReviewWorkItem[]}
+export interface ReviewCaseFilters{readonly status?:ReviewCaseStatus|undefined;readonly riskLevel?:ReviewRiskLevel|undefined;readonly assignedTo?:string|undefined}
+export interface CreateReviewCaseRecord{readonly id:string;readonly tenantId:string;readonly companyId:string;readonly sourceType:ReviewSourceType;readonly sourceId:string;readonly riskLevel:ReviewRiskLevel;readonly blocksFiling:boolean;readonly summary:string;readonly assignedTo?:string|undefined;readonly status:ReviewCaseStatus;readonly actorId:string;readonly traceId:string;readonly occurredAt:Date}
+export interface MutateReviewCaseRecord{readonly tenantId:string;readonly companyId:string;readonly reviewCaseId:string;readonly expectedVersion:number;readonly status:ReviewCaseStatus;readonly assignedTo?:string|undefined;readonly action:string;readonly note:string;readonly actorId:string;readonly traceId:string;readonly occurredAt:Date;readonly workItem?:{readonly id:string;readonly kind:ReviewWorkItemKind;readonly content:string;readonly documentIds:readonly string[]}|undefined}
+export const REVIEW_CASE_STORE=Symbol('REVIEW_CASE_STORE');
+export interface ReviewCaseStore{create(record:CreateReviewCaseRecord):Promise<{reviewCase:ReviewCase;created:boolean}>;list(tenantId:string,companyId:string,filters:ReviewCaseFilters):Promise<readonly ReviewCase[]>;find(tenantId:string,companyId:string,id:string):Promise<ReviewCase|null>;mutate(record:MutateReviewCaseRecord):Promise<ReviewCase|null>}

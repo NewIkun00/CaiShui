@@ -12,6 +12,8 @@ import { AccountingModule } from './modules/accounting/accounting.module.js';
 import { ReconciliationModule } from './modules/reconciliation/reconciliation.module.js';
 import { PolicyRuleModule } from './modules/policy-rule/policy-rule.module.js';
 import { CalculationModule } from './modules/calculation/calculation.module.js';
+import { ReviewCaseModule } from './modules/review-case/review-case.module.js';
+import { FilingModule } from './modules/filing/filing.module.js';
 
-@Module({ imports: [DatabaseModule, OrganizationModule, ProfileScopeModule, LedgerSetupModule, CounterpartyModule, BusinessEventModule, BankImportModule, InvoiceModule, DocumentModule, ReconciliationModule, AccountingModule, PolicyRuleModule, CalculationModule] })
+@Module({ imports: [DatabaseModule, OrganizationModule, ProfileScopeModule, LedgerSetupModule, CounterpartyModule, BusinessEventModule, BankImportModule, InvoiceModule, DocumentModule, ReconciliationModule, AccountingModule, PolicyRuleModule, CalculationModule, ReviewCaseModule, FilingModule] })
 export class AppModule {}

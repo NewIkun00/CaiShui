@@ -57,7 +57,16 @@ export class PostgresCalculationStore implements CalculationStore {
     const rows = await this.db.select().from(calculationRuns)
       .where(and(eq(calculationRuns.tenantId, tenantId), eq(calculationRuns.companyId, companyId)))
       .orderBy(desc(calculationRuns.createdAt));
-    return Promise.all(rows.map(async (row) => {
+    return Promise.all(rows.map(async (row) => this.present(row)));
+  }
+
+  async find(tenantId: string, companyId: string, id: string): Promise<SavedCalculationRun | null> {
+    const [row] = await this.db.select().from(calculationRuns)
+      .where(and(eq(calculationRuns.tenantId, tenantId), eq(calculationRuns.companyId, companyId), eq(calculationRuns.id, id))).limit(1);
+    return row ? this.present(row) : null;
+  }
+
+  private async present(row: typeof calculationRuns.$inferSelect): Promise<SavedCalculationRun> {
       const stepRows = await this.db.select().from(calculationRunSteps)
         .where(eq(calculationRunSteps.calculationRunId, row.id))
         .orderBy(calculationRunSteps.sequence);
@@ -73,6 +82,5 @@ export class PostgresCalculationStore implements CalculationStore {
         })) as CalculationExplanationStep[],
         createdAt: row.createdAt, createdBy: row.createdBy,
       };
-    }));
   }
-}
+  }

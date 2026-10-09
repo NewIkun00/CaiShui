@@ -38,5 +38,6 @@ export interface ReconciliationCheckStore {
   save(record:SaveReconciliationCheckRunRecord):Promise<SavedReconciliationCheckRun>;
   latest(tenantId:string,companyId:string):Promise<SavedReconciliationCheckRun|null>;
   find(tenantId:string,companyId:string,runId:string):Promise<SavedReconciliationCheckRun|null>;
+  findIssue(tenantId:string,companyId:string,issueId:string):Promise<{readonly run:SavedReconciliationCheckRun;readonly issue:SavedReconciliationCheckIssue}|null>;
   triage(record:TriageReconciliationIssueRecord):Promise<TriageReconciliationIssueResult>;
 }
