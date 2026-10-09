@@ -30,6 +30,12 @@
     { "idx": 25, "version": "7", "when": 1791475212000, "tag": "0025_bank_statement_scope", "breakpoints": true },
     { "idx": 26, "version": "7", "when": 1791475213000, "tag": "0026_subledger_reconciliation_checks", "breakpoints": true },
     { "idx": 27, "version": "7", "when": 1791475214000, "tag": "0027_period_reopen_decisions", "breakpoints": true },
-    { "idx": 28, "version": "7", "when": 1791561600000, "tag": "0028_review_cases", "breakpoints": true }
+    { "idx": 28, "version": "7", "when": 1791561600000, "tag": "0028_review_cases", "breakpoints": true },
+    { "idx": 29, "version": "7", "when": 1791561601000, "tag": "0029_filing_calendars_tasks", "breakpoints": true },
+    { "idx": 30, "version": "7", "when": 1791561602000, "tag": "0030_filing_sops", "breakpoints": true },
+    { "idx": 31, "version": "7", "when": 1791561603000, "tag": "0031_filing_packages", "breakpoints": true },
+    { "idx": 32, "version": "7", "when": 1791561604000, "tag": "0032_filing_receipts_closures", "breakpoints": true },
+    { "idx": 33, "version": "7", "when": 1791561605000, "tag": "0033_filing_adjustment_work_orders", "breakpoints": true },
+    { "idx": 34, "version": "7", "when": 1791561606000, "tag": "0034_identity_foundation", "breakpoints": true }
   ]
 }
