@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { apiFetch } from '../lib/api-fetch';
+import { authCurrentResponseSchema } from '@ledgerly/contracts';
 
 const navigation = [
   { label: '总览', items: [
@@ -25,6 +27,9 @@ const navigation = [
   ] },
   { label: '系统设置', items: [
     { href: '/settings/members', label: '成员与权限', mark: '♙' },
+  ] },
+  { label: '平台管理', operationsOnly: true, items: [
+    { href: '/operations/roles', label: '运营角色', mark: '♜' },
   ] },
   { label: '税务治理', items: [
     { href: '/filings', label: '申报待办', mark: '◷' },
@@ -57,6 +62,7 @@ const titles: Readonly<Record<string, readonly [string, string]>> = {
   '/register': ['创建账号', '验证个人身份并建立首个企业档案'],
   '/settings/members': ['成员与权限', '邀请、查看和停用企业成员'],
   '/invite': ['加入企业', '验证并接受企业成员邀请'],
+  '/operations/roles': ['运营角色', '受控分配和撤销平台权限'],
   '/auth/callback': ['正在登录', '正在验证身份并建立安全会话'],
 };
 
@@ -68,6 +74,15 @@ function active(pathname: string, href: string) {
 
 export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
   const pathname = usePathname();
+  const [canManageOperations, setCanManageOperations] = useState(false);
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_AUTH_MODE !== 'oidc' || pathname === '/login' || pathname === '/register' || pathname.startsWith('/auth/')) return;
+    void apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? '/api'}/v1/auth/me`).then(async (response) => {
+      if (!response.ok) return;
+      const current = authCurrentResponseSchema.parse(await response.json() as unknown);
+      setCanManageOperations(current.operationsRoles.includes('platform_admin'));
+    }).catch(() => undefined);
+  }, [pathname]);
   if (pathname === '/login' || pathname === '/register' || pathname === '/invite' || pathname.startsWith('/auth/')) return children;
   const [title, description] = titles[pathname] ?? ['账税通', '一人公司财务工作台'];
 
@@ -77,7 +92,7 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
         <span>账</span><strong>账税通</strong><small>LEDGERLY</small>
       </Link>
       <nav className="app-navigation" aria-label="主要功能">
-        {navigation.map(group=><section key={group.label}>
+        {navigation.filter(group => !('operationsOnly' in group) || canManageOperations).map(group=><section key={group.label}>
           <p>{group.label}</p>
           {group.items.map(item=><Link key={item.href} href={item.href} className={active(pathname,item.href)?'active':''}>
             <i aria-hidden="true">{item.mark}</i><span>{item.label}</span>

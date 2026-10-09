@@ -84,7 +84,8 @@ export class AuthenticationService {
       await this.identities.revokeOwnSession(established.user.id, transaction.replaceSessionId, 'replaced by step-up session', traceId);
     }
     const memberships = await this.store.listMembershipsForUser(established.user.id);
-    return { established, memberships, returnTo: transaction.returnTo };
+    const operationsRoles = await this.store.listOperationsRoles(established.user.id);
+    return { established, memberships, operationsRoles, returnTo: transaction.returnTo };
   }
 
   async authenticate(sessionId: string): Promise<ActiveAuthentication | null> {
@@ -105,7 +106,11 @@ export class AuthenticationService {
   async current(sessionId: string) {
     const authenticated = await this.store.findAuthenticatedSession(sessionId, new Date());
     if (!authenticated) throw new UnauthorizedException('Session is invalid or expired');
-    return { ...authenticated, memberships: await this.store.listMembershipsForUser(authenticated.user.id) };
+    return {
+      ...authenticated,
+      memberships: await this.store.listMembershipsForUser(authenticated.user.id),
+      operationsRoles: await this.store.listOperationsRoles(authenticated.user.id),
+    };
   }
 
   async authorizeTenant(userId: string, tenantId: string, companyId?: string) {

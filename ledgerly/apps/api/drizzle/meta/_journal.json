@@ -38,6 +38,7 @@
     { "idx": 33, "version": "7", "when": 1791561605000, "tag": "0033_filing_adjustment_work_orders", "breakpoints": true },
     { "idx": 34, "version": "7", "when": 1791561606000, "tag": "0034_identity_foundation", "breakpoints": true },
     { "idx": 35, "version": "7", "when": 1791561607000, "tag": "0035_tenant_membership_workflow", "breakpoints": true },
-    { "idx": 36, "version": "7", "when": 1791561608000, "tag": "0036_oidc_login_states", "breakpoints": true }
+    { "idx": 36, "version": "7", "when": 1791561608000, "tag": "0036_oidc_login_states", "breakpoints": true },
+    { "idx": 37, "version": "7", "when": 1791561609000, "tag": "0037_platform_role_governance", "breakpoints": true }
   ]
 }

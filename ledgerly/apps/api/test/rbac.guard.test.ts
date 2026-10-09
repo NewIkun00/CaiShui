@@ -16,6 +16,9 @@ describe('global RBAC policy', () => {
     expect(operationsRolesPermit(['support_readonly'], 'policy.manage')).toBe(false);
     expect(operationsRolesPermit(['rule_editor'], 'policy.manage')).toBe(true);
     expect(operationsRolesPermit(['accounting_reviewer'], 'review.manage')).toBe(true);
+    expect(operationsRolesPermit(['security_auditor'], 'identity.read')).toBe(true);
+    expect(operationsRolesPermit(['security_auditor'], 'identity.manage')).toBe(false);
+    expect(operationsRolesPermit(['platform_admin'], 'identity.manage')).toBe(true);
   });
 
   it('denies customer writes and operations management without their required roles', () => {

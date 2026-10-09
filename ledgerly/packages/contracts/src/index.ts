@@ -1679,6 +1679,10 @@ export const annualFilingArchiveResponseSchema=z.object({
 export type AnnualFilingArchiveResponse=z.infer<typeof annualFilingArchiveResponseSchema>;
 
 export const customerRoleSchema = z.enum(['tenant_owner', 'tenant_admin', 'bookkeeper', 'member']);
+export const operationsRoleSchema = z.enum([
+  'support_readonly', 'accounting_reviewer', 'tax_reviewer', 'rule_editor',
+  'rule_approver', 'security_auditor', 'platform_admin',
+]);
 export const tenantInvitationInputSchema = z.object({
   identifier: z.string().trim().min(3).max(254),
   roles: z.array(customerRoleSchema).min(1).max(4),
@@ -1720,6 +1724,25 @@ export const tenantMemberListResponseSchema = z.object({ items: z.array(tenantMe
 export type TenantInvitationResponse = z.infer<typeof tenantInvitationResponseSchema>;
 export type TenantMemberResponse = z.infer<typeof tenantMemberResponseSchema>;
 
+export const operationsRoleAssignmentInputSchema = z.object({
+  userId: z.string().uuid(), role: operationsRoleSchema,
+}).strict();
+export type OperationsRoleAssignmentInput = z.infer<typeof operationsRoleAssignmentInputSchema>;
+export const operationsRoleRevocationInputSchema = z.object({
+  expectedVersion: z.number().int().positive(), reason: z.string().trim().min(5).max(500),
+}).strict();
+export type OperationsRoleRevocationInput = z.infer<typeof operationsRoleRevocationInputSchema>;
+export const operationsRoleAssignmentResponseSchema = z.object({
+  userId: z.string().uuid(), displayName: z.string(), role: operationsRoleSchema,
+  status: z.enum(['active', 'suspended', 'removed']), version: z.number().int().positive(),
+  createdAt: z.string().datetime(), createdBy: z.string().uuid(),
+  updatedAt: z.string().datetime(), updatedBy: z.string().uuid(),
+}).strict();
+export const operationsRoleAssignmentListResponseSchema = z.object({
+  items: z.array(operationsRoleAssignmentResponseSchema),
+}).strict();
+export type OperationsRoleAssignmentResponse = z.infer<typeof operationsRoleAssignmentResponseSchema>;
+
 export const authLoginInputSchema = z.object({
   returnTo: z.string().regex(/^\/(?!\/)/).max(500).default('/dashboard'),
 }).strict();
@@ -1740,6 +1763,7 @@ export const authCurrentResponseSchema = z.object({
     authenticatedAt: z.string().datetime(), expiresAt: z.string().datetime(),
   }).strict(),
   memberships: z.array(tenantMemberResponseSchema),
+  operationsRoles: z.array(operationsRoleSchema),
   returnTo: z.string().optional(),
 }).strict();
 export const authLogoutResponseSchema = z.object({ providerRevoked: z.boolean() }).strict();

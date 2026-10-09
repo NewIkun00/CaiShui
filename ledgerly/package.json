@@ -16,7 +16,8 @@
     "openapi:generate": "pnpm --filter @ledgerly/api build && node tools/generate-openapi.mjs && openapi-typescript openapi/openapi.json -o packages/api-client/src/generated.ts --immutable --alphabetize",
     "openapi:check": "pnpm openapi:generate && git diff --exit-code -- openapi/openapi.json packages/api-client/src/generated.ts",
     "db:generate": "pnpm --filter @ledgerly/api db:generate",
-    "db:migrate": "pnpm --filter @ledgerly/api db:migrate"
+    "db:migrate": "pnpm --filter @ledgerly/api db:migrate",
+    "identity:seed-admin": "pnpm --filter @ledgerly/api identity:seed-admin"
   },
   "devDependencies": {
     "@eslint/js": "9.39.1",

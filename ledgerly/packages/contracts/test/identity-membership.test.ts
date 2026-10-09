@@ -3,6 +3,9 @@ import {
   tenantInvitationInputSchema,
   tenantInvitationResponseSchema,
   tenantMemberResponseSchema,
+  operationsRoleAssignmentInputSchema,
+  operationsRoleAssignmentResponseSchema,
+  operationsRoleRevocationInputSchema,
 } from '../src/index.js';
 
 const tenantId = '10000000-0000-4000-8000-000000000001';
@@ -29,6 +32,16 @@ describe('identity membership contracts', () => {
     expect(tenantMemberResponseSchema.parse({
       tenantId, userId, displayName: '测试成员', status: 'active', roles: ['member'], companyIds: [companyId],
       version: 1, activatedAt: time,
+    }).status).toBe('active');
+  });
+
+  it('bounds platform role assignment and revocation evidence', () => {
+    expect(operationsRoleAssignmentInputSchema.parse({ userId, role: 'rule_editor' }).role).toBe('rule_editor');
+    expect(operationsRoleAssignmentInputSchema.safeParse({ userId, role: 'tenant_owner' }).success).toBe(false);
+    expect(operationsRoleRevocationInputSchema.safeParse({ expectedVersion: 1, reason: 'x' }).success).toBe(false);
+    expect(operationsRoleAssignmentResponseSchema.parse({
+      userId, displayName: '规则编辑', role: 'rule_editor', status: 'active', version: 1,
+      createdAt: time, createdBy: userId, updatedAt: time, updatedBy: userId,
     }).status).toBe('active');
   });
 });

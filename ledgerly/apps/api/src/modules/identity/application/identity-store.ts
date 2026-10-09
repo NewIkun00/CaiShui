@@ -65,6 +65,36 @@ export interface SavedTenantMember {
   readonly deactivatedAt?: Date;
 }
 
+export interface SavedOperationsRoleAssignment {
+  readonly userId: string;
+  readonly displayName: string;
+  readonly role: OperationsRole;
+  readonly status: 'active' | 'suspended' | 'removed';
+  readonly version: number;
+  readonly createdAt: Date;
+  readonly createdBy: string;
+  readonly updatedAt: Date;
+  readonly updatedBy: string;
+}
+
+export interface AssignOperationsRoleRecord {
+  readonly userId: string;
+  readonly role: OperationsRole;
+  readonly actorId: string;
+  readonly traceId: string;
+  readonly occurredAt: Date;
+}
+
+export interface RevokeOperationsRoleRecord extends AssignOperationsRoleRecord {
+  readonly expectedVersion: number;
+  readonly reason: string;
+}
+
+export type RevokeOperationsRoleResult =
+  | { readonly kind: 'revoked'; readonly assignment: SavedOperationsRoleAssignment }
+  | { readonly kind: 'last-platform-admin' }
+  | { readonly kind: 'conflict' };
+
 export interface CreateInvitationRecord {
   readonly invitation: SavedTenantInvitation;
   readonly actorId: string;
@@ -99,6 +129,9 @@ export interface IdentityStore {
   findAuthenticatedSession(sessionId: string, now: Date): Promise<AuthenticatedSession | null>;
   listMembershipsForUser(userId: string): Promise<readonly SavedTenantMember[]>;
   listOperationsRoles(userId: string): Promise<readonly OperationsRole[]>;
+  listOperationsRoleAssignments(): Promise<readonly SavedOperationsRoleAssignment[]>;
+  assignOperationsRole(record: AssignOperationsRoleRecord): Promise<SavedOperationsRoleAssignment | null>;
+  revokeOperationsRole(record: RevokeOperationsRoleRecord): Promise<RevokeOperationsRoleResult>;
   createLoginState(record: LoginStateRecord): Promise<void>;
   consumeLoginState(stateHash: string, occurredAt: Date): Promise<boolean>;
   bootstrapOwner(tenantId: string, userId: string, companyId: string, occurredAt: Date): Promise<void>;

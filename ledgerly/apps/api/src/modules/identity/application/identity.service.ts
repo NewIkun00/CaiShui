@@ -1,5 +1,10 @@
 import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import type { TenantInvitationInput, TenantMemberDeactivateInput } from '@ledgerly/contracts';
+import type {
+  OperationsRoleAssignmentInput,
+  OperationsRoleRevocationInput,
+  TenantInvitationInput,
+  TenantMemberDeactivateInput,
+} from '@ledgerly/contracts';
 import type { CustomerRole } from '@ledgerly/domain';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { VerifiedProviderIdentity } from './identity-provider.port.js';
@@ -9,6 +14,7 @@ import {
   type IdentityStore,
   type SavedTenantInvitation,
   type SavedTenantMember,
+  type SavedOperationsRoleAssignment,
 } from './identity-store.js';
 
 interface ActorContext {
@@ -142,6 +148,50 @@ export class IdentityService {
     return member;
   }
 
+  async listOperationsRoleAssignments(context: ActorContext): Promise<readonly SavedOperationsRoleAssignment[]> {
+    await this.requirePlatformAdministrator(context.actorId);
+    return this.store.listOperationsRoleAssignments();
+  }
+
+  async assignOperationsRole(
+    input: OperationsRoleAssignmentInput,
+    context: ActorContext,
+  ): Promise<SavedOperationsRoleAssignment> {
+    await this.requirePlatformAdministrator(context.actorId);
+    if (input.userId === context.actorId) {
+      throw new ForbiddenException({ code: 'OPERATIONS_SELF_GRANT_DENIED', message: 'Administrators cannot grant roles to themselves' });
+    }
+    const assignment = await this.store.assignOperationsRole({
+      userId: input.userId, role: input.role, actorId: context.actorId,
+      traceId: context.traceId, occurredAt: new Date(),
+    });
+    if (!assignment) throw new NotFoundException('Active target user not found');
+    return assignment;
+  }
+
+  async revokeOperationsRole(
+    userId: string,
+    role: OperationsRoleAssignmentInput['role'],
+    input: OperationsRoleRevocationInput,
+    context: ActorContext,
+  ): Promise<SavedOperationsRoleAssignment> {
+    await this.requirePlatformAdministrator(context.actorId);
+    if (userId === context.actorId) {
+      throw new ForbiddenException({ code: 'OPERATIONS_SELF_REVOKE_DENIED', message: 'Administrators cannot revoke their own roles' });
+    }
+    const result = await this.store.revokeOperationsRole({
+      userId, role, expectedVersion: input.expectedVersion, reason: input.reason,
+      actorId: context.actorId, traceId: context.traceId, occurredAt: new Date(),
+    });
+    if (result.kind === 'last-platform-admin') {
+      throw new ConflictException({ code: 'LAST_PLATFORM_ADMIN', message: 'The last active platform administrator cannot be revoked' });
+    }
+    if (result.kind === 'conflict') {
+      throw new ConflictException({ code: 'OPERATIONS_ROLE_VERSION_CONFLICT', message: 'Operations role changed concurrently or is not active' });
+    }
+    return result.assignment;
+  }
+
   private async requireTenantAdministrator(tenantId: string, context: ActorContext): Promise<SavedTenantMember> {
     if (context.tenantId !== tenantId) throw new NotFoundException('Tenant not found');
     const member = await this.store.findMember(tenantId, context.actorId);
@@ -150,6 +200,12 @@ export class IdentityService {
       throw new ForbiddenException('Tenant administrator role required');
     }
     return member;
+  }
+
+  private async requirePlatformAdministrator(actorId: string): Promise<void> {
+    if (!(await this.store.listOperationsRoles(actorId)).includes('platform_admin')) {
+      throw new ForbiddenException({ code: 'PLATFORM_ADMIN_REQUIRED', message: 'Platform administrator role required' });
+    }
   }
 
   private hash(value: string): string {

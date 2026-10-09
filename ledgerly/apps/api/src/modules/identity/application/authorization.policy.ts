@@ -1,7 +1,7 @@
 import type { CustomerRole, OperationsRole } from '@ledgerly/domain';
 
 export type CustomerPermission = 'customer.read' | 'customer.write';
-export type OperationsResource = 'policy' | 'review';
+export type OperationsResource = 'policy' | 'review' | 'identity';
 export type OperationsPermission = `${OperationsResource}.read` | `${OperationsResource}.manage`;
 
 const customerGrants: Readonly<Record<CustomerRole, readonly CustomerPermission[]>> = {
@@ -17,8 +17,8 @@ const operationsGrants: Readonly<Record<OperationsRole, readonly OperationsPermi
   tax_reviewer: ['policy.read', 'review.read', 'review.manage'],
   rule_editor: ['policy.read', 'policy.manage'],
   rule_approver: ['policy.read', 'policy.manage'],
-  security_auditor: ['policy.read', 'review.read'],
-  platform_admin: ['policy.read', 'policy.manage', 'review.read', 'review.manage'],
+  security_auditor: ['policy.read', 'review.read', 'identity.read'],
+  platform_admin: ['policy.read', 'policy.manage', 'review.read', 'review.manage', 'identity.read', 'identity.manage'],
 };
 
 export function customerRolesPermit(roles: readonly CustomerRole[], permission: CustomerPermission): boolean {

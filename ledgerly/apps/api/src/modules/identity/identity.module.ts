@@ -15,6 +15,7 @@ import { DisabledIdentityProvider } from './infrastructure/disabled-identity.pro
 import { KeycloakOidcProvider } from './infrastructure/keycloak-oidc.provider.js';
 import { RbacGuard } from './presentation/rbac.guard.js';
 import { StepUpGuard } from './presentation/step-up.guard.js';
+import { OperationsIdentityController } from './presentation/operations-identity.controller.js';
 
 const storageProviders = process.env['STORAGE_MODE'] === 'memory'
   ? [MemoryIdentityStore, { provide: IDENTITY_STORE, useExisting: MemoryIdentityStore }]
@@ -25,7 +26,7 @@ const identityProvider = authMode() === 'oidc'
   : [DisabledIdentityProvider, { provide: IDENTITY_PROVIDER, useExisting: DisabledIdentityProvider }];
 
 @Module({
-  controllers: [AuthenticationController, IdentityController],
+  controllers: [AuthenticationController, IdentityController, OperationsIdentityController],
   providers: [
     ...storageProviders,
     ...identityProvider,

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { activateAppUser, createAppUser, type AppUser, type AuthMethod, type AuthSession, type ExternalIdentity, type OperationsRole } from '@ledgerly/domain';
-import { and, eq, gt, inArray, isNull } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNull, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { DATABASE, type Database } from '../../../infrastructure/database/database.provider.js';
 import {
@@ -18,6 +18,7 @@ import {
 } from '../../../infrastructure/database/schema.js';
 import type {
   AcceptInvitationRecord,
+  AssignOperationsRoleRecord,
   AuthenticatedSession,
   CreateInvitationRecord,
   DeactivateMemberRecord,
@@ -26,6 +27,9 @@ import type {
   IdentityStore,
   LoginStateRecord,
   RevokeIdentitySessionRecord,
+  RevokeOperationsRoleRecord,
+  RevokeOperationsRoleResult,
+  SavedOperationsRoleAssignment,
   SavedTenantInvitation,
   SavedTenantMember,
 } from '../application/identity-store.js';
@@ -39,6 +43,72 @@ export class PostgresIdentityStore implements IdentityStore {
       eq(platformRoleAssignments.userId, userId), eq(platformRoleAssignments.status, 'active'),
     ));
     return rows.map((row) => row.role as OperationsRole);
+  }
+
+  async listOperationsRoleAssignments(): Promise<readonly SavedOperationsRoleAssignment[]> {
+    const rows = await this.db.select().from(platformRoleAssignments);
+    return Promise.all(rows.map(async (row) => {
+      const [user] = await this.db.select().from(appUsers).where(eq(appUsers.id, row.userId)).limit(1);
+      if (!user) throw new Error('Operations role user is unavailable');
+      return this.operationsAssignment(row, user.displayName);
+    }));
+  }
+
+  assignOperationsRole(record: AssignOperationsRoleRecord): Promise<SavedOperationsRoleAssignment | null> {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext('ledgerly.platform-role-governance'))`);
+      const [user] = await tx.select().from(appUsers).where(and(eq(appUsers.id, record.userId), eq(appUsers.status, 'active'))).limit(1);
+      if (!user) return null;
+      const [current] = await tx.select().from(platformRoleAssignments).where(and(
+        eq(platformRoleAssignments.userId, record.userId), eq(platformRoleAssignments.role, record.role),
+      )).limit(1);
+      if (current?.status === 'active') return this.operationsAssignment(current, user.displayName);
+      const [assignment] = current
+        ? await tx.update(platformRoleAssignments).set({
+          status: 'active', version: current.version + 1, updatedAt: record.occurredAt, updatedBy: record.actorId,
+        }).where(and(
+          eq(platformRoleAssignments.userId, record.userId), eq(platformRoleAssignments.role, record.role),
+          eq(platformRoleAssignments.version, current.version),
+        )).returning()
+        : await tx.insert(platformRoleAssignments).values({
+          userId: record.userId, role: record.role, status: 'active', version: 1,
+          createdAt: record.occurredAt, createdBy: record.actorId, updatedAt: record.occurredAt, updatedBy: record.actorId,
+        }).returning();
+      if (!assignment) return null;
+      await this.platformRoleSideEffects(tx, record, 'assigned', { role: record.role });
+      return this.operationsAssignment(assignment, user.displayName);
+    });
+  }
+
+  revokeOperationsRole(record: RevokeOperationsRoleRecord): Promise<RevokeOperationsRoleResult> {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext('ledgerly.platform-role-governance'))`);
+      const [current] = await tx.select().from(platformRoleAssignments).where(and(
+        eq(platformRoleAssignments.userId, record.userId), eq(platformRoleAssignments.role, record.role),
+        eq(platformRoleAssignments.status, 'active'), eq(platformRoleAssignments.version, record.expectedVersion),
+      )).limit(1);
+      if (!current) return { kind: 'conflict' } as const;
+      if (record.role === 'platform_admin') {
+        const admins = await tx.select({ userId: platformRoleAssignments.userId }).from(platformRoleAssignments)
+          .innerJoin(appUsers, eq(appUsers.id, platformRoleAssignments.userId)).where(and(
+            eq(platformRoleAssignments.role, 'platform_admin'), eq(platformRoleAssignments.status, 'active'),
+            eq(appUsers.status, 'active'),
+          ));
+        if (admins.length <= 1) return { kind: 'last-platform-admin' } as const;
+      }
+      const [assignment] = await tx.update(platformRoleAssignments).set({
+        status: 'removed', version: record.expectedVersion + 1,
+        updatedAt: record.occurredAt, updatedBy: record.actorId,
+      }).where(and(
+        eq(platformRoleAssignments.userId, record.userId), eq(platformRoleAssignments.role, record.role),
+        eq(platformRoleAssignments.status, 'active'), eq(platformRoleAssignments.version, record.expectedVersion),
+      )).returning();
+      if (!assignment) return { kind: 'conflict' } as const;
+      const [user] = await tx.select().from(appUsers).where(eq(appUsers.id, record.userId)).limit(1);
+      if (!user) throw new Error('Operations role user is unavailable');
+      await this.platformRoleSideEffects(tx, record, 'revoked', { role: record.role, reason: record.reason });
+      return { kind: 'revoked', assignment: this.operationsAssignment(assignment, user.displayName) } as const;
+    });
   }
 
   establish(record: EstablishIdentityRecord): Promise<EstablishedIdentity> {
@@ -308,6 +378,17 @@ export class PostgresIdentityStore implements IdentityStore {
     };
   }
 
+  private operationsAssignment(
+    row: typeof platformRoleAssignments.$inferSelect,
+    displayName: string,
+  ): SavedOperationsRoleAssignment {
+    return {
+      userId: row.userId, displayName, role: row.role as OperationsRole,
+      status: row.status as SavedOperationsRoleAssignment['status'], version: row.version,
+      createdAt: row.createdAt, createdBy: row.createdBy, updatedAt: row.updatedAt, updatedBy: row.updatedBy,
+    };
+  }
+
   private legacyRole(roles: SavedTenantMember['roles']): string {
     if (roles.includes('tenant_owner') || roles.includes('tenant_admin')) return 'owner';
     if (roles.includes('bookkeeper')) return 'accountant';
@@ -331,6 +412,25 @@ export class PostgresIdentityStore implements IdentityStore {
     await tx.insert(outboxEvents).values({
       id: randomUUID(), tenantId, eventType: `tenant_member.${action}.v1`, aggregateType: 'tenant_member',
       aggregateId: resourceId, payload: metadata, occurredAt,
+    });
+  }
+
+  private async platformRoleSideEffects(
+    tx: Parameters<Parameters<Database['transaction']>[0]>[0],
+    record: AssignOperationsRoleRecord,
+    action: 'assigned' | 'revoked',
+    metadata: Record<string, unknown>,
+  ) {
+    await tx.insert(auditEvents).values({
+      id: randomUUID(), actorId: record.actorId, action: `platform_role.${action}`,
+      resourceType: 'platform_role_assignment', resourceId: record.userId,
+      outcome: 'success', traceId: record.traceId, metadata: { targetUserId: record.userId, ...metadata },
+      occurredAt: record.occurredAt,
+    });
+    await tx.insert(outboxEvents).values({
+      id: randomUUID(), tenantId: null, eventType: `platform_role.${action}.v1`,
+      aggregateType: 'platform_role_assignment', aggregateId: record.userId,
+      payload: { targetUserId: record.userId, ...metadata }, occurredAt: record.occurredAt,
     });
   }
 }

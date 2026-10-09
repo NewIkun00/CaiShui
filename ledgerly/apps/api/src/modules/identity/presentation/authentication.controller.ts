@@ -97,6 +97,7 @@ export class AuthenticationController {
         expiresAt: result.established.session.expiresAt.toISOString(),
       },
       memberships: result.memberships.map((member) => this.presentMember(member)),
+      operationsRoles: result.operationsRoles,
       returnTo: result.returnTo,
     };
   }
@@ -115,6 +116,7 @@ export class AuthenticationController {
         authenticatedAt: current.session.authenticatedAt.toISOString(), expiresAt: current.session.expiresAt.toISOString(),
       },
       memberships: current.memberships.map((member) => this.presentMember(member)),
+      operationsRoles: current.operationsRoles,
     };
   }
 

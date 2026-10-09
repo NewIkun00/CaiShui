@@ -97,4 +97,48 @@ describe('identity service', () => {
       expectedVersion: 1, reason: '不允许停用自己',
     }, { actorId: ownerId, tenantId, traceId: 'trace-self' })).rejects.toThrow('Administrators cannot deactivate themselves');
   });
+
+  it('governs platform roles with administrator separation and optimistic revocation', async () => {
+    const store = new MemoryIdentityStore();
+    const service = new IdentityService(store);
+    const administrator = await service.establishVerifiedIdentity({
+      ...principal, subject: 'platform-admin', providerSessionId: 'platform-admin-session', displayName: '平台管理员',
+    }, 'trace-admin');
+    const target = await service.establishVerifiedIdentity({
+      ...principal, subject: 'operations-user', providerSessionId: 'operations-session', displayName: '运营用户',
+    }, 'trace-target');
+    store.setOperationsRoles(administrator.user.id, ['platform_admin']);
+    const assigned = await service.assignOperationsRole({ userId: target.user.id, role: 'rule_editor' }, {
+      actorId: administrator.user.id, traceId: 'trace-assign',
+    });
+    expect(assigned).toMatchObject({ role: 'rule_editor', status: 'active', version: 1 });
+    expect(await service.listOperationsRoleAssignments({ actorId: administrator.user.id, traceId: 'trace-list' })).toHaveLength(1);
+    await expect(service.assignOperationsRole({ userId: administrator.user.id, role: 'security_auditor' }, {
+      actorId: administrator.user.id, traceId: 'trace-self',
+    })).rejects.toThrow('cannot grant roles to themselves');
+    const revoked = await service.revokeOperationsRole(target.user.id, 'rule_editor', {
+      expectedVersion: assigned.version, reason: '职责调整，撤销规则编辑权限',
+    }, { actorId: administrator.user.id, traceId: 'trace-revoke' });
+    expect(revoked).toMatchObject({ status: 'removed', version: 2 });
+    expect(await store.listOperationsRoles(target.user.id)).not.toContain('rule_editor');
+  });
+
+  it('does not revoke the final tracked platform administrator', async () => {
+    const store = new MemoryIdentityStore();
+    const service = new IdentityService(store);
+    const actor = await service.establishVerifiedIdentity({
+      ...principal, subject: 'seed-admin', providerSessionId: 'seed-admin-session', displayName: '种子管理员',
+    }, 'trace-seed');
+    const target = await service.establishVerifiedIdentity({
+      ...principal, subject: 'last-admin', providerSessionId: 'last-admin-session', displayName: '最后管理员',
+    }, 'trace-target');
+    store.setOperationsRoles(actor.user.id, ['platform_admin']);
+    const tracked = await store.assignOperationsRole({
+      userId: target.user.id, role: 'platform_admin', actorId: actor.user.id,
+      traceId: 'trace-bootstrap', occurredAt: new Date(),
+    });
+    await expect(service.revokeOperationsRole(target.user.id, 'platform_admin', {
+      expectedVersion: tracked!.version, reason: '尝试撤销最后管理员',
+    }, { actorId: actor.user.id, traceId: 'trace-last-admin' })).rejects.toThrow('last active platform administrator');
+  });
 });

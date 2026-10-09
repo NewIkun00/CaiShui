@@ -1053,6 +1053,41 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/operations/role-assignments": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 平台管理员查看运营角色分配；不授予企业数据访问权 */
+        readonly get: operations["OperationsIdentityController_list"];
+        readonly put?: never;
+        /** 经 MFA 为另一名活动用户分配平台运营角色 */
+        readonly post: operations["OperationsIdentityController_assign"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/operations/role-assignments/{userId}/{role}/revoke": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 经 MFA 撤销另一名用户的平台运营角色 */
+        readonly post: operations["OperationsIdentityController_revoke"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/policy-sources": {
         readonly parameters: {
             readonly query?: never;
@@ -1414,6 +1449,7 @@ export interface operations {
                             readonly userId: string;
                             readonly version: number;
                         }[];
+                        readonly operationsRoles: readonly ("support_readonly" | "accounting_reviewer" | "tax_reviewer" | "rule_editor" | "rule_approver" | "security_auditor" | "platform_admin")[];
                         readonly returnTo?: string;
                         readonly session: {
                             /** Format: date-time */
@@ -1519,6 +1555,7 @@ export interface operations {
                             readonly userId: string;
                             readonly version: number;
                         }[];
+                        readonly operationsRoles: readonly ("support_readonly" | "accounting_reviewer" | "tax_reviewer" | "rule_editor" | "rule_approver" | "security_auditor" | "platform_admin")[];
                         readonly returnTo?: string;
                         readonly session: {
                             /** Format: date-time */
@@ -6118,6 +6155,135 @@ export interface operations {
                             }[];
                             readonly versionTag: string;
                         };
+                    };
+                };
+            };
+        };
+    };
+    readonly OperationsIdentityController_list: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly displayName: string;
+                            /** @enum {string} */
+                            readonly role: "support_readonly" | "accounting_reviewer" | "tax_reviewer" | "rule_editor" | "rule_approver" | "security_auditor" | "platform_admin";
+                            /** @enum {string} */
+                            readonly status: "active" | "suspended" | "removed";
+                            /** Format: date-time */
+                            readonly updatedAt: string;
+                            /** Format: uuid */
+                            readonly updatedBy: string;
+                            /** Format: uuid */
+                            readonly userId: string;
+                            readonly version: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly OperationsIdentityController_assign: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @enum {string} */
+                    readonly role: "support_readonly" | "accounting_reviewer" | "tax_reviewer" | "rule_editor" | "rule_approver" | "security_auditor" | "platform_admin";
+                    /** Format: uuid */
+                    readonly userId: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        readonly displayName: string;
+                        /** @enum {string} */
+                        readonly role: "support_readonly" | "accounting_reviewer" | "tax_reviewer" | "rule_editor" | "rule_approver" | "security_auditor" | "platform_admin";
+                        /** @enum {string} */
+                        readonly status: "active" | "suspended" | "removed";
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        /** Format: uuid */
+                        readonly userId: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly OperationsIdentityController_revoke: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly role: string;
+                readonly userId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly expectedVersion: number;
+                    readonly reason: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        readonly displayName: string;
+                        /** @enum {string} */
+                        readonly role: "support_readonly" | "accounting_reviewer" | "tax_reviewer" | "rule_editor" | "rule_approver" | "security_auditor" | "platform_admin";
+                        /** @enum {string} */
+                        readonly status: "active" | "suspended" | "removed";
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        /** Format: uuid */
+                        readonly userId: string;
+                        readonly version: number;
                     };
                 };
             };

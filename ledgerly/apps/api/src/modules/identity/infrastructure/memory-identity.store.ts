@@ -12,6 +12,7 @@ import {
 import type {
   EstablishedIdentity,
   AcceptInvitationRecord,
+  AssignOperationsRoleRecord,
   AuthenticatedSession,
   CreateInvitationRecord,
   DeactivateMemberRecord,
@@ -19,6 +20,9 @@ import type {
   IdentityStore,
   LoginStateRecord,
   RevokeIdentitySessionRecord,
+  RevokeOperationsRoleRecord,
+  RevokeOperationsRoleResult,
+  SavedOperationsRoleAssignment,
   SavedTenantInvitation,
   SavedTenantMember,
 } from '../application/identity-store.js';
@@ -33,6 +37,7 @@ export class MemoryIdentityStore implements IdentityStore {
   private readonly companies = new Map<string, Set<string>>();
   private readonly loginStates = new Map<string, LoginStateRecord & { consumedAt?: Date }>();
   private readonly operationsRoles = new Map<string, readonly OperationsRole[]>();
+  private readonly operationsAssignments = new Map<string, SavedOperationsRoleAssignment>();
 
   establish(record: EstablishIdentityRecord): Promise<EstablishedIdentity> {
     const identityKey = this.identityKey(record.principal.issuer, record.principal.subject);
@@ -93,6 +98,48 @@ export class MemoryIdentityStore implements IdentityStore {
 
   setOperationsRoles(userId: string, roles: readonly OperationsRole[]): void {
     this.operationsRoles.set(userId, [...new Set(roles)]);
+  }
+
+  listOperationsRoleAssignments(): Promise<readonly SavedOperationsRoleAssignment[]> {
+    return Promise.resolve([...this.operationsAssignments.values()]);
+  }
+
+  assignOperationsRole(record: AssignOperationsRoleRecord): Promise<SavedOperationsRoleAssignment | null> {
+    const user = this.users.get(record.userId);
+    if (!user || user.status !== 'active') return Promise.resolve(null);
+    const key = `${record.userId}:${record.role}`;
+    const current = this.operationsAssignments.get(key);
+    if (current?.status === 'active') return Promise.resolve(current);
+    const assignment: SavedOperationsRoleAssignment = Object.freeze({
+      userId: record.userId, displayName: user.displayName, role: record.role, status: 'active',
+      version: current ? current.version + 1 : 1,
+      createdAt: current?.createdAt ?? record.occurredAt, createdBy: current?.createdBy ?? record.actorId,
+      updatedAt: record.occurredAt, updatedBy: record.actorId,
+    });
+    this.operationsAssignments.set(key, assignment);
+    this.operationsRoles.set(record.userId, [...new Set([...(this.operationsRoles.get(record.userId) ?? []), record.role])]);
+    return Promise.resolve(assignment);
+  }
+
+  revokeOperationsRole(record: RevokeOperationsRoleRecord): Promise<RevokeOperationsRoleResult> {
+    const key = `${record.userId}:${record.role}`;
+    const current = this.operationsAssignments.get(key);
+    if (!current || current.status !== 'active' || current.version !== record.expectedVersion) {
+      return Promise.resolve({ kind: 'conflict' });
+    }
+    if (record.role === 'platform_admin') {
+      const activeAdmins = [...this.operationsAssignments.values()].filter(
+        (item) => item.role === 'platform_admin' && item.status === 'active' && this.users.get(item.userId)?.status === 'active',
+      );
+      if (activeAdmins.length <= 1) return Promise.resolve({ kind: 'last-platform-admin' });
+    }
+    const assignment: SavedOperationsRoleAssignment = Object.freeze({
+      ...current, status: 'removed', version: current.version + 1,
+      updatedAt: record.occurredAt, updatedBy: record.actorId,
+    });
+    this.operationsAssignments.set(key, assignment);
+    this.operationsRoles.set(record.userId, (this.operationsRoles.get(record.userId) ?? []).filter((role) => role !== record.role));
+    return Promise.resolve({ kind: 'revoked', assignment });
   }
 
   listMembershipsForUser(userId: string): Promise<readonly SavedTenantMember[]> {
