@@ -537,6 +537,109 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/companies/{companyId}/review-cases": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 按状态、风险和负责人筛选复核队列 */
+        readonly get: operations["ReviewCaseController_list"];
+        readonly put?: never;
+        /** 从受控风险来源创建人工复核案件；同一来源幂等 */
+        readonly post: operations["ReviewCaseController_create"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/review-cases/{reviewCaseId}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 读取复核案件、补件请求与工作底稿 */
+        readonly get: operations["ReviewCaseController_get"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/review-cases/{reviewCaseId}/assign": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 分派或转派复核案件 */
+        readonly post: operations["ReviewCaseController_assign"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/review-cases/{reviewCaseId}/decision": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 批准或驳回复核案件；创建人与复核人职责分离，且不修改来源事实 */
+        readonly post: operations["ReviewCaseController_decide"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/review-cases/{reviewCaseId}/transitions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 开始复核、等待补件、恢复复核或取消 */
+        readonly post: operations["ReviewCaseController_transition"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/review-cases/{reviewCaseId}/work-items": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 追加不可变工作底稿或补件请求；附件仅引用既有文档 ID */
+        readonly post: operations["ReviewCaseController_append"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/companies/{companyId}/scope-evaluations": {
         readonly parameters: {
             readonly query?: never;
@@ -3210,6 +3313,503 @@ export interface operations {
                         readonly invoiceId: string;
                         /** Format: uuid */
                         readonly paymentEventId: string;
+                    };
+                };
+            };
+        };
+    };
+    readonly ReviewCaseController_list: {
+        readonly parameters: {
+            readonly query: {
+                readonly assignedTo: string;
+                readonly riskLevel: string;
+                readonly status: string;
+            };
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** Format: uuid */
+                            readonly assignedTo?: string;
+                            readonly blocksFiling: boolean;
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly items: readonly {
+                                readonly content: string;
+                                /** Format: date-time */
+                                readonly createdAt: string;
+                                /** Format: uuid */
+                                readonly createdBy: string;
+                                readonly documentIds: readonly string[];
+                                /** Format: uuid */
+                                readonly id: string;
+                                /** @enum {string} */
+                                readonly kind: "workpaper" | "document_request";
+                            }[];
+                            /** @enum {string} */
+                            readonly riskLevel: "yellow" | "red";
+                            /** Format: uuid */
+                            readonly sourceId: string;
+                            /** @enum {string} */
+                            readonly sourceType: "reconciliation_issue" | "period_reopen_request";
+                            /** @enum {string} */
+                            readonly status: "open" | "awaiting_documents" | "in_review" | "approved" | "rejected" | "cancelled";
+                            readonly summary: string;
+                            /** Format: date-time */
+                            readonly updatedAt: string;
+                            /** Format: uuid */
+                            readonly updatedBy: string;
+                            readonly version: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly ReviewCaseController_create: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: uuid */
+                    readonly assignedTo?: string;
+                    /** Format: uuid */
+                    readonly sourceId: string;
+                    /** @enum {string} */
+                    readonly sourceType: "reconciliation_issue" | "period_reopen_request";
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly created: boolean;
+                        readonly reviewCase: {
+                            /** Format: uuid */
+                            readonly assignedTo?: string;
+                            readonly blocksFiling: boolean;
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly items: readonly {
+                                readonly content: string;
+                                /** Format: date-time */
+                                readonly createdAt: string;
+                                /** Format: uuid */
+                                readonly createdBy: string;
+                                readonly documentIds: readonly string[];
+                                /** Format: uuid */
+                                readonly id: string;
+                                /** @enum {string} */
+                                readonly kind: "workpaper" | "document_request";
+                            }[];
+                            /** @enum {string} */
+                            readonly riskLevel: "yellow" | "red";
+                            /** Format: uuid */
+                            readonly sourceId: string;
+                            /** @enum {string} */
+                            readonly sourceType: "reconciliation_issue" | "period_reopen_request";
+                            /** @enum {string} */
+                            readonly status: "open" | "awaiting_documents" | "in_review" | "approved" | "rejected" | "cancelled";
+                            readonly summary: string;
+                            /** Format: date-time */
+                            readonly updatedAt: string;
+                            /** Format: uuid */
+                            readonly updatedBy: string;
+                            readonly version: number;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    readonly ReviewCaseController_get: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly reviewCaseId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly assignedTo?: string;
+                        readonly blocksFiling: boolean;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly items: readonly {
+                            readonly content: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly documentIds: readonly string[];
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** @enum {string} */
+                            readonly kind: "workpaper" | "document_request";
+                        }[];
+                        /** @enum {string} */
+                        readonly riskLevel: "yellow" | "red";
+                        /** Format: uuid */
+                        readonly sourceId: string;
+                        /** @enum {string} */
+                        readonly sourceType: "reconciliation_issue" | "period_reopen_request";
+                        /** @enum {string} */
+                        readonly status: "open" | "awaiting_documents" | "in_review" | "approved" | "rejected" | "cancelled";
+                        readonly summary: string;
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly ReviewCaseController_assign: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly reviewCaseId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: uuid */
+                    readonly assignedTo: string;
+                    readonly expectedVersion: number;
+                    readonly note: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly assignedTo?: string;
+                        readonly blocksFiling: boolean;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly items: readonly {
+                            readonly content: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly documentIds: readonly string[];
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** @enum {string} */
+                            readonly kind: "workpaper" | "document_request";
+                        }[];
+                        /** @enum {string} */
+                        readonly riskLevel: "yellow" | "red";
+                        /** Format: uuid */
+                        readonly sourceId: string;
+                        /** @enum {string} */
+                        readonly sourceType: "reconciliation_issue" | "period_reopen_request";
+                        /** @enum {string} */
+                        readonly status: "open" | "awaiting_documents" | "in_review" | "approved" | "rejected" | "cancelled";
+                        readonly summary: string;
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly ReviewCaseController_decide: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly reviewCaseId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @enum {string} */
+                    readonly decision: "approved" | "rejected";
+                    readonly expectedVersion: number;
+                    readonly reason: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly assignedTo?: string;
+                        readonly blocksFiling: boolean;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly items: readonly {
+                            readonly content: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly documentIds: readonly string[];
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** @enum {string} */
+                            readonly kind: "workpaper" | "document_request";
+                        }[];
+                        /** @enum {string} */
+                        readonly riskLevel: "yellow" | "red";
+                        /** Format: uuid */
+                        readonly sourceId: string;
+                        /** @enum {string} */
+                        readonly sourceType: "reconciliation_issue" | "period_reopen_request";
+                        /** @enum {string} */
+                        readonly status: "open" | "awaiting_documents" | "in_review" | "approved" | "rejected" | "cancelled";
+                        readonly summary: string;
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly ReviewCaseController_transition: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly reviewCaseId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @enum {string} */
+                    readonly action: "start_review" | "request_documents" | "resume_review" | "cancel";
+                    readonly expectedVersion: number;
+                    readonly note: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly assignedTo?: string;
+                        readonly blocksFiling: boolean;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly items: readonly {
+                            readonly content: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly documentIds: readonly string[];
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** @enum {string} */
+                            readonly kind: "workpaper" | "document_request";
+                        }[];
+                        /** @enum {string} */
+                        readonly riskLevel: "yellow" | "red";
+                        /** Format: uuid */
+                        readonly sourceId: string;
+                        /** @enum {string} */
+                        readonly sourceType: "reconciliation_issue" | "period_reopen_request";
+                        /** @enum {string} */
+                        readonly status: "open" | "awaiting_documents" | "in_review" | "approved" | "rejected" | "cancelled";
+                        readonly summary: string;
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly ReviewCaseController_append: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly reviewCaseId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly content: string;
+                    /** @default [] */
+                    readonly documentIds?: readonly string[];
+                    readonly expectedVersion: number;
+                    /** @enum {string} */
+                    readonly kind: "workpaper" | "document_request";
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly assignedTo?: string;
+                        readonly blocksFiling: boolean;
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly items: readonly {
+                            readonly content: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly documentIds: readonly string[];
+                            /** Format: uuid */
+                            readonly id: string;
+                            /** @enum {string} */
+                            readonly kind: "workpaper" | "document_request";
+                        }[];
+                        /** @enum {string} */
+                        readonly riskLevel: "yellow" | "red";
+                        /** Format: uuid */
+                        readonly sourceId: string;
+                        /** @enum {string} */
+                        readonly sourceType: "reconciliation_issue" | "period_reopen_request";
+                        /** @enum {string} */
+                        readonly status: "open" | "awaiting_documents" | "in_review" | "approved" | "rejected" | "cancelled";
+                        readonly summary: string;
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
                     };
                 };
             };

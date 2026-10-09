@@ -1,0 +1,3 @@
+import Link from'next/link';
+import{ReviewCenter}from'./review-center';
+export default function ReviewsPage(){return <main className="events-shell"><header className="topbar"><div className="brand"><span>账</span>账税通</div><nav className="top-actions"><Link className="setup-action" href="/reconciliation">查看勾稽异常</Link><Link className="setup-action" href="/accounting">查看反结账申请</Link></nav></header><section className="events-heading review-heading"><div><p className="eyebrow">R1 · 运营工作台</p><h1>人工复核中心</h1><p>统一接收高风险异常，保留分派、补件、底稿和决定的完整证据链。复核结论不会修改原始账务事实或静默解除阻断。</p></div></section><ReviewCenter/></main>}

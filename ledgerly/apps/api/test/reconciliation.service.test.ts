@@ -19,6 +19,8 @@ import { MemoryScopeStore } from '../src/modules/profile-scope/infrastructure/me
 import { ReconciliationService } from '../src/modules/reconciliation/application/reconciliation.service.js';
 import { MemoryReconciliationCheckStore } from '../src/modules/reconciliation/infrastructure/memory-reconciliation-check.store.js';
 import { MemorySettlementStore } from '../src/modules/reconciliation/infrastructure/memory-settlement.store.js';
+import { MemoryReviewCaseStore } from '../src/modules/review-case/infrastructure/memory-review-case.store.js';
+import { ReviewCaseIntakeService } from '../src/modules/review-case/application/review-case-intake.service.js';
 
 const actorId = '10000000-0000-4000-8000-000000000001';
 
@@ -47,7 +49,8 @@ async function fixture() {
     .create(created.company.id, { name: '示例客户', type: 'customer' }, context);
   const invoiceService = new InvoiceService(setups, parties, invoices, new MockInvoiceExtractionProvider());
   const eventService = new BusinessEventService(setups, parties, events);
-  const service = new ReconciliationService(invoices, events, settlements, setups, checks, vouchers,bankImports);
+  const reviewCases=new MemoryReviewCaseStore();
+  const service = new ReconciliationService(invoices, events, settlements, setups, checks, vouchers,bankImports,new ReviewCaseIntakeService(reviewCases));
   const accounting = new AccountingService(setups, events, vouchers, settlements);
   async function statement(balance:string,createdAt=new Date(0)){return bankImports.save({tenantId:context.tenantId,actorId,traceId:'statement',batch:{id:randomUUID(),companyId:created.company.id,accountId:setup.accountId,statementPeriodStart:setup.periodStart,statementPeriodEnd:setup.periodEnd,fileName:'statement.csv',fileHash:'a'.repeat(64),status:'confirmed',totalRows:1,validRows:1,invalidRows:0,duplicateRows:0,batchErrors:[],createdAt,confirmedAt:createdAt,rows:[{id:randomUUID(),rowNumber:2,occurredOn:'2026-10-31',description:'期末余额',direction:'income',amount:'0.01',balance,fingerprint:randomUUID(),status:'valid',errors:[]}]}})}
   await statement('0.00');
@@ -66,7 +69,7 @@ async function fixture() {
     return eventService.confirm(created.company.id, draft.id, context);
   }
   async function serviceCompleted(amount:string){const draft=await eventService.create(created.company.id,{type:'service_completed',occurredOn:'2026-10-08',amount,counterpartyId:party.id,description:'完成服务'},context);return eventService.confirm(created.company.id,draft.id,context)}
-  return { created, context, service, accounting, invoice, payment, serviceCompleted,setups,statement };
+  return { created, context, service, accounting, invoice, payment, serviceCompleted,setups,statement,reviewCases };
 }
 
 describe('ReconciliationService', () => {
@@ -114,10 +117,11 @@ describe('ReconciliationService', () => {
   });
 
   it('freezes all differences, tracks triage and only turns green after facts are fixed', async () => {
-    const { created, context, service, invoice, payment } = await fixture();
+    const { created, context, service, invoice, payment,reviewCases } = await fixture();
     const inv = await invoice('12345682'); const pay = await payment('106.00');
     const first = await service.runCheck(created.company.id, context);
     expect(first).toMatchObject({ grade: 'red', blocksFiling: true, totalIssues: 3, yellowIssues:2,redIssues:1 });
+    expect(await reviewCases.list(context.tenantId,created.company.id,{})).toHaveLength(first.issues.length);
     expect((await service.runCheck(created.company.id, context)).id).toBe(first.id);
     const issue = first.issues[0]!;
     await expect(service.triageIssue(created.company.id, first.id, issue.id, {

@@ -796,3 +796,16 @@ export const calculationRunSteps = pgTable(
     uniqueIndex('calculation_run_steps_key_unique').on(table.calculationRunId, table.key),
   ],
 );
+
+export const reviewCases=pgTable('review_cases',{
+  id:uuid('id').primaryKey(),tenantId:uuid('tenant_id').notNull().references(()=>tenants.id),companyId:uuid('company_id').notNull().references(()=>companies.id),
+  sourceType:text('source_type').notNull(),sourceId:uuid('source_id').notNull(),riskLevel:text('risk_level').notNull(),blocksFiling:boolean('blocks_filing').notNull(),
+  summary:text('summary').notNull(),status:text('status').notNull(),assignedTo:uuid('assigned_to'),...auditColumns,
+},table=>[uniqueIndex('review_cases_source_unique').on(table.tenantId,table.companyId,table.sourceType,table.sourceId),index('review_cases_queue_idx').on(table.tenantId,table.companyId,table.status,table.riskLevel),index('review_cases_assignee_idx').on(table.tenantId,table.assignedTo,table.status)]);
+export const reviewCaseEvents=pgTable('review_case_events',{
+  id:uuid('id').primaryKey(),reviewCaseId:uuid('review_case_id').notNull().references(()=>reviewCases.id),eventType:text('event_type').notNull(),
+  fromStatus:text('from_status').notNull(),toStatus:text('to_status').notNull(),note:text('note').notNull(),caseVersion:integer('case_version').notNull(),actedBy:uuid('acted_by').notNull(),actedAt:timestamp('acted_at',{withTimezone:true}).notNull(),
+},table=>[uniqueIndex('review_case_events_version_unique').on(table.reviewCaseId,table.caseVersion),index('review_case_events_case_idx').on(table.reviewCaseId,table.actedAt)]);
+export const reviewCaseWorkItems=pgTable('review_case_work_items',{
+  id:uuid('id').primaryKey(),reviewCaseId:uuid('review_case_id').notNull().references(()=>reviewCases.id),kind:text('kind').notNull(),content:text('content').notNull(),documentIds:jsonb('document_ids').notNull().default([]),createdAt:timestamp('created_at',{withTimezone:true}).notNull(),createdBy:uuid('created_by').notNull(),
+},table=>[index('review_case_work_items_case_idx').on(table.reviewCaseId,table.createdAt)]);

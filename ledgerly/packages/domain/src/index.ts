@@ -157,3 +157,15 @@ export {
   type CalculationReady,
   type CalculationRuleCandidate,
 } from './calculation.js';
+export {
+  assertReviewWorkItemAllowed,
+  assignReviewCase,
+  decideReviewCase,
+  reviewCaseStatuses,
+  transitionReviewCase,
+  ReviewCaseError,
+  type ReviewCaseAction,
+  type ReviewCaseDecision,
+  type ReviewCaseState,
+  type ReviewCaseStatus,
+} from './review-case.js';

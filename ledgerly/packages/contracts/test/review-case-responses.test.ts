@@ -1,0 +1,8 @@
+import{describe,expect,it}from'vitest';
+import{reviewCaseDecisionSchema,reviewCaseInputSchema,reviewCaseResponseSchema,reviewWorkItemInputSchema}from'../src/index.js';
+const id=(prefix:string)=>`${prefix}0000000-0000-4000-8000-000000000001`;
+describe('review case contracts',()=>{
+  it('accepts source-only creation and rejects client-authored risk facts',()=>{expect(reviewCaseInputSchema.parse({sourceType:'reconciliation_issue',sourceId:id('1')})).toEqual({sourceType:'reconciliation_issue',sourceId:id('1')});expect(reviewCaseInputSchema.safeParse({sourceType:'reconciliation_issue',sourceId:id('1'),riskLevel:'red',blocksFiling:true,summary:'伪造字段'}).success).toBe(false);});
+  it('requires optimistic locks and meaningful evidence',()=>{expect(reviewCaseDecisionSchema.safeParse({expectedVersion:0,decision:'approved',reason:'证据完整，可以通过'}).success).toBe(false);expect(reviewWorkItemInputSchema.parse({expectedVersion:2,kind:'workpaper',content:'已经核验来源数据和支持材料'}).documentIds).toEqual([]);});
+  it('parses a traceable case with append-only work items',()=>{const parsed=reviewCaseResponseSchema.parse({id:id('1'),companyId:id('2'),sourceType:'period_reopen_request',sourceId:id('3'),riskLevel:'red',blocksFiling:true,summary:'反结账申请需要专业复核',status:'in_review',assignedTo:id('4'),version:2,createdAt:'2026-10-09T00:00:00.000Z',createdBy:id('5'),updatedAt:'2026-10-09T01:00:00.000Z',updatedBy:id('4'),items:[{id:id('6'),kind:'workpaper',content:'已核验申请范围与原始凭证',documentIds:[id('7')],createdAt:'2026-10-09T01:00:00.000Z',createdBy:id('4')}]});expect(parsed).toMatchObject({status:'in_review',version:2,items:[{kind:'workpaper'}]});});
+});

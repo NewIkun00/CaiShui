@@ -656,3 +656,30 @@ export const calculationRunResponseSchema=z.object({
 });
 export const calculationRunListResponseSchema=z.object({items:z.array(calculationRunResponseSchema)}).strict();
 export type CalculationRunResponse=z.infer<typeof calculationRunResponseSchema>;
+
+export const reviewCaseStatusSchema=z.enum(['open','awaiting_documents','in_review','approved','rejected','cancelled']);
+export const reviewCaseSourceTypeSchema=z.enum(['reconciliation_issue','period_reopen_request']);
+export const reviewCaseRiskLevelSchema=z.enum(['yellow','red']);
+export const reviewWorkItemKindSchema=z.enum(['workpaper','document_request']);
+export const reviewCaseInputSchema=z.object({
+  sourceType:reviewCaseSourceTypeSchema,sourceId:z.string().uuid(),assignedTo:z.string().uuid().optional(),
+}).strict();
+export type ReviewCaseInput=z.infer<typeof reviewCaseInputSchema>;
+export const reviewCaseAssignmentSchema=z.object({expectedVersion:z.number().int().positive(),assignedTo:z.string().uuid(),note:z.string().trim().min(5).max(2000)}).strict();
+export type ReviewCaseAssignment=z.infer<typeof reviewCaseAssignmentSchema>;
+export const reviewWorkItemInputSchema=z.object({expectedVersion:z.number().int().positive(),kind:reviewWorkItemKindSchema,content:z.string().trim().min(5).max(4000),documentIds:z.array(z.string().uuid()).max(20).default([])}).strict();
+export type ReviewWorkItemInput=z.infer<typeof reviewWorkItemInputSchema>;
+export const reviewCaseTransitionSchema=z.object({expectedVersion:z.number().int().positive(),action:z.enum(['start_review','request_documents','resume_review','cancel']),note:z.string().trim().min(5).max(2000)}).strict();
+export type ReviewCaseTransition=z.infer<typeof reviewCaseTransitionSchema>;
+export const reviewCaseDecisionSchema=z.object({expectedVersion:z.number().int().positive(),decision:z.enum(['approved','rejected']),reason:z.string().trim().min(5).max(2000)}).strict();
+export type ReviewCaseDecisionInput=z.infer<typeof reviewCaseDecisionSchema>;
+export const reviewWorkItemResponseSchema=z.object({id:z.string().uuid(),kind:reviewWorkItemKindSchema,content:z.string(),documentIds:z.array(z.string().uuid()),createdAt:z.string().datetime(),createdBy:z.string().uuid()}).strict();
+export const reviewCaseResponseSchema=z.object({
+  id:z.string().uuid(),companyId:z.string().uuid(),sourceType:reviewCaseSourceTypeSchema,sourceId:z.string().uuid(),
+  riskLevel:reviewCaseRiskLevelSchema,blocksFiling:z.boolean(),summary:z.string(),status:reviewCaseStatusSchema,
+  assignedTo:z.string().uuid().optional(),version:z.number().int().positive(),createdAt:z.string().datetime(),createdBy:z.string().uuid(),
+  updatedAt:z.string().datetime(),updatedBy:z.string().uuid(),items:z.array(reviewWorkItemResponseSchema),
+}).strict();
+export const reviewCaseListResponseSchema=z.object({items:z.array(reviewCaseResponseSchema)}).strict();
+export const reviewCaseCreationResponseSchema=z.object({reviewCase:reviewCaseResponseSchema,created:z.boolean()}).strict();
+export type ReviewCaseResponse=z.infer<typeof reviewCaseResponseSchema>;
