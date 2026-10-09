@@ -332,6 +332,58 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/companies/{companyId}/filing-packages": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 列出公司的申报包草稿、冻结包及更正关系 */
+        readonly get: operations["FilingPackageController_list"];
+        readonly put?: never;
+        /** 创建只引用不可变事实的申报包草稿，并返回全部冻结阻断 */
+        readonly post: operations["FilingPackageController_create"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/filing-packages/{packageId}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 读取申报包不可变引用快照与当前记录的阻断 */
+        readonly get: operations["FilingPackageController_get"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/filing-packages/{packageId}/freeze": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 重新校验最新引用、红色阻断和哈希后冻结申报包 */
+        readonly post: operations["FilingPackageController_freeze"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/companies/{companyId}/filing-tasks": {
         readonly parameters: {
             readonly query?: never;
@@ -2423,6 +2475,327 @@ export interface operations {
                         readonly fileName: string;
                         /** @enum {string} */
                         readonly mediaType: "application/pdf" | "application/ofd" | "image/jpeg" | "image/png";
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingPackageController_list: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            readonly blockers: readonly ("PACKAGE_NOT_DRAFT" | "RED_REVIEW_BLOCKER" | "APPROVED_REVIEW_REQUIRED" | "CALCULATION_RESULT_REQUIRED" | "INPUT_HASH_REQUIRED" | "RULE_HASH_REQUIRED" | "RESULT_HASH_REQUIRED" | "SOP_HASH_REQUIRED" | "REFERENCE_HASH_MISMATCH")[];
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            readonly contentHash: string;
+                            /** Format: uuid */
+                            readonly correctionOfPackageId?: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            /** Format: date-time */
+                            readonly frozenAt?: string;
+                            /** Format: uuid */
+                            readonly frozenBy?: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly packageNumber: number;
+                            readonly snapshot: {
+                                /** Format: uuid */
+                                readonly calculationRunId: string;
+                                readonly filingCalendarHash: string;
+                                /** Format: uuid */
+                                readonly filingCalendarId: string;
+                                /** Format: uuid */
+                                readonly filingTaskId: string;
+                                readonly inputHash?: string;
+                                readonly resultHash?: string;
+                                readonly reviewDecisions: readonly {
+                                    readonly decisionHash: string;
+                                    /** Format: uuid */
+                                    readonly reviewCaseId: string;
+                                    /** @enum {string} */
+                                    readonly status: "approved";
+                                    readonly version: number;
+                                }[];
+                                readonly ruleHash?: string;
+                                /** Format: uuid */
+                                readonly ruleVersionId?: string;
+                                readonly sopHash: string;
+                                /** Format: uuid */
+                                readonly sopVersionId: string;
+                            };
+                            /** @enum {string} */
+                            readonly status: "draft" | "frozen";
+                            /** Format: date-time */
+                            readonly updatedAt: string;
+                            /** Format: uuid */
+                            readonly updatedBy: string;
+                            readonly version: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingPackageController_create: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: uuid */
+                    readonly calculationRunId: string;
+                    /** Format: uuid */
+                    readonly correctionOfPackageId?: string;
+                    /** Format: uuid */
+                    readonly filingTaskId: string;
+                    readonly reviewCaseIds: readonly string[];
+                    /** Format: uuid */
+                    readonly sopVersionId: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly blockers: readonly ("PACKAGE_NOT_DRAFT" | "RED_REVIEW_BLOCKER" | "APPROVED_REVIEW_REQUIRED" | "CALCULATION_RESULT_REQUIRED" | "INPUT_HASH_REQUIRED" | "RULE_HASH_REQUIRED" | "RESULT_HASH_REQUIRED" | "SOP_HASH_REQUIRED" | "REFERENCE_HASH_MISMATCH")[];
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        readonly contentHash: string;
+                        /** Format: uuid */
+                        readonly correctionOfPackageId?: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: date-time */
+                        readonly frozenAt?: string;
+                        /** Format: uuid */
+                        readonly frozenBy?: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly packageNumber: number;
+                        readonly snapshot: {
+                            /** Format: uuid */
+                            readonly calculationRunId: string;
+                            readonly filingCalendarHash: string;
+                            /** Format: uuid */
+                            readonly filingCalendarId: string;
+                            /** Format: uuid */
+                            readonly filingTaskId: string;
+                            readonly inputHash?: string;
+                            readonly resultHash?: string;
+                            readonly reviewDecisions: readonly {
+                                readonly decisionHash: string;
+                                /** Format: uuid */
+                                readonly reviewCaseId: string;
+                                /** @enum {string} */
+                                readonly status: "approved";
+                                readonly version: number;
+                            }[];
+                            readonly ruleHash?: string;
+                            /** Format: uuid */
+                            readonly ruleVersionId?: string;
+                            readonly sopHash: string;
+                            /** Format: uuid */
+                            readonly sopVersionId: string;
+                        };
+                        /** @enum {string} */
+                        readonly status: "draft" | "frozen";
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingPackageController_get: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly packageId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly blockers: readonly ("PACKAGE_NOT_DRAFT" | "RED_REVIEW_BLOCKER" | "APPROVED_REVIEW_REQUIRED" | "CALCULATION_RESULT_REQUIRED" | "INPUT_HASH_REQUIRED" | "RULE_HASH_REQUIRED" | "RESULT_HASH_REQUIRED" | "SOP_HASH_REQUIRED" | "REFERENCE_HASH_MISMATCH")[];
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        readonly contentHash: string;
+                        /** Format: uuid */
+                        readonly correctionOfPackageId?: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: date-time */
+                        readonly frozenAt?: string;
+                        /** Format: uuid */
+                        readonly frozenBy?: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly packageNumber: number;
+                        readonly snapshot: {
+                            /** Format: uuid */
+                            readonly calculationRunId: string;
+                            readonly filingCalendarHash: string;
+                            /** Format: uuid */
+                            readonly filingCalendarId: string;
+                            /** Format: uuid */
+                            readonly filingTaskId: string;
+                            readonly inputHash?: string;
+                            readonly resultHash?: string;
+                            readonly reviewDecisions: readonly {
+                                readonly decisionHash: string;
+                                /** Format: uuid */
+                                readonly reviewCaseId: string;
+                                /** @enum {string} */
+                                readonly status: "approved";
+                                readonly version: number;
+                            }[];
+                            readonly ruleHash?: string;
+                            /** Format: uuid */
+                            readonly ruleVersionId?: string;
+                            readonly sopHash: string;
+                            /** Format: uuid */
+                            readonly sopVersionId: string;
+                        };
+                        /** @enum {string} */
+                        readonly status: "draft" | "frozen";
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingPackageController_freeze: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly packageId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly expectedVersion: number;
+                    readonly note: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly blockers: readonly ("PACKAGE_NOT_DRAFT" | "RED_REVIEW_BLOCKER" | "APPROVED_REVIEW_REQUIRED" | "CALCULATION_RESULT_REQUIRED" | "INPUT_HASH_REQUIRED" | "RULE_HASH_REQUIRED" | "RESULT_HASH_REQUIRED" | "SOP_HASH_REQUIRED" | "REFERENCE_HASH_MISMATCH")[];
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        readonly contentHash: string;
+                        /** Format: uuid */
+                        readonly correctionOfPackageId?: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: date-time */
+                        readonly frozenAt?: string;
+                        /** Format: uuid */
+                        readonly frozenBy?: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly packageNumber: number;
+                        readonly snapshot: {
+                            /** Format: uuid */
+                            readonly calculationRunId: string;
+                            readonly filingCalendarHash: string;
+                            /** Format: uuid */
+                            readonly filingCalendarId: string;
+                            /** Format: uuid */
+                            readonly filingTaskId: string;
+                            readonly inputHash?: string;
+                            readonly resultHash?: string;
+                            readonly reviewDecisions: readonly {
+                                readonly decisionHash: string;
+                                /** Format: uuid */
+                                readonly reviewCaseId: string;
+                                /** @enum {string} */
+                                readonly status: "approved";
+                                readonly version: number;
+                            }[];
+                            readonly ruleHash?: string;
+                            /** Format: uuid */
+                            readonly ruleVersionId?: string;
+                            readonly sopHash: string;
+                            /** Format: uuid */
+                            readonly sopVersionId: string;
+                        };
+                        /** @enum {string} */
+                        readonly status: "draft" | "frozen";
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
                     };
                 };
             };

@@ -46,4 +46,5 @@ export const CALCULATION_STORE = Symbol('CALCULATION_STORE');
 export interface CalculationStore {
   save(record: SaveCalculationRunRecord): Promise<SavedCalculationRun>;
   list(tenantId: string, companyId: string): Promise<readonly SavedCalculationRun[]>;
+  find(tenantId: string, companyId: string, id: string): Promise<SavedCalculationRun | null>;
 }
