@@ -332,6 +332,74 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/companies/{companyId}/filing-tasks": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 列出申报任务并按查询日期派生到期/逾期状态 */
+        readonly get: operations["FilingTaskController_list"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/filing-tasks/{taskId}/transitions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 按待办→已申报→已缴款顺序流转 */
+        readonly post: operations["FilingTaskController_transition"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/filing-tasks/generate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 从日历幂等生成申报任务；测试日历不得用于生产 */
+        readonly post: operations["FilingTaskController_generate"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/companies/{companyId}/filing-tasks/todos": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 读取未完成的站内申报待办 */
+        readonly get: operations["FilingTaskController_todos"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/companies/{companyId}/imports/bank-csv": {
         readonly parameters: {
             readonly query?: never;
@@ -668,6 +736,24 @@ export interface paths {
         readonly get: operations["ProfileScopeController_latest"];
         readonly put?: never;
         readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/filing-calendars": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** 列出当前租户的征期日历版本 */
+        readonly get: operations["FilingCalendarController_list"];
+        readonly put?: never;
+        /** 创建不可变版本化征期日历；正式日历必须携带 gov.cn 来源 */
+        readonly post: operations["FilingCalendarController_create"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -2324,6 +2410,300 @@ export interface operations {
             };
         };
     };
+    readonly FilingTaskController_list: {
+        readonly parameters: {
+            readonly query: {
+                readonly asOf: string;
+            };
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** Format: uuid */
+                            readonly calendarEntryId: string;
+                            /** Format: uuid */
+                            readonly calendarId: string;
+                            readonly calendarName: string;
+                            /** @enum {string} */
+                            readonly calendarSourceType: "test_fixture" | "official_notice";
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            /** Format: date */
+                            readonly dueDate: string;
+                            /** Format: date-time */
+                            readonly filedAt?: string;
+                            /** Format: uuid */
+                            readonly filedBy?: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly label: string;
+                            /** Format: date-time */
+                            readonly paidAt?: string;
+                            /** Format: uuid */
+                            readonly paidBy?: string;
+                            /** Format: date */
+                            readonly periodEnd: string;
+                            /** Format: date */
+                            readonly periodStart: string;
+                            /** @enum {string} */
+                            readonly status: "todo" | "filed" | "paid";
+                            /** @enum {string} */
+                            readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                            /** @enum {string} */
+                            readonly timing: "upcoming" | "due_today" | "overdue" | "completed";
+                            /** Format: date-time */
+                            readonly updatedAt: string;
+                            /** Format: uuid */
+                            readonly updatedBy: string;
+                            readonly version: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingTaskController_transition: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+                readonly taskId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @enum {string} */
+                    readonly action: "mark_filed" | "mark_paid";
+                    readonly expectedVersion: number;
+                    readonly note: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly calendarEntryId: string;
+                        /** Format: uuid */
+                        readonly calendarId: string;
+                        readonly calendarName: string;
+                        /** @enum {string} */
+                        readonly calendarSourceType: "test_fixture" | "official_notice";
+                        /** Format: uuid */
+                        readonly companyId: string;
+                        /** Format: date-time */
+                        readonly createdAt: string;
+                        /** Format: uuid */
+                        readonly createdBy: string;
+                        /** Format: date */
+                        readonly dueDate: string;
+                        /** Format: date-time */
+                        readonly filedAt?: string;
+                        /** Format: uuid */
+                        readonly filedBy?: string;
+                        /** Format: uuid */
+                        readonly id: string;
+                        readonly label: string;
+                        /** Format: date-time */
+                        readonly paidAt?: string;
+                        /** Format: uuid */
+                        readonly paidBy?: string;
+                        /** Format: date */
+                        readonly periodEnd: string;
+                        /** Format: date */
+                        readonly periodStart: string;
+                        /** @enum {string} */
+                        readonly status: "todo" | "filed" | "paid";
+                        /** @enum {string} */
+                        readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                        /** @enum {string} */
+                        readonly timing: "upcoming" | "due_today" | "overdue" | "completed";
+                        /** Format: date-time */
+                        readonly updatedAt: string;
+                        /** Format: uuid */
+                        readonly updatedBy: string;
+                        readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingTaskController_generate: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: uuid */
+                    readonly calendarId: string;
+                    /** @enum {string} */
+                    readonly usage: "test" | "production";
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly createdCount: number;
+                        readonly items: readonly {
+                            /** Format: uuid */
+                            readonly calendarEntryId: string;
+                            /** Format: uuid */
+                            readonly calendarId: string;
+                            readonly calendarName: string;
+                            /** @enum {string} */
+                            readonly calendarSourceType: "test_fixture" | "official_notice";
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            /** Format: date */
+                            readonly dueDate: string;
+                            /** Format: date-time */
+                            readonly filedAt?: string;
+                            /** Format: uuid */
+                            readonly filedBy?: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly label: string;
+                            /** Format: date-time */
+                            readonly paidAt?: string;
+                            /** Format: uuid */
+                            readonly paidBy?: string;
+                            /** Format: date */
+                            readonly periodEnd: string;
+                            /** Format: date */
+                            readonly periodStart: string;
+                            /** @enum {string} */
+                            readonly status: "todo" | "filed" | "paid";
+                            /** @enum {string} */
+                            readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                            /** @enum {string} */
+                            readonly timing: "upcoming" | "due_today" | "overdue" | "completed";
+                            /** Format: date-time */
+                            readonly updatedAt: string;
+                            /** Format: uuid */
+                            readonly updatedBy: string;
+                            readonly version: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingTaskController_todos: {
+        readonly parameters: {
+            readonly query: {
+                readonly asOf: string;
+            };
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            /** Format: uuid */
+                            readonly calendarEntryId: string;
+                            /** Format: uuid */
+                            readonly calendarId: string;
+                            readonly calendarName: string;
+                            /** @enum {string} */
+                            readonly calendarSourceType: "test_fixture" | "official_notice";
+                            /** Format: uuid */
+                            readonly companyId: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            /** Format: date */
+                            readonly dueDate: string;
+                            /** Format: date-time */
+                            readonly filedAt?: string;
+                            /** Format: uuid */
+                            readonly filedBy?: string;
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly label: string;
+                            /** Format: date-time */
+                            readonly paidAt?: string;
+                            /** Format: uuid */
+                            readonly paidBy?: string;
+                            /** Format: date */
+                            readonly periodEnd: string;
+                            /** Format: date */
+                            readonly periodStart: string;
+                            /** @enum {string} */
+                            readonly status: "todo" | "filed" | "paid";
+                            /** @enum {string} */
+                            readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                            /** @enum {string} */
+                            readonly timing: "upcoming" | "due_today" | "overdue" | "completed";
+                            /** Format: date-time */
+                            readonly updatedAt: string;
+                            /** Format: uuid */
+                            readonly updatedBy: string;
+                            readonly version: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
     readonly BankImportController_upload: {
         readonly parameters: {
             readonly query?: never;
@@ -3968,6 +4348,178 @@ export interface operations {
                             /** @enum {string} */
                             readonly severity: "yellow" | "red";
                         }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingCalendarController_list: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly items: readonly {
+                            readonly contentHash: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly entries: readonly {
+                                /** Format: date */
+                                readonly dueDate: string;
+                                /** Format: uuid */
+                                readonly id: string;
+                                readonly label: string;
+                                /** Format: date */
+                                readonly periodEnd: string;
+                                /** Format: date */
+                                readonly periodStart: string;
+                                /** @enum {string} */
+                                readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                            }[];
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly jurisdictionCode: string;
+                            readonly name: string;
+                            readonly productionReady: boolean;
+                            readonly source: {
+                                readonly title: string;
+                                /** @enum {string} */
+                                readonly type: "test_fixture";
+                            } | {
+                                readonly contentHash: string;
+                                readonly documentNumber: string;
+                                /** Format: uri */
+                                readonly officialUrl: string;
+                                readonly title: string;
+                                /** @enum {string} */
+                                readonly type: "official_notice";
+                                /** Format: date-time */
+                                readonly verifiedAt: string;
+                                /** Format: uuid */
+                                readonly verifiedBy: string;
+                            };
+                            readonly versionTag: string;
+                            readonly year: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingCalendarController_create: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly entries: readonly {
+                        /** Format: date */
+                        readonly dueDate: string;
+                        readonly label: string;
+                        /** Format: date */
+                        readonly periodEnd: string;
+                        /** Format: date */
+                        readonly periodStart: string;
+                        /** @enum {string} */
+                        readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                    }[];
+                    readonly jurisdictionCode: string;
+                    readonly name: string;
+                    readonly source: {
+                        readonly title: string;
+                        /** @enum {string} */
+                        readonly type: "test_fixture";
+                    } | {
+                        readonly contentHash: string;
+                        readonly documentNumber: string;
+                        /** Format: uri */
+                        readonly officialUrl: string;
+                        readonly title: string;
+                        /** @enum {string} */
+                        readonly type: "official_notice";
+                        /** Format: date-time */
+                        readonly verifiedAt: string;
+                        /** Format: uuid */
+                        readonly verifiedBy: string;
+                    };
+                    readonly versionTag: string;
+                    readonly year: number;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        readonly calendar: {
+                            readonly contentHash: string;
+                            /** Format: date-time */
+                            readonly createdAt: string;
+                            /** Format: uuid */
+                            readonly createdBy: string;
+                            readonly entries: readonly {
+                                /** Format: date */
+                                readonly dueDate: string;
+                                /** Format: uuid */
+                                readonly id: string;
+                                readonly label: string;
+                                /** Format: date */
+                                readonly periodEnd: string;
+                                /** Format: date */
+                                readonly periodStart: string;
+                                /** @enum {string} */
+                                readonly taxType: "vat" | "surcharge" | "corporate_income_tax" | "stamp_duty";
+                            }[];
+                            /** Format: uuid */
+                            readonly id: string;
+                            readonly jurisdictionCode: string;
+                            readonly name: string;
+                            readonly productionReady: boolean;
+                            readonly source: {
+                                readonly title: string;
+                                /** @enum {string} */
+                                readonly type: "test_fixture";
+                            } | {
+                                readonly contentHash: string;
+                                readonly documentNumber: string;
+                                /** Format: uri */
+                                readonly officialUrl: string;
+                                readonly title: string;
+                                /** @enum {string} */
+                                readonly type: "official_notice";
+                                /** Format: date-time */
+                                readonly verifiedAt: string;
+                                /** Format: uuid */
+                                readonly verifiedBy: string;
+                            };
+                            readonly versionTag: string;
+                            readonly year: number;
+                        };
+                        readonly created: boolean;
                     };
                 };
             };

@@ -683,3 +683,47 @@ export const reviewCaseResponseSchema=z.object({
 export const reviewCaseListResponseSchema=z.object({items:z.array(reviewCaseResponseSchema)}).strict();
 export const reviewCaseCreationResponseSchema=z.object({reviewCase:reviewCaseResponseSchema,created:z.boolean()}).strict();
 export type ReviewCaseResponse=z.infer<typeof reviewCaseResponseSchema>;
+
+export const filingCalendarSourceSchema=z.discriminatedUnion('type',[
+  z.object({type:z.literal('test_fixture'),title:z.string().trim().min(3).max(300)}).strict(),
+  z.object({
+    type:z.literal('official_notice'),title:z.string().trim().min(3).max(300),
+    officialUrl:z.url().refine(value=>{try{const hostname=new URL(value).hostname.toLowerCase();return hostname==='gov.cn'||hostname.endsWith('.gov.cn');}catch{return false}},{message:'正式征期来源必须使用 gov.cn 网址'}),
+    documentNumber:z.string().trim().min(2).max(200),contentHash:z.string().regex(/^[0-9a-f]{64}$/),
+    verifiedAt:z.string().datetime({offset:true}),verifiedBy:z.string().uuid(),
+  }).strict(),
+]);
+export const filingCalendarEntryInputSchema=z.object({
+  taxType:z.enum(['vat','surcharge','corporate_income_tax','stamp_duty']),
+  periodStart:z.iso.date(),periodEnd:z.iso.date(),dueDate:z.iso.date(),label:z.string().trim().min(2).max(200),
+}).strict().refine(value=>value.periodEnd>=value.periodStart,{message:'申报期间结束日不得早于开始日',path:['periodEnd']});
+export const filingCalendarInputSchema=z.object({
+  name:z.string().trim().min(3).max(200),versionTag:z.string().trim().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{1,39}$/),
+  jurisdictionCode:z.string().regex(/^CN(?:-[A-Z0-9]{2,6})?$/),year:z.number().int().min(2020).max(2100),
+  source:filingCalendarSourceSchema,entries:z.array(filingCalendarEntryInputSchema).min(1).max(100),
+}).strict().superRefine((value,context)=>{for(const[entryIndex,entry]of value.entries.entries()){if(Number(entry.periodStart.slice(0,4))!==value.year){context.addIssue({code:'custom',message:'申报期间必须属于日历年度',path:['entries',entryIndex,'periodStart']});}}});
+export type FilingCalendarInput=z.infer<typeof filingCalendarInputSchema>;
+export const filingCalendarEntryResponseSchema=filingCalendarEntryInputSchema.safeExtend({id:z.string().uuid()}).strict();
+export const filingCalendarResponseSchema=filingCalendarInputSchema.omit({entries:true}).safeExtend({
+  id:z.string().uuid(),contentHash:z.string().regex(/^[0-9a-f]{64}$/),productionReady:z.boolean(),
+  createdAt:z.string().datetime(),createdBy:z.string().uuid(),entries:z.array(filingCalendarEntryResponseSchema),
+}).strict();
+export const filingCalendarCreationResponseSchema=z.object({calendar:filingCalendarResponseSchema,created:z.boolean()}).strict();
+export const filingCalendarListResponseSchema=z.object({items:z.array(filingCalendarResponseSchema)}).strict();
+export type FilingCalendarResponse=z.infer<typeof filingCalendarResponseSchema>;
+
+export const filingTaskGenerationSchema=z.object({calendarId:z.string().uuid(),usage:z.enum(['test','production'])}).strict();
+export type FilingTaskGenerationInput=z.infer<typeof filingTaskGenerationSchema>;
+export const filingTaskTransitionSchema=z.object({expectedVersion:z.number().int().positive(),action:z.enum(['mark_filed','mark_paid']),note:z.string().trim().min(5).max(2000)}).strict();
+export type FilingTaskTransitionInput=z.infer<typeof filingTaskTransitionSchema>;
+export const filingTaskResponseSchema=z.object({
+  id:z.string().uuid(),companyId:z.string().uuid(),calendarId:z.string().uuid(),calendarEntryId:z.string().uuid(),
+  calendarName:z.string(),calendarSourceType:z.enum(['test_fixture','official_notice']),taxType:z.enum(['vat','surcharge','corporate_income_tax','stamp_duty']),
+  label:z.string(),periodStart:z.iso.date(),periodEnd:z.iso.date(),dueDate:z.iso.date(),status:z.enum(['todo','filed','paid']),
+  timing:z.enum(['upcoming','due_today','overdue','completed']),version:z.number().int().positive(),
+  filedAt:z.string().datetime().optional(),filedBy:z.string().uuid().optional(),paidAt:z.string().datetime().optional(),paidBy:z.string().uuid().optional(),
+  createdAt:z.string().datetime(),createdBy:z.string().uuid(),updatedAt:z.string().datetime(),updatedBy:z.string().uuid(),
+}).strict();
+export const filingTaskGenerationResponseSchema=z.object({items:z.array(filingTaskResponseSchema),createdCount:z.number().int().nonnegative()}).strict();
+export const filingTaskListResponseSchema=z.object({items:z.array(filingTaskResponseSchema)}).strict();
+export type FilingTaskResponse=z.infer<typeof filingTaskResponseSchema>;

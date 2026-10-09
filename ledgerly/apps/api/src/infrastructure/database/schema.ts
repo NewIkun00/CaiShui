@@ -809,3 +809,18 @@ export const reviewCaseEvents=pgTable('review_case_events',{
 export const reviewCaseWorkItems=pgTable('review_case_work_items',{
   id:uuid('id').primaryKey(),reviewCaseId:uuid('review_case_id').notNull().references(()=>reviewCases.id),kind:text('kind').notNull(),content:text('content').notNull(),documentIds:jsonb('document_ids').notNull().default([]),createdAt:timestamp('created_at',{withTimezone:true}).notNull(),createdBy:uuid('created_by').notNull(),
 },table=>[index('review_case_work_items_case_idx').on(table.reviewCaseId,table.createdAt)]);
+
+export const filingCalendars=pgTable('filing_calendars',{
+  id:uuid('id').primaryKey(),tenantId:uuid('tenant_id').notNull().references(()=>tenants.id),name:text('name').notNull(),versionTag:text('version_tag').notNull(),
+  jurisdictionCode:text('jurisdiction_code').notNull(),year:integer('year').notNull(),sourceType:text('source_type').notNull(),source:jsonb('source').notNull(),contentHash:text('content_hash').notNull(),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull(),createdBy:uuid('created_by').notNull(),
+},table=>[uniqueIndex('filing_calendars_version_unique').on(table.tenantId,table.jurisdictionCode,table.year,table.versionTag),uniqueIndex('filing_calendars_hash_unique').on(table.tenantId,table.contentHash),index('filing_calendars_tenant_year_idx').on(table.tenantId,table.year)]);
+export const filingCalendarEntries=pgTable('filing_calendar_entries',{
+  id:uuid('id').primaryKey(),calendarId:uuid('calendar_id').notNull().references(()=>filingCalendars.id),taxType:text('tax_type').notNull(),label:text('label').notNull(),periodStart:date('period_start').notNull(),periodEnd:date('period_end').notNull(),dueDate:date('due_date').notNull(),
+},table=>[uniqueIndex('filing_calendar_entries_natural_unique').on(table.calendarId,table.taxType,table.periodStart,table.periodEnd),index('filing_calendar_entries_due_idx').on(table.calendarId,table.dueDate)]);
+export const filingTasks=pgTable('filing_tasks',{
+  id:uuid('id').primaryKey(),tenantId:uuid('tenant_id').notNull().references(()=>tenants.id),companyId:uuid('company_id').notNull().references(()=>companies.id),calendarId:uuid('calendar_id').notNull().references(()=>filingCalendars.id),calendarEntryId:uuid('calendar_entry_id').notNull().references(()=>filingCalendarEntries.id),status:text('status').notNull(),filedAt:timestamp('filed_at',{withTimezone:true}),filedBy:uuid('filed_by'),paidAt:timestamp('paid_at',{withTimezone:true}),paidBy:uuid('paid_by'),...auditColumns,
+},table=>[uniqueIndex('filing_tasks_company_entry_unique').on(table.tenantId,table.companyId,table.calendarEntryId),index('filing_tasks_todo_idx').on(table.tenantId,table.companyId,table.status),index('filing_tasks_calendar_idx').on(table.calendarId)]);
+export const filingTaskEvents=pgTable('filing_task_events',{
+  id:uuid('id').primaryKey(),filingTaskId:uuid('filing_task_id').notNull().references(()=>filingTasks.id),eventType:text('event_type').notNull(),fromStatus:text('from_status').notNull(),toStatus:text('to_status').notNull(),note:text('note').notNull(),taskVersion:integer('task_version').notNull(),actedBy:uuid('acted_by').notNull(),actedAt:timestamp('acted_at',{withTimezone:true}).notNull(),
+},table=>[uniqueIndex('filing_task_events_version_unique').on(table.filingTaskId,table.taskVersion),index('filing_task_events_task_idx').on(table.filingTaskId,table.actedAt)]);

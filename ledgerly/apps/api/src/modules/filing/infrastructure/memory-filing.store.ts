@@ -1,0 +1,14 @@
+import{Injectable}from'@nestjs/common';
+import type{CreateFilingCalendarRecord,FilingCalendar,FilingStore,FilingTask,GenerateFilingTasksRecord,TransitionFilingTaskRecord}from'../application/filing-store.js';
+@Injectable()
+export class MemoryFilingStore implements FilingStore{
+  private readonly calendars=new Map<string,FilingCalendar[]>();private readonly tasks=new Map<string,FilingTask[]>();
+  createCalendar(record:CreateFilingCalendarRecord):Promise<{calendar:FilingCalendar;created:boolean}>{const items=this.calendars.get(record.tenantId)??[],existing=items.find(item=>item.jurisdictionCode===record.calendar.jurisdictionCode&&item.year===record.calendar.year&&item.versionTag===record.calendar.versionTag);if(existing)return Promise.resolve({calendar:existing,created:false});this.calendars.set(record.tenantId,[record.calendar,...items]);return Promise.resolve({calendar:record.calendar,created:true});}
+  listCalendars(tenantId:string){return Promise.resolve(this.calendars.get(tenantId)??[]);}
+  findCalendar(tenantId:string,id:string){return Promise.resolve((this.calendars.get(tenantId)??[]).find(item=>item.id===id)??null);}
+  generateTasks(record:GenerateFilingTasksRecord):Promise<{items:readonly FilingTask[];createdCount:number}>{const key=this.key(record.tenantId,record.companyId),current=this.tasks.get(key)??[];let createdCount=0;const next=[...current];for(const task of record.tasks){if(!next.some(item=>item.calendarEntryId===task.calendarEntryId)){next.push(task);createdCount++;}}this.tasks.set(key,next);return Promise.resolve({items:next.filter(item=>item.calendarId===record.calendar.id).sort((a,b)=>a.dueDate.localeCompare(b.dueDate)),createdCount});}
+  listTasks(tenantId:string,companyId:string){return Promise.resolve((this.tasks.get(this.key(tenantId,companyId))??[]).slice().sort((a,b)=>a.dueDate.localeCompare(b.dueDate)));}
+  findTask(tenantId:string,companyId:string,id:string){return Promise.resolve((this.tasks.get(this.key(tenantId,companyId))??[]).find(item=>item.id===id)??null);}
+  transitionTask(record:TransitionFilingTaskRecord):Promise<FilingTask|null>{const key=this.key(record.tenantId,record.companyId),items=this.tasks.get(key)??[],index=items.findIndex(item=>item.id===record.taskId&&item.version===record.expectedVersion);if(index<0)return Promise.resolve(null);const current=items[index]!;const changed:FilingTask={...current,status:record.status,version:current.version+1,...(record.status==='filed'?{filedAt:record.occurredAt,filedBy:record.actorId}:{}),...(record.status==='paid'?{paidAt:record.occurredAt,paidBy:record.actorId}:{}),updatedAt:record.occurredAt,updatedBy:record.actorId};this.tasks.set(key,items.map((item,i)=>i===index?changed:item));return Promise.resolve(changed);}
+  private key(tenantId:string,companyId:string){return`${tenantId}:${companyId}`;}
+}
