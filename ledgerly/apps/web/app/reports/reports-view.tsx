@@ -18,7 +18,7 @@ function context(): WorkspaceContext | null {
   } catch { return null; }
 }
 
-function api() { return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'; }
+function api() { return process.env.NEXT_PUBLIC_API_URL ?? '/api'; }
 function money(value: string) { return new Intl.NumberFormat('zh-CN',{style:'currency',currency:'CNY'}).format(Number(value)); }
 
 export function ReportsView() {

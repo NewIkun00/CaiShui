@@ -32,7 +32,7 @@ const statusNames: Record<string, string> = {
 };
 const taxTypeNames = { vat: '增值税', surcharge: '附加税费', corporate_income_tax: '企业所得税', stamp_duty: '印花税' } as const;
 
-function api() { return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'; }
+function api() { return process.env.NEXT_PUBLIC_API_URL ?? '/api'; }
 function authHeaders(actorId: string, json = false) { return { 'x-user-id': actorId, ...(json ? { 'content-type': 'application/json' } : {}) }; }
 function today() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); }
 function versionToday() { return `${today().replaceAll('-', '.')}-1`; }

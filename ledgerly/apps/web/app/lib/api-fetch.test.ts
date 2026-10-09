@@ -36,4 +36,17 @@ describe('authenticated API fetch', () => {
     const init = seen!;
     expect(new Headers(init.headers).get('x-user-id')).toBe('development-user');
   });
+
+  it('starts provider step-up after a protected high-risk operation asks for MFA', async () => {
+    vi.stubEnv('NEXT_PUBLIC_AUTH_MODE', 'oidc');
+    const assign = vi.fn();
+    vi.stubGlobal('window', { location: { pathname: '/filings', search: '?period=2026-09', assign } });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 'STEP_UP_REQUIRED' }), { status: 403, headers: { 'content-type': 'application/json' } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ authorizationUrl: 'https://identity.example.com/step-up' }), { status: 201, headers: { 'content-type': 'application/json' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    await apiFetch('/api/v1/companies/company/filing-packages/package/freeze', { method: 'POST' });
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/v1/auth/step-up', expect.objectContaining({ method: 'POST', credentials: 'include' }));
+    expect(assign).toHaveBeenCalledWith('https://identity.example.com/step-up');
+  });
 });

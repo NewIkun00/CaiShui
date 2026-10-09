@@ -6,7 +6,7 @@ import{useCallback,useEffect,useMemo,useState,type FormEvent}from'react';
 interface Workspace{tenantId:string;companyId:string}
 const creatorId='10000000-0000-4000-8000-000000000001',reviewerId='10000000-0000-4000-8000-000000000002';
 const typeLabels={void:'作废',correction:'更正',additional_tax:'补税',refund:'退税'}as const,statusLabels={open:'待复核',in_review:'复核中',resolved:'已解决',cancelled:'已取消'}as const;
-function api(){return process.env.NEXT_PUBLIC_API_URL??'http://localhost:3001'}
+function api(){return process.env.NEXT_PUBLIC_API_URL??'/api'}
 function workspace():Workspace|null{try{const value=JSON.parse(window.localStorage.getItem('ledgerly.context')??'null')as Partial<Workspace>|null;return value&&typeof value.tenantId==='string'&&typeof value.companyId==='string'?{tenantId:value.tenantId,companyId:value.companyId}:null}catch{return null}}
 function headers(context:Workspace,actor=creatorId,json=false){return{'x-user-id':actor,'x-tenant-id':context.tenantId,...(json?{'content-type':'application/json'}:{})}}
 async function errorMessage(response:Response,fallback:string){try{const value=await response.json()as{message?:unknown};return typeof value.message==='string'?value.message:fallback}catch{return fallback}}

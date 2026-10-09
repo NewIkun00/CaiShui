@@ -58,6 +58,7 @@ describe('OIDC BFF authentication service', () => {
     const started = await service.beginLogin('/dashboard', 'trace-start');
     expect(started.authorizationUrl).toContain('https://identity.example.com/authorize');
     expect(provider.lastAuthorization?.codeChallenge).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(provider.lastAuthorization?.intent).toBe('login');
     await expect(service.completeLogin('code-1', 'wrong-state-value-that-is-long-enough', started.transaction, 'trace-wrong')).rejects.toThrow('Login state is invalid or expired');
     const completed = await service.completeLogin('code-1', provider.lastAuthorization!.state, started.transaction, 'trace-callback');
     expect(completed.returnTo).toBe('/dashboard');
@@ -66,6 +67,26 @@ describe('OIDC BFF authentication service', () => {
     expect(await service.logout(completed.established.session.id, 'trace-logout')).toEqual({ providerRevoked: true });
     expect(provider.revoked).toEqual(['provider-session-1']);
     expect(await service.authenticate(completed.established.session.id)).toBeNull();
+  });
+
+  it('starts registration with the protected OIDC transaction and a dedicated provider intent', async () => {
+    const { service, provider } = fixture();
+    const started = await service.beginLogin('/onboarding', 'trace-register', 'register');
+    expect(started.authorizationUrl).toContain('https://identity.example.com/authorize');
+    expect(provider.lastAuthorization).toMatchObject({ intent: 'register', redirectUri: 'https://app.example.com/auth/callback' });
+  });
+
+  it('replaces the current local session after step-up by the same account', async () => {
+    const { service, provider } = fixture();
+    const login = await service.beginLogin('/dashboard', 'trace-login');
+    const initial = await service.completeLogin('code-login', provider.lastAuthorization!.state, login.transaction, 'trace-login-callback');
+    const authentication = await service.authenticate(initial.established.session.id);
+    const stepUp = await service.beginStepUp('/filings', authentication!, 'trace-step-up');
+    expect(provider.lastAuthorization?.intent).toBe('step-up');
+    const completed = await service.completeLogin('code-step-up', provider.lastAuthorization!.state, stepUp.transaction, 'trace-step-up-callback');
+    expect(completed.established.user.id).toBe(initial.established.user.id);
+    expect(await service.authenticate(initial.established.session.id)).toBeNull();
+    expect(await service.authenticate(completed.established.session.id)).not.toBeNull();
   });
 
   it('enforces active tenant membership and company scope centrally', async () => {

@@ -13,7 +13,7 @@ interface WorkspaceContext { tenantId:string; companyId:string }
 const typeLabels={invoice:'发票',bank_receipt:'银行回单',contract:'合同',screenshot:'截图',payroll:'工资表',other:'其他'} as const;
 
 function readContext():WorkspaceContext|null { try{const raw:unknown=JSON.parse(window.localStorage.getItem('ledgerly.context')??'null');if(typeof raw!=='object'||raw===null)return null;const value=raw as Partial<WorkspaceContext>;return typeof value.tenantId==='string'&&typeof value.companyId==='string'?{tenantId:value.tenantId,companyId:value.companyId}:null;}catch{return null;} }
-function api(){return process.env.NEXT_PUBLIC_API_URL??'http://localhost:3001';}
+function api(){return process.env.NEXT_PUBLIC_API_URL??'/api';}
 function headers(workspace:WorkspaceContext,json=false){return {'x-user-id':'10000000-0000-4000-8000-000000000001','x-tenant-id':workspace.tenantId,...(json?{'content-type':'application/json'}:{})};}
 
 async function encodeFile(file:File):Promise<string>{const bytes=new Uint8Array(await file.arrayBuffer());let binary='';const size=0x8000;for(let start=0;start<bytes.length;start+=size)binary+=String.fromCharCode(...bytes.subarray(start,start+size));return btoa(binary);}

@@ -7,6 +7,8 @@ export interface AuthTransactionPayload {
   readonly codeVerifier: string;
   readonly returnTo: string;
   readonly expiresAt: string;
+  readonly expectedUserId?: string;
+  readonly replaceSessionId?: string;
 }
 
 @Injectable()

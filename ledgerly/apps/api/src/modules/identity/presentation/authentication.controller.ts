@@ -18,6 +18,7 @@ import { AuthenticationService } from '../application/authentication.service.js'
 import type { SavedTenantMember } from '../application/identity-store.js';
 import { PublicAuth } from './public-auth.decorator.js';
 import { OIDC_TRANSACTION_COOKIE, SESSION_COOKIE } from './session-auth.guard.js';
+import type { AuthenticatedFastifyRequest } from '../../../shared/authenticated-request.js';
 
 @ApiTags('authentication')
 @Controller('v1/auth')
@@ -35,7 +36,37 @@ export class AuthenticationController {
     @Res({ passthrough: true }) reply: FastifyReply,
   ) {
     const traceId = this.traceId(request);
-    const result = await this.authentication.beginLogin(input.returnTo, traceId);
+    const result = await this.authentication.beginLogin(input.returnTo, traceId, 'login');
+    reply.header('set-cookie', this.cookie(OIDC_TRANSACTION_COOKIE, result.transaction, 600, '/v1/auth'));
+    return { authorizationUrl: result.authorizationUrl, expiresAt: result.expiresAt.toISOString() };
+  }
+
+  @PublicAuth()
+  @Post('register')
+  @ApiOperation({ summary: '创建 OIDC 注册事务；新身份登录后进入企业建档' })
+  @ApiZodBody(authLoginInputSchema)
+  @ApiZodCreatedResponse(authLoginResponseSchema)
+  async register(
+    @Body(new ZodValidationPipe(authLoginInputSchema)) input: AuthLoginInput,
+    @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
+    const result = await this.authentication.beginLogin(input.returnTo, this.traceId(request), 'register');
+    reply.header('set-cookie', this.cookie(OIDC_TRANSACTION_COOKIE, result.transaction, 600, '/v1/auth'));
+    return { authorizationUrl: result.authorizationUrl, expiresAt: result.expiresAt.toISOString() };
+  }
+
+  @Post('step-up')
+  @ApiOperation({ summary: '为当前账号发起高风险操作二次认证' })
+  @ApiZodBody(authLoginInputSchema)
+  @ApiZodCreatedResponse(authLoginResponseSchema)
+  async stepUp(
+    @Body(new ZodValidationPipe(authLoginInputSchema)) input: AuthLoginInput,
+    @Req() request: AuthenticatedFastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
+    if (!request.authentication) throw new UnauthorizedException('Authenticated session required');
+    const result = await this.authentication.beginStepUp(input.returnTo, request.authentication, this.traceId(request));
     reply.header('set-cookie', this.cookie(OIDC_TRANSACTION_COOKIE, result.transaction, 600, '/v1/auth'));
     return { authorizationUrl: result.authorizationUrl, expiresAt: result.expiresAt.toISOString() };
   }

@@ -30,7 +30,7 @@ const timingLabels = {
   completed: '已完成',
 } as const;
 function api() {
-  return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+  return process.env.NEXT_PUBLIC_API_URL ?? '/api';
 }
 function workspace(): Workspace | null {
   try {

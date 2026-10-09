@@ -8,7 +8,7 @@ interface WorkspaceContext{tenantId:string;companyId:string}
 const decisionLabels={SCOPE_PROFILE_MISSING:'缺少适用性画像',SCOPE_NOT_ELIGIBLE:'当前主体不在自动化范围',NO_CONFIRMED_FACTS:'期间内没有已确认事实',NO_MATCHING_RULE:'没有匹配的活动规则',MULTIPLE_MATCHING_RULES:'存在多个匹配规则',IMPLEMENTATION_NOT_REGISTERED:'计算实现尚未注册'} as const;
 const taxLabels={vat:'增值税',surcharge:'附加税费',corporate_income_tax:'企业所得税',stamp_duty:'印花税'} as const;
 function workspace():WorkspaceContext|null{try{const raw:unknown=JSON.parse(window.localStorage.getItem('ledgerly.context')??'null');if(typeof raw!=='object'||raw===null)return null;const value=raw as Partial<WorkspaceContext>;return typeof value.tenantId==='string'&&typeof value.companyId==='string'?{tenantId:value.tenantId,companyId:value.companyId}:null}catch{return null}}
-function endpoint(companyId:string){return`${process.env.NEXT_PUBLIC_API_URL??'http://localhost:3001'}/v1/companies/${companyId}/calculation-runs`}
+function endpoint(companyId:string){return`${process.env.NEXT_PUBLIC_API_URL??'/api'}/v1/companies/${companyId}/calculation-runs`}
 function headers(context:WorkspaceContext,json=false){return{'x-user-id':'10000000-0000-4000-8000-000000000001','x-tenant-id':context.tenantId,...(json?{'content-type':'application/json'}:{})}}
 
 export function CalculationReadiness(){

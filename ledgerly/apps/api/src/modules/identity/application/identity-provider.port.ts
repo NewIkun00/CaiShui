@@ -16,6 +16,7 @@ export interface AuthorizationUrlInput {
   readonly nonce: string;
   readonly codeChallenge: string;
   readonly redirectUri: string;
+  readonly intent: 'login' | 'register' | 'step-up';
 }
 
 export interface AuthorizationCodeInput {

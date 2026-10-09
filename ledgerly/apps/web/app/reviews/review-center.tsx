@@ -9,7 +9,7 @@ const creatorId='10000000-0000-4000-8000-000000000001',reviewerId='20000000-0000
 const statusLabels={open:'待接单',awaiting_documents:'等待补件',in_review:'复核中',approved:'已批准',rejected:'已驳回',cancelled:'已取消'}as const;
 const sourceLabels={reconciliation_issue:'勾稽异常',period_reopen_request:'反结账申请'}as const;
 function workspace():Workspace|null{try{const raw:unknown=JSON.parse(window.localStorage.getItem('ledgerly.context')??'null');if(!raw||typeof raw!=='object')return null;const value=raw as Partial<Workspace>;return typeof value.tenantId==='string'&&typeof value.companyId==='string'?{tenantId:value.tenantId,companyId:value.companyId}:null}catch{return null}}
-function api(){return process.env.NEXT_PUBLIC_API_URL??'http://localhost:3001'}
+function api(){return process.env.NEXT_PUBLIC_API_URL??'/api'}
 function headers(context:Workspace,actorId=creatorId,json=false){return{'x-user-id':actorId,'x-tenant-id':context.tenantId,...(json?{'content-type':'application/json'}:{})}}
 function sourceHref(item:ReviewCaseResponse){return item.sourceType==='reconciliation_issue'?'/reconciliation':'/accounting'}
 async function errorMessage(response:Response,fallback:string){try{const body=await response.json()as{message?:string};return body.message??fallback}catch{return fallback}}

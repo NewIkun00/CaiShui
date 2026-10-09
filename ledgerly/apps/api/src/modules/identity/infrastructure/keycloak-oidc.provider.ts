@@ -28,12 +28,19 @@ export class KeycloakOidcProvider implements IdentityProviderPort {
   private jwks?: { readonly expiresAt: number; readonly keys: readonly JsonWebKey[] };
 
   authorizationUrl(input: AuthorizationUrlInput): string {
-    const url = new URL(`${this.issuer()}/protocol/openid-connect/auth`);
+    const endpoint = input.intent === 'register' ? 'registrations' : 'auth';
+    const url = new URL(`${this.issuer()}/protocol/openid-connect/${endpoint}`);
     url.search = new URLSearchParams({
       client_id: this.clientId(), response_type: 'code', scope: 'openid profile email',
       redirect_uri: input.redirectUri, state: input.state, nonce: input.nonce,
       code_challenge: input.codeChallenge, code_challenge_method: 'S256',
     }).toString();
+    if (input.intent === 'step-up') {
+      url.searchParams.set('prompt', 'login');
+      url.searchParams.set('max_age', '0');
+      const acrValues = process.env['OIDC_STEP_UP_ACR_VALUES'];
+      if (acrValues) url.searchParams.set('acr_values', acrValues);
+    }
     return url.toString();
   }
 

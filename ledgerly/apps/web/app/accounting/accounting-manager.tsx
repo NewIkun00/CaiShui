@@ -25,7 +25,7 @@ function context(): WorkspaceContext | null {
     return typeof value.tenantId === 'string' && typeof value.companyId === 'string' ? { tenantId:value.tenantId, companyId:value.companyId } : null;
   } catch { return null; }
 }
-function api() { return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'; }
+function api() { return process.env.NEXT_PUBLIC_API_URL ?? '/api'; }
 function headers(workspace: WorkspaceContext, json=false) { return { 'x-user-id':'10000000-0000-4000-8000-000000000001', 'x-tenant-id':workspace.tenantId, ...(json ? { 'content-type':'application/json' } : {}) }; }
 async function errorMessage(response: Response, fallback: string) {
   const payload = await response.json().catch(() => null) as { error?: { code?: string; message?: string } } | null;

@@ -39,6 +39,27 @@ describe('Keycloak OIDC adapter', () => {
     return `${header}.${claims}.${signer.sign(privateKey).toString('base64url')}`;
   }
 
+  it('uses the provider registration endpoint without weakening PKCE parameters', () => {
+    const url = new URL(new KeycloakOidcProvider().authorizationUrl({
+      state: 'state', nonce: 'nonce', codeChallenge: 'challenge',
+      redirectUri: 'https://app.example.com/auth/callback', intent: 'register',
+    }));
+    expect(url.pathname).toBe('/realms/ledgerly/protocol/openid-connect/registrations');
+    expect(url.searchParams.get('code_challenge_method')).toBe('S256');
+  });
+
+  it('forces fresh provider authentication for step-up', () => {
+    vi.stubEnv('OIDC_STEP_UP_ACR_VALUES', 'urn:ledgerly:mfa');
+    const url = new URL(new KeycloakOidcProvider().authorizationUrl({
+      state: 'state', nonce: 'nonce', codeChallenge: 'challenge',
+      redirectUri: 'https://app.example.com/auth/callback', intent: 'step-up',
+    }));
+    expect(url.pathname).toMatch(/\/auth$/);
+    expect(url.searchParams.get('prompt')).toBe('login');
+    expect(url.searchParams.get('max_age')).toBe('0');
+    expect(url.searchParams.get('acr_values')).toBe('urn:ledgerly:mfa');
+  });
+
   it('verifies signature, issuer, audience, nonce, time and authentication methods', async () => {
     returnedToken = token('expected-nonce');
     const provider = new KeycloakOidcProvider();

@@ -72,6 +72,40 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/auth/register": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 创建 OIDC 注册事务；新身份登录后进入企业建档 */
+        readonly post: operations["AuthenticationController_register"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/auth/step-up": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 为当前账号发起高风险操作二次认证 */
+        readonly post: operations["AuthenticationController_stepUp"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/companies/{companyId}": {
         readonly parameters: {
             readonly query?: never;
@@ -1502,6 +1536,68 @@ export interface operations {
                             /** @enum {string} */
                             readonly status: "pending_identity" | "active" | "disabled";
                         };
+                    };
+                };
+            };
+        };
+    };
+    readonly AuthenticationController_register: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @default /dashboard */
+                    readonly returnTo?: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uri */
+                        readonly authorizationUrl: string;
+                        /** Format: date-time */
+                        readonly expiresAt: string;
+                    };
+                };
+            };
+        };
+    };
+    readonly AuthenticationController_stepUp: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @default /dashboard */
+                    readonly returnTo?: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uri */
+                        readonly authorizationUrl: string;
+                        /** Format: date-time */
+                        readonly expiresAt: string;
                     };
                 };
             };

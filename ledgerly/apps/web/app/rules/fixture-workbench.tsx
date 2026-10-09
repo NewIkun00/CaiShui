@@ -46,7 +46,7 @@ function fixtureTemplate() {
   })), null, 2);
 }
 
-function api() { return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'; }
+function api() { return process.env.NEXT_PUBLIC_API_URL ?? '/api'; }
 function suggestedVersion() {
   return `${new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()).replaceAll('-', '.')}-1`;
 }

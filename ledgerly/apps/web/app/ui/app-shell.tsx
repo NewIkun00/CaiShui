@@ -23,6 +23,9 @@ const navigation = [
   { label: '运营复核', items: [
     { href: '/reviews', label: '人工复核中心', mark: '◉' },
   ] },
+  { label: '系统设置', items: [
+    { href: '/settings/members', label: '成员与权限', mark: '♙' },
+  ] },
   { label: '税务治理', items: [
     { href: '/filings', label: '申报待办', mark: '◷' },
     { href: '/calculations', label: '试算准备', mark: '∑' },
@@ -51,6 +54,9 @@ const titles: Readonly<Record<string, readonly [string, string]>> = {
   '/setup/financial-account': ['资金与首期', '设置资金账户和会计期间'],
   '/setup/counterparties': ['往来单位', '建立客户、供应商和关联方档案'],
   '/login': ['安全登录', '通过企业身份服务进入账税通'],
+  '/register': ['创建账号', '验证个人身份并建立首个企业档案'],
+  '/settings/members': ['成员与权限', '邀请、查看和停用企业成员'],
+  '/invite': ['加入企业', '验证并接受企业成员邀请'],
   '/auth/callback': ['正在登录', '正在验证身份并建立安全会话'],
 };
 
@@ -62,6 +68,7 @@ function active(pathname: string, href: string) {
 
 export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
   const pathname = usePathname();
+  if (pathname === '/login' || pathname === '/register' || pathname === '/invite' || pathname.startsWith('/auth/')) return children;
   const [title, description] = titles[pathname] ?? ['账税通', '一人公司财务工作台'];
 
   return <div className="app-frame">

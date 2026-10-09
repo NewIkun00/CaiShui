@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
 interface WorkspaceContext { tenantId:string; companyId:string }
 function context():WorkspaceContext|null { try { const raw:unknown=JSON.parse(window.localStorage.getItem('ledgerly.context')??'null'); if(typeof raw!=='object'||raw===null)return null; const value=raw as Partial<WorkspaceContext>; return typeof value.tenantId==='string'&&typeof value.companyId==='string'?{tenantId:value.tenantId,companyId:value.companyId}:null } catch { return null } }
-function api(){return process.env.NEXT_PUBLIC_API_URL??'http://localhost:3001'}
+function api(){return process.env.NEXT_PUBLIC_API_URL??'/api'}
 function headers(workspace:WorkspaceContext,json=false){return{'x-user-id':'10000000-0000-4000-8000-000000000001','x-tenant-id':workspace.tenantId,...(json?{'content-type':'application/json'}:{})}}
 const triageLabels={investigating:'调查中',needs_documents:'待补资料',ready_for_recheck:'待重新检查'} as const;
 

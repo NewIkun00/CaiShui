@@ -31,7 +31,7 @@ export function BankImportManager() {
     if (file.size > 2_000_000) { setMessage('单个文件不能超过 2 MB。'); return; }
     setPending(true); setMessage('正在解析和校验…');
     try {
-      const setupResponse=await apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/companies/${workspace.companyId}/ledger-setup`,{headers:{'x-user-id':'10000000-0000-4000-8000-000000000001','x-tenant-id':workspace.tenantId}});
+      const setupResponse=await apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? '/api'}/v1/companies/${workspace.companyId}/ledger-setup`,{headers:{'x-user-id':'10000000-0000-4000-8000-000000000001','x-tenant-id':workspace.tenantId}});
       if(!setupResponse.ok)throw new Error('请先完成资金账户和会计期间设置。');
       const setup=ledgerSetupResponseSchema.parse(await setupResponse.json());
       if(setup.accountType!=='bank')throw new Error('当前资金账户不是银行账户，不能导入银行对账单。');
@@ -55,7 +55,7 @@ export function BankImportManager() {
   }
 
   function request(workspace: WorkspaceContext, suffix: string, init: RequestInit) {
-    return apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/companies/${workspace.companyId}/imports/bank-csv${suffix}`, {
+    return apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? '/api'}/v1/companies/${workspace.companyId}/imports/bank-csv${suffix}`, {
       ...init, headers: { 'content-type': 'application/json', 'x-user-id': '10000000-0000-4000-8000-000000000001', 'x-tenant-id': workspace.tenantId },
     });
   }

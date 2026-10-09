@@ -34,7 +34,7 @@ const blockerLabels = {
   REFERENCE_HASH_MISMATCH: '引用已变化，请重新建包',
 } as const;
 function api() {
-  return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+  return process.env.NEXT_PUBLIC_API_URL ?? '/api';
 }
 function workspace(): Workspace | null {
   try {

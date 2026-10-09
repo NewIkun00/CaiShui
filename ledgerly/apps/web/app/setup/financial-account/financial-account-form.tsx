@@ -56,7 +56,7 @@ export function FinancialAccountForm() {
     if (!parsed.success) { setState({ kind: 'error', message: '请检查账户名称、金额、银行信息和会计月份。' }); return; }
     setState({ kind: 'submitting' });
     try {
-      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/companies/${context.companyId}/ledger-setup`, {
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? '/api'}/v1/companies/${context.companyId}/ledger-setup`, {
         method: 'POST', headers: { 'content-type': 'application/json', 'x-user-id': '10000000-0000-4000-8000-000000000001', 'x-tenant-id': context.tenantId }, body: JSON.stringify(parsed.data),
       });
       const payload: unknown = await response.json();

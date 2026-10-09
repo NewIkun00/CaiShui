@@ -29,7 +29,7 @@ const blockerLabels: Record<string, string> = {
   OPEN_ADJUSTMENT_WORK_ORDER: '仍有未完成的更正/补退税工单',
 };
 function api() {
-  return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+  return process.env.NEXT_PUBLIC_API_URL ?? '/api';
 }
 function workspace(): Workspace | null {
   try {

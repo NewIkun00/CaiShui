@@ -1,5 +1,6 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import type { OperationsRole } from '@ledgerly/domain';
 import { IDENTITY_PROVIDER, type IdentityProviderPort } from './identity-provider.port.js';
 import { IDENTITY_STORE, type IdentityStore } from './identity-store.js';
 import { IdentityService } from './identity.service.js';
@@ -14,6 +15,7 @@ export interface ActiveAuthentication {
   readonly authMethods: readonly string[];
   readonly authenticatedAt: Date;
   readonly expiresAt: Date;
+  readonly operationsRoles: readonly OperationsRole[];
 }
 
 @Injectable()
@@ -25,7 +27,20 @@ export class AuthenticationService {
     private readonly transactions: AuthTransactionCodec,
   ) {}
 
-  async beginLogin(returnTo: string, traceId: string) {
+  async beginLogin(returnTo: string, traceId: string, intent: 'login' | 'register' = 'login') {
+    return this.beginAuthorization(returnTo, traceId, intent);
+  }
+
+  async beginStepUp(returnTo: string, authenticated: ActiveAuthentication, traceId: string) {
+    return this.beginAuthorization(returnTo, traceId, 'step-up', authenticated);
+  }
+
+  private async beginAuthorization(
+    returnTo: string,
+    traceId: string,
+    intent: 'login' | 'register' | 'step-up',
+    authenticated?: ActiveAuthentication,
+  ) {
     if (authMode() !== 'oidc') throw new ServiceUnavailableException('OIDC login is disabled in development-headers mode');
     const state = randomBytes(32).toString('base64url');
     const nonce = randomBytes(32).toString('base64url');
@@ -34,9 +49,12 @@ export class AuthenticationService {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 10 * 60_000);
     await this.store.createLoginState({ stateHash: this.hash(state), expiresAt, createdAt: now, traceId });
-    const payload: AuthTransactionPayload = { state, nonce, codeVerifier, returnTo, expiresAt: expiresAt.toISOString() };
+    const payload: AuthTransactionPayload = {
+      state, nonce, codeVerifier, returnTo, expiresAt: expiresAt.toISOString(),
+      ...(authenticated ? { expectedUserId: authenticated.userId, replaceSessionId: authenticated.sessionId } : {}),
+    };
     return {
-      authorizationUrl: this.provider.authorizationUrl({ state, nonce, codeChallenge, redirectUri: oidcRedirectUri() }),
+      authorizationUrl: this.provider.authorizationUrl({ state, nonce, codeChallenge, redirectUri: oidcRedirectUri(), intent }),
       expiresAt,
       transaction: this.transactions.seal(payload),
     };
@@ -58,6 +76,13 @@ export class AuthenticationService {
       expectedNonce: transaction.nonce,
     });
     const established = await this.identities.establishVerifiedIdentity(principal, traceId);
+    if (transaction.expectedUserId && established.user.id !== transaction.expectedUserId) {
+      await this.identities.revokeOwnSession(established.user.id, established.session.id, 'step-up identity mismatch', traceId);
+      throw new ForbiddenException({ code: 'STEP_UP_IDENTITY_MISMATCH', message: 'Step-up must use the current account' });
+    }
+    if (transaction.replaceSessionId && transaction.replaceSessionId !== established.session.id) {
+      await this.identities.revokeOwnSession(established.user.id, transaction.replaceSessionId, 'replaced by step-up session', traceId);
+    }
     const memberships = await this.store.listMembershipsForUser(established.user.id);
     return { established, memberships, returnTo: transaction.returnTo };
   }
@@ -73,6 +98,7 @@ export class AuthenticationService {
       authMethods: authenticated.session.authMethods,
       authenticatedAt: authenticated.session.authenticatedAt,
       expiresAt: authenticated.session.expiresAt,
+      operationsRoles: await this.store.listOperationsRoles(authenticated.user.id),
     };
   }
 

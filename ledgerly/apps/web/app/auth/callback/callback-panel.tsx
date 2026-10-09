@@ -6,7 +6,7 @@ import { authCurrentResponseSchema } from '@ledgerly/contracts';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-const api = () => process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const api = () => process.env.NEXT_PUBLIC_API_URL ?? '/api';
 
 export function CallbackPanel() {
   const query = useSearchParams();
@@ -33,8 +33,13 @@ export function CallbackPanel() {
         const payload: unknown = await response.json();
         if (!response.ok) throw new Error('登录事务已过期、已使用或校验失败。');
         const result = authCurrentResponseSchema.parse(payload);
+        const membership = result.memberships[0];
+        const companyId = membership?.companyIds[0];
+        if (membership && companyId) {
+          window.localStorage.setItem('ledgerly.context', JSON.stringify({ tenantId: membership.tenantId, companyId }));
+        }
         setMessage(`欢迎回来，${result.user.displayName}。正在进入工作台…`);
-        router.replace(result.returnTo ?? '/dashboard');
+        router.replace(result.memberships.length ? (result.returnTo ?? '/dashboard') : '/onboarding');
       } catch (error: unknown) {
         setMessage(error instanceof Error ? error.message : '登录失败，请返回重试。');
       }

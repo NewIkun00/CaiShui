@@ -7,6 +7,7 @@ import {
   type AppUser,
   type AuthSession,
   type ExternalIdentity,
+  type OperationsRole,
 } from '@ledgerly/domain';
 import type {
   EstablishedIdentity,
@@ -31,6 +32,7 @@ export class MemoryIdentityStore implements IdentityStore {
   private readonly members = new Map<string, SavedTenantMember>();
   private readonly companies = new Map<string, Set<string>>();
   private readonly loginStates = new Map<string, LoginStateRecord & { consumedAt?: Date }>();
+  private readonly operationsRoles = new Map<string, readonly OperationsRole[]>();
 
   establish(record: EstablishIdentityRecord): Promise<EstablishedIdentity> {
     const identityKey = this.identityKey(record.principal.issuer, record.principal.subject);
@@ -83,6 +85,14 @@ export class MemoryIdentityStore implements IdentityStore {
     const user = this.users.get(session.userId);
     if (!user || user.status !== 'active') return Promise.resolve(null);
     return Promise.resolve({ user, session });
+  }
+
+  listOperationsRoles(userId: string): Promise<readonly OperationsRole[]> {
+    return Promise.resolve(this.operationsRoles.get(userId) ?? []);
+  }
+
+  setOperationsRoles(userId: string, roles: readonly OperationsRole[]): void {
+    this.operationsRoles.set(userId, [...new Set(roles)]);
   }
 
   listMembershipsForUser(userId: string): Promise<readonly SavedTenantMember[]> {

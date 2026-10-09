@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { activateAppUser, createAppUser, type AppUser, type AuthMethod, type AuthSession, type ExternalIdentity } from '@ledgerly/domain';
+import { activateAppUser, createAppUser, type AppUser, type AuthMethod, type AuthSession, type ExternalIdentity, type OperationsRole } from '@ledgerly/domain';
 import { and, eq, gt, inArray, isNull } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import { DATABASE, type Database } from '../../../infrastructure/database/database.provider.js';
@@ -11,6 +11,7 @@ import {
   externalIdentities,
   outboxEvents,
   oidcLoginStates,
+  platformRoleAssignments,
   tenantInvitations,
   tenantMemberRoles,
   tenantMembers,
@@ -32,6 +33,13 @@ import type {
 @Injectable()
 export class PostgresIdentityStore implements IdentityStore {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
+
+  async listOperationsRoles(userId: string): Promise<readonly OperationsRole[]> {
+    const rows = await this.db.select({ role: platformRoleAssignments.role }).from(platformRoleAssignments).where(and(
+      eq(platformRoleAssignments.userId, userId), eq(platformRoleAssignments.status, 'active'),
+    ));
+    return rows.map((row) => row.role as OperationsRole);
+  }
 
   establish(record: EstablishIdentityRecord): Promise<EstablishedIdentity> {
     return this.db.transaction(async (tx) => {
@@ -66,7 +74,12 @@ export class PostgresIdentityStore implements IdentityStore {
         authenticatedAt: record.principal.authenticatedAt, expiresAt: record.principal.expiresAt, lastSeenAt: record.occurredAt,
       }).onConflictDoUpdate({
         target: [authSessions.issuer, authSessions.providerSessionId],
-        set: { lastSeenAt: record.occurredAt, expiresAt: record.principal.expiresAt, authMethods: [...record.principal.authMethods] },
+        set: {
+          lastSeenAt: record.occurredAt,
+          authenticatedAt: record.principal.authenticatedAt,
+          expiresAt: record.principal.expiresAt,
+          authMethods: [...record.principal.authMethods],
+        },
       }).returning();
       if (!sessionRow) throw new Error('Identity session was not persisted');
       await tx.insert(auditEvents).values({

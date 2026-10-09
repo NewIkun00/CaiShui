@@ -13,6 +13,8 @@ import { AuthTransactionCodec } from './infrastructure/auth-transaction.codec.js
 import { authMode } from './infrastructure/auth-mode.js';
 import { DisabledIdentityProvider } from './infrastructure/disabled-identity.provider.js';
 import { KeycloakOidcProvider } from './infrastructure/keycloak-oidc.provider.js';
+import { RbacGuard } from './presentation/rbac.guard.js';
+import { StepUpGuard } from './presentation/step-up.guard.js';
 
 const storageProviders = process.env['STORAGE_MODE'] === 'memory'
   ? [MemoryIdentityStore, { provide: IDENTITY_STORE, useExisting: MemoryIdentityStore }]
@@ -32,6 +34,10 @@ const identityProvider = authMode() === 'oidc'
     AuthTransactionCodec,
     SessionAuthGuard,
     { provide: APP_GUARD, useExisting: SessionAuthGuard },
+    RbacGuard,
+    { provide: APP_GUARD, useExisting: RbacGuard },
+    StepUpGuard,
+    { provide: APP_GUARD, useExisting: StepUpGuard },
   ],
   exports: [IDENTITY_STORE, IdentityService, AuthenticationService],
 })

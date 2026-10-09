@@ -73,6 +73,7 @@ import type {
   FilingSop,
   FilingTask,
 } from '../application/filing-store.js';
+import { RequireStepUp } from '../../identity/presentation/step-up.decorator.js';
 
 @ApiTags('filing-calendars')
 @ApiHeader({ name: 'x-user-id', required: true })
@@ -127,6 +128,7 @@ export class FilingAdjustmentController{
   @ApiZodOkResponse(filingAdjustmentListResponseSchema)
   async list(@Param('companyId',new ParseUUIDPipe())companyId:string,@Req()request:FastifyRequest){return{items:(await this.service.list(companyId,requestContext(request,true))).map(item=>this.present(item))};}
   @Post(':workOrderId/transitions')
+  @RequireStepUp()
   @ApiOperation({summary:'按受控状态机复核、解决或取消申报调整工单'})
   @ApiZodBody(filingAdjustmentTransitionSchema)
   @ApiZodOkResponse(filingAdjustmentResponseSchema)
@@ -328,6 +330,7 @@ export class FilingPackageController {
     );
   }
   @Post(':packageId/freeze')
+  @RequireStepUp()
   @ApiOperation({ summary: '重新校验最新引用、红色阻断和哈希后冻结申报包' })
   @ApiZodBody(filingPackageFreezeSchema)
   @ApiZodOkResponse(filingPackageResponseSchema)
@@ -375,6 +378,7 @@ export class FilingPackageController {
     };
   }
   @Post(':packageId/close')
+  @RequireStepUp()
   @ApiOperation({ summary: '核对冻结结果、回执和完税凭证后创建不可变关闭记录' })
   @ApiZodBody(filingClosureInputSchema)
   @ApiZodCreatedResponse(filingClosureResponseSchema)

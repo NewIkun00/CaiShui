@@ -1,4 +1,4 @@
-import type { AppUser, AuthSession, CustomerRole, ExternalIdentity, TenantMemberStatus } from '@ledgerly/domain';
+import type { AppUser, AuthSession, CustomerRole, ExternalIdentity, OperationsRole, TenantMemberStatus } from '@ledgerly/domain';
 import type { VerifiedProviderIdentity } from './identity-provider.port.js';
 
 export interface EstablishIdentityRecord {
@@ -98,6 +98,7 @@ export interface IdentityStore {
   revokeSession(record: RevokeIdentitySessionRecord): Promise<AuthSession | null>;
   findAuthenticatedSession(sessionId: string, now: Date): Promise<AuthenticatedSession | null>;
   listMembershipsForUser(userId: string): Promise<readonly SavedTenantMember[]>;
+  listOperationsRoles(userId: string): Promise<readonly OperationsRole[]>;
   createLoginState(record: LoginStateRecord): Promise<void>;
   consumeLoginState(stateHash: string, occurredAt: Date): Promise<boolean>;
   bootstrapOwner(tenantId: string, userId: string, companyId: string, occurredAt: Date): Promise<void>;
