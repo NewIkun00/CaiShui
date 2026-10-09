@@ -1,8 +1,94 @@
-import{describe,expect,it}from'vitest';
-import{filingPackageFreezeSchema,filingPackageInputSchema,filingPackageResponseSchema,filingSopInputSchema}from'../src/index.js';
-const id=(prefix:string)=>`${prefix}0000000-0000-4000-8000-000000000001`,hash='a'.repeat(64),time='2026-10-09T00:00:00.000Z';
-describe('filing package contracts',()=>{
-  it('keeps test SOP explicit and versioned',()=>{expect(filingSopInputSchema.parse({name:'R3 测试 SOP',versionTag:'fixture-1',jurisdictionCode:'CN-JS',source:{type:'test_fixture',title:'仅作 R3 冻结流程测试'},steps:[{code:'open_portal',title:'打开官方平台',instruction:'由用户自主登录官方平台并核对页面'}]}).source.type).toBe('test_fixture');});
-  it('requires calculation, SOP and at least one review reference',()=>{const base={filingTaskId:id('1'),calculationRunId:id('2'),sopVersionId:id('3')};expect(filingPackageInputSchema.safeParse({...base,reviewCaseIds:[]}).success).toBe(false);expect(filingPackageInputSchema.safeParse({...base,reviewCaseIds:[id('4')]}).success).toBe(true);expect(filingPackageFreezeSchema.safeParse({expectedVersion:0,note:'冻结申报包'}).success).toBe(false);});
-  it('parses a fully traceable frozen snapshot',()=>{expect(filingPackageResponseSchema.parse({id:id('1'),companyId:id('2'),packageNumber:1,status:'frozen',version:2,snapshot:{filingTaskId:id('3'),filingCalendarId:id('4'),filingCalendarHash:hash,calculationRunId:id('5'),inputHash:hash,ruleVersionId:id('6'),ruleHash:hash,resultHash:hash,reviewDecisions:[{reviewCaseId:id('7'),version:3,status:'approved',decisionHash:hash}],sopVersionId:id('8'),sopHash:hash},contentHash:hash,blockers:[],frozenAt:time,frozenBy:id('9'),createdAt:time,createdBy:id('9'),updatedAt:time,updatedBy:id('9')})).toMatchObject({status:'frozen',blockers:[]});});
+import { describe, expect, it } from 'vitest';
+import {
+  filingPackageFreezeSchema,
+  filingPackageInputSchema,
+  filingPackageResponseSchema,
+  filingSopInputSchema,
+  filingTestResultFixtureInputSchema,
+  filingTestResultFixtureResponseSchema,
+} from '../src/index.js';
+const id = (prefix: string) => `${prefix}0000000-0000-4000-8000-000000000001`,
+  hash = 'a'.repeat(64),
+  time = '2026-10-09T00:00:00.000Z';
+describe('filing package contracts', () => {
+  it('keeps test SOP explicit and versioned', () => {
+    expect(
+      filingSopInputSchema.parse({
+        name: 'R3 测试 SOP',
+        versionTag: 'fixture-1',
+        jurisdictionCode: 'CN-JS',
+        source: { type: 'test_fixture', title: '仅作 R3 冻结流程测试' },
+        steps: [
+          {
+            code: 'open_portal',
+            title: '打开官方平台',
+            instruction: '由用户自主登录官方平台并核对页面',
+          },
+        ],
+      }).source.type,
+    ).toBe('test_fixture');
+  });
+  it('requires an explicit attestation for hash-only test result references', () => {
+    const calculationRunId = id('2');
+    expect(filingTestResultFixtureInputSchema.safeParse({ calculationRunId }).success).toBe(false);
+    expect(
+      filingTestResultFixtureResponseSchema.parse({
+        source: 'test_fixture',
+        calculationRunId,
+        inputHash: hash,
+        ruleVersionId: id('3'),
+        ruleContentHash: hash,
+        resultHash: hash,
+      }).source,
+    ).toBe('test_fixture');
+  });
+  it('requires calculation, SOP and at least one review reference', () => {
+    const base = { filingTaskId: id('1'), calculationRunId: id('2'), sopVersionId: id('3') };
+    expect(filingPackageInputSchema.safeParse({ ...base, reviewCaseIds: [] }).success).toBe(false);
+    expect(filingPackageInputSchema.safeParse({ ...base, reviewCaseIds: [id('4')] }).success).toBe(
+      true,
+    );
+    expect(
+      filingPackageFreezeSchema.safeParse({ expectedVersion: 0, note: '冻结申报包' }).success,
+    ).toBe(false);
+  });
+  it('parses a fully traceable frozen snapshot', () => {
+    expect(
+      filingPackageResponseSchema.parse({
+        id: id('1'),
+        companyId: id('2'),
+        packageNumber: 1,
+        status: 'frozen',
+        version: 2,
+        snapshot: {
+          filingTaskId: id('3'),
+          filingCalendarId: id('4'),
+          filingCalendarHash: hash,
+          calculationRunId: id('5'),
+          taxResultSource: 'test_fixture',
+          inputHash: hash,
+          ruleVersionId: id('6'),
+          ruleHash: hash,
+          resultHash: hash,
+          reviewDecisions: [
+            { reviewCaseId: id('7'), version: 3, status: 'approved', decisionHash: hash },
+          ],
+          sopVersionId: id('8'),
+          sopHash: hash,
+        },
+        contentHash: hash,
+        blockers: [],
+        frozenAt: time,
+        frozenBy: id('9'),
+        createdAt: time,
+        createdBy: id('9'),
+        updatedAt: time,
+        updatedBy: id('9'),
+      }),
+    ).toMatchObject({
+      status: 'frozen',
+      snapshot: { taxResultSource: 'test_fixture' },
+      blockers: [],
+    });
+  });
 });

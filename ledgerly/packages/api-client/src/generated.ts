@@ -384,6 +384,23 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/companies/{companyId}/filing-packages/test-result-fixtures": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** 仅在显式内存模式为真实计算运行创建无税额测试引用 */
+        readonly post: operations["FilingPackageController_createTestResultFixture"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/companies/{companyId}/filing-tasks": {
         readonly parameters: {
             readonly query?: never;
@@ -2542,6 +2559,8 @@ export interface operations {
                                 readonly sopHash: string;
                                 /** Format: uuid */
                                 readonly sopVersionId: string;
+                                /** @enum {string} */
+                                readonly taxResultSource?: "test_fixture" | "calculation_result";
                             };
                             /** @enum {string} */
                             readonly status: "draft" | "frozen";
@@ -2631,6 +2650,8 @@ export interface operations {
                             readonly sopHash: string;
                             /** Format: uuid */
                             readonly sopVersionId: string;
+                            /** @enum {string} */
+                            readonly taxResultSource?: "test_fixture" | "calculation_result";
                         };
                         /** @enum {string} */
                         readonly status: "draft" | "frozen";
@@ -2706,6 +2727,8 @@ export interface operations {
                             readonly sopHash: string;
                             /** Format: uuid */
                             readonly sopVersionId: string;
+                            /** @enum {string} */
+                            readonly taxResultSource?: "test_fixture" | "calculation_result";
                         };
                         /** @enum {string} */
                         readonly status: "draft" | "frozen";
@@ -2788,6 +2811,8 @@ export interface operations {
                             readonly sopHash: string;
                             /** Format: uuid */
                             readonly sopVersionId: string;
+                            /** @enum {string} */
+                            readonly taxResultSource?: "test_fixture" | "calculation_result";
                         };
                         /** @enum {string} */
                         readonly status: "draft" | "frozen";
@@ -2796,6 +2821,49 @@ export interface operations {
                         /** Format: uuid */
                         readonly updatedBy: string;
                         readonly version: number;
+                    };
+                };
+            };
+        };
+    };
+    readonly FilingPackageController_createTestResultFixture: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                readonly "x-tenant-id": string;
+                readonly "x-user-id": string;
+            };
+            readonly path: {
+                readonly companyId: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** @enum {string} */
+                    readonly attestation: "TEST_FIXTURE_ONLY";
+                    /** Format: uuid */
+                    readonly calculationRunId: string;
+                };
+            };
+        };
+        readonly responses: {
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": {
+                        /** Format: uuid */
+                        readonly calculationRunId: string;
+                        readonly inputHash: string;
+                        readonly resultHash: string;
+                        readonly ruleContentHash: string;
+                        /** Format: uuid */
+                        readonly ruleVersionId: string;
+                        /** @enum {string} */
+                        readonly source: "test_fixture";
                     };
                 };
             };

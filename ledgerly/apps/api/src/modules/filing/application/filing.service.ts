@@ -4,6 +4,7 @@ import type {
   FilingPackageFreezeInput,
   FilingPackageInput,
   FilingSopInput,
+  FilingTestResultFixtureInput,
   FilingTaskGenerationInput,
   FilingTaskTransitionInput,
 } from '@ledgerly/contracts';
@@ -121,6 +122,37 @@ export class FilingService {
   }
   listSops(context: RequestContext) {
     return this.store.listSops(this.tenant(context));
+  }
+  async createTestResultFixture(
+    companyId: string,
+    input: FilingTestResultFixtureInput,
+    context: RequestContext,
+  ) {
+    const tenantId = await this.company(companyId, context),
+      calculation = await this.calculations.find(tenantId, companyId, input.calculationRunId);
+    if (!calculation) throw new NotFoundException('Calculation run not found');
+    if (!this.taxResults.registerTestFixture)
+      throw new ConflictException({
+        code: 'TEST_RESULT_FIXTURE_DISABLED',
+        message: 'Test result fixtures are available only in explicit memory mode',
+      });
+    const ruleContentHash = sha256({
+        type: 'TEST_RULE_REFERENCE_ONLY',
+        calculationRunId: calculation.id,
+      }),
+      reference = {
+        source: 'test_fixture' as const,
+        calculationRunId: calculation.id,
+        inputHash: calculation.inputHash,
+        ruleVersionId: uuidFromHash(ruleContentHash),
+        ruleContentHash,
+        resultHash: sha256({
+          type: 'TEST_RESULT_REFERENCE_ONLY',
+          calculationRunId: calculation.id,
+          inputHash: calculation.inputHash,
+        }),
+      };
+    return this.taxResults.registerTestFixture(tenantId, companyId, reference);
   }
   async generate(companyId: string, input: FilingTaskGenerationInput, context: RequestContext) {
     const tenantId = await this.company(companyId, context),
@@ -265,26 +297,29 @@ export class FilingService {
       filingCalendarHash: calendar.contentHash,
       calculationRunId: calculation.id,
       inputHash: calculation.inputHash,
-      ...(calculation.ruleVersionId ? { ruleVersionId: calculation.ruleVersionId } : {}),
-      ...(calculation.ruleContentHash ? { ruleHash: calculation.ruleContentHash } : {}),
+      ...(result?.source ? { taxResultSource: result.source } : {}),
+      ...(result?.ruleVersionId
+        ? { ruleVersionId: result.ruleVersionId }
+        : calculation.ruleVersionId
+          ? { ruleVersionId: calculation.ruleVersionId }
+          : {}),
+      ...(result?.ruleContentHash
+        ? { ruleHash: result.ruleContentHash }
+        : calculation.ruleContentHash
+          ? { ruleHash: calculation.ruleContentHash }
+          : {}),
       ...(result?.resultHash ? { resultHash: result.resultHash } : {}),
       reviewDecisions: decisions,
       sopVersionId: sop.id,
       sopHash: sop.contentHash,
     };
     const allReviews = await this.reviews.list(tenantId, companyId, {}),
-      referencesMatch = Boolean(
-        result &&
-          result.calculationRunId === calculation.id &&
-          result.inputHash === calculation.inputHash &&
-          result.ruleVersionId === calculation.ruleVersionId &&
-          result.ruleContentHash === calculation.ruleContentHash,
-      ),
+      referencesMatch = this.resultCompatible(calculation, result),
       blockers = filingPackageFreezeBlockers({
         status: 'draft',
         hasRedReviewBlocker: this.redBlocker(allReviews),
         approvedReviewCount: decisions.length,
-        calculationReady: calculation.status === CalculationRunStatus.Ready && Boolean(result),
+        calculationReady: referencesMatch,
         inputHash: snapshot.inputHash,
         ruleHash: snapshot.ruleHash,
         resultHash: snapshot.resultHash,
@@ -389,13 +424,13 @@ export class FilingService {
           task.calendarId === snapshot.filingCalendarId &&
           calendar.contentHash === snapshot.filingCalendarHash &&
           calculation.inputHash === snapshot.inputHash &&
-          calculation.ruleVersionId === snapshot.ruleVersionId &&
-          calculation.ruleContentHash === snapshot.ruleHash &&
           result.calculationRunId === snapshot.calculationRunId &&
+          result.source === snapshot.taxResultSource &&
           result.inputHash === snapshot.inputHash &&
           result.ruleVersionId === snapshot.ruleVersionId &&
           result.ruleContentHash === snapshot.ruleHash &&
           result.resultHash === snapshot.resultHash &&
+          this.resultCompatible(calculation, result) &&
           sop.contentHash === snapshot.sopHash &&
           decisionMatches.every(Boolean),
       );
@@ -403,7 +438,7 @@ export class FilingService {
       status: item.status,
       hasRedReviewBlocker: this.redBlocker(reviews),
       approvedReviewCount: snapshot.reviewDecisions.length,
-      calculationReady: calculation?.status === CalculationRunStatus.Ready && Boolean(result),
+      calculationReady: Boolean(calculation && this.resultCompatible(calculation, result)),
       inputHash: snapshot.inputHash,
       ruleHash: snapshot.ruleHash,
       resultHash: snapshot.resultHash,
@@ -414,6 +449,24 @@ export class FilingService {
   private redBlocker(items: readonly ReviewCase[]) {
     return items.some(
       (item) => item.riskLevel === 'red' && item.blocksFiling && item.status !== 'approved',
+    );
+  }
+  private resultCompatible(
+    calculation: Awaited<ReturnType<CalculationStore['find']>>,
+    result: Awaited<ReturnType<TaxResultReferencePort['find']>>,
+  ) {
+    if (
+      !calculation ||
+      !result ||
+      result.calculationRunId !== calculation.id ||
+      result.inputHash !== calculation.inputHash
+    )
+      return false;
+    if (result.source === 'test_fixture') return true;
+    return (
+      calculation.status === CalculationRunStatus.Ready &&
+      result.ruleVersionId === calculation.ruleVersionId &&
+      result.ruleContentHash === calculation.ruleContentHash
     );
   }
   private withTiming(task: FilingTask, asOf: string) {
@@ -464,6 +517,10 @@ function reviewDecisionHash(item: ReviewCase) {
     updatedAt: item.updatedAt.toISOString(),
     updatedBy: item.updatedBy,
   });
+}
+function uuidFromHash(hash: string) {
+  const value = `${hash.slice(0, 12)}4${hash.slice(13, 16)}8${hash.slice(17, 32)}`;
+  return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20, 32)}`;
 }
 function chinaDate(value: Date) {
   return new Intl.DateTimeFormat('en-CA', {

@@ -42,7 +42,7 @@ const titles: Readonly<Record<string, readonly [string, string]>> = {
   '/reports': ['财务报表', '查看利润表和资产负债表'],
   '/reconciliation': ['勾稽检查', '定位申报前的数据差异'],
   '/reviews': ['人工复核中心', '处理风险案件、补件和专业复核证据'],
-  '/filings': ['申报待办', '管理版本化征期、到期提醒和申报状态'],
+  '/filings': ['申报准备', '管理版本化征期、待办、SOP 与不可变申报包'],
   '/calculations': ['试算准备', '检查税务计算所需事实和规则'],
   '/rules': ['规则样本', '管理黄金样本和执行证据'],
   '/rules/governance': ['政策治理', '管理政策来源和规则版本'],

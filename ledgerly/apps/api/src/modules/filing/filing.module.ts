@@ -8,7 +8,10 @@ import{TAX_RESULT_REFERENCE_PORT}from'./application/tax-result-reference.port.js
 import{MemoryFilingStore}from'./infrastructure/memory-filing.store.js';
 import{PostgresFilingStore}from'./infrastructure/postgres-filing.store.js';
 import{UnavailableTaxResultReferenceAdapter}from'./infrastructure/unavailable-tax-result-reference.adapter.js';
+import{MemoryTaxResultReferenceAdapter}from'./infrastructure/memory-tax-result-reference.adapter.js';
 import{FilingCalendarController,FilingPackageController,FilingSopController,FilingTaskController}from'./presentation/filing.controller.js';
-const providers=process.env['STORAGE_MODE']==='memory'?[MemoryFilingStore,{provide:FILING_STORE,useExisting:MemoryFilingStore}]:[PostgresFilingStore,{provide:FILING_STORE,useExisting:PostgresFilingStore}];
-@Module({imports:[OrganizationModule,CalculationModule,ReviewCaseStoreModule],controllers:[FilingCalendarController,FilingSopController,FilingTaskController,FilingPackageController],providers:[...providers,UnavailableTaxResultReferenceAdapter,{provide:TAX_RESULT_REFERENCE_PORT,useExisting:UnavailableTaxResultReferenceAdapter},FilingService]})
+const memory=process.env['STORAGE_MODE']==='memory';
+const providers=memory?[MemoryFilingStore,{provide:FILING_STORE,useExisting:MemoryFilingStore}]:[PostgresFilingStore,{provide:FILING_STORE,useExisting:PostgresFilingStore}];
+const taxResultProviders=memory?[MemoryTaxResultReferenceAdapter,{provide:TAX_RESULT_REFERENCE_PORT,useExisting:MemoryTaxResultReferenceAdapter}]:[UnavailableTaxResultReferenceAdapter,{provide:TAX_RESULT_REFERENCE_PORT,useExisting:UnavailableTaxResultReferenceAdapter}];
+@Module({imports:[OrganizationModule,CalculationModule,ReviewCaseStoreModule],controllers:[FilingCalendarController,FilingSopController,FilingTaskController,FilingPackageController],providers:[...providers,...taxResultProviders,FilingService]})
 export class FilingModule{}

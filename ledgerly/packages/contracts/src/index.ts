@@ -739,6 +739,11 @@ export const filingSopCreationResponseSchema=z.object({sop:filingSopResponseSche
 export const filingSopListResponseSchema=z.object({items:z.array(filingSopResponseSchema)}).strict();
 export type FilingSopResponse=z.infer<typeof filingSopResponseSchema>;
 
+export const filingTestResultFixtureInputSchema=z.object({calculationRunId:z.string().uuid(),attestation:z.literal('TEST_FIXTURE_ONLY')}).strict();
+export type FilingTestResultFixtureInput=z.infer<typeof filingTestResultFixtureInputSchema>;
+export const filingTestResultFixtureResponseSchema=z.object({source:z.literal('test_fixture'),calculationRunId:z.string().uuid(),inputHash:z.string().regex(/^[0-9a-f]{64}$/),ruleVersionId:z.string().uuid(),ruleContentHash:z.string().regex(/^[0-9a-f]{64}$/),resultHash:z.string().regex(/^[0-9a-f]{64}$/)}).strict();
+export type FilingTestResultFixtureResponse=z.infer<typeof filingTestResultFixtureResponseSchema>;
+
 export const filingPackageInputSchema=z.object({
   filingTaskId:z.string().uuid(),calculationRunId:z.string().uuid(),sopVersionId:z.string().uuid(),reviewCaseIds:z.array(z.string().uuid()).min(1).max(100),correctionOfPackageId:z.string().uuid().optional(),
 }).strict();
@@ -748,7 +753,7 @@ export type FilingPackageFreezeInput=z.infer<typeof filingPackageFreezeSchema>;
 export const filingPackageBlockerCodeSchema=z.enum(['PACKAGE_NOT_DRAFT','RED_REVIEW_BLOCKER','APPROVED_REVIEW_REQUIRED','CALCULATION_RESULT_REQUIRED','INPUT_HASH_REQUIRED','RULE_HASH_REQUIRED','RESULT_HASH_REQUIRED','SOP_HASH_REQUIRED','REFERENCE_HASH_MISMATCH']);
 const filingPackageSnapshotSchema=z.object({
   filingTaskId:z.string().uuid(),filingCalendarId:z.string().uuid(),filingCalendarHash:z.string().regex(/^[0-9a-f]{64}$/),
-  calculationRunId:z.string().uuid(),inputHash:z.string().regex(/^[0-9a-f]{64}$/).optional(),ruleVersionId:z.string().uuid().optional(),ruleHash:z.string().regex(/^[0-9a-f]{64}$/).optional(),resultHash:z.string().regex(/^[0-9a-f]{64}$/).optional(),
+  calculationRunId:z.string().uuid(),taxResultSource:z.enum(['test_fixture','calculation_result']).optional(),inputHash:z.string().regex(/^[0-9a-f]{64}$/).optional(),ruleVersionId:z.string().uuid().optional(),ruleHash:z.string().regex(/^[0-9a-f]{64}$/).optional(),resultHash:z.string().regex(/^[0-9a-f]{64}$/).optional(),
   reviewDecisions:z.array(z.object({reviewCaseId:z.string().uuid(),version:z.number().int().positive(),status:z.literal('approved'),decisionHash:z.string().regex(/^[0-9a-f]{64}$/)}).strict()),
   sopVersionId:z.string().uuid(),sopHash:z.string().regex(/^[0-9a-f]{64}$/),
 }).strict();
