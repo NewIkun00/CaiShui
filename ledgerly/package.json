@@ -12,12 +12,17 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "check": "pnpm openapi:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "check": "pnpm openapi:check && pnpm r5:acceptance:test && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "openapi:generate": "pnpm --filter @ledgerly/domain build && pnpm --filter @ledgerly/contracts build && pnpm --filter @ledgerly/api build && node tools/generate-openapi.mjs && openapi-typescript openapi/openapi.json -o packages/api-client/src/generated.ts --immutable --alphabetize",
     "openapi:check": "pnpm openapi:generate && git diff --exit-code -- openapi/openapi.json packages/api-client/src/generated.ts",
     "db:generate": "pnpm --filter @ledgerly/api db:generate",
     "db:migrate": "pnpm --filter @ledgerly/api db:migrate",
-    "identity:seed-admin": "pnpm --filter @ledgerly/api identity:seed-admin"
+    "identity:seed-admin": "pnpm --filter @ledgerly/api identity:seed-admin",
+    "r5:acceptance:doctor": "node tools/r5-acceptance/cli.mjs doctor",
+    "r5:acceptance:start": "node tools/r5-acceptance/cli.mjs start",
+    "r5:acceptance:run": "node tools/r5-acceptance/cli.mjs run",
+    "r5:acceptance:stop": "node tools/r5-acceptance/cli.mjs stop",
+    "r5:acceptance:test": "node --test tools/r5-acceptance/test/*.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.39.1",

@@ -1,0 +1,73 @@
+name: ledgerly-r5-acceptance
+services:
+  certgen:
+    image: alpine/openssl:3.5.4
+    entrypoint: ['/bin/sh', '/workspace/certgen.sh']
+    volumes:
+      - ./certgen.sh:/workspace/certgen.sh:ro
+      - ./.data/certs:/certs
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ledgerly
+      POSTGRES_USER: ledgerly
+      POSTGRES_PASSWORD: ${R5_POSTGRES_PASSWORD:?required}
+    ports: ['${R5_POSTGRES_PORT:-55432}:5432']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ledgerly -d ledgerly']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  keycloak-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${R5_KEYCLOAK_DB_PASSWORD:?required}
+    ports: ['${R5_KEYCLOAK_DB_PORT:-55433}:5432']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U keycloak -d keycloak']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.21.8
+    ports:
+      - '${R5_MAILPIT_SMTP_PORT:-51025}:1025'
+      - '${R5_MAILPIT_HTTP_PORT:-58080}:8025'
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.0
+    depends_on:
+      certgen:
+        condition: service_completed_successfully
+      keycloak-db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    command:
+      - start-dev
+      - --import-realm
+      - --https-port=8443
+      - --https-certificate-file=/opt/keycloak/conf/tls.crt
+      - --https-certificate-key-file=/opt/keycloak/conf/tls.key
+      - --hostname=https://127.0.0.1:${R5_KEYCLOAK_HTTPS_PORT:-58443}
+      - --hostname-strict=false
+      - --health-enabled=true
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${R5_KEYCLOAK_ADMIN:?required}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${R5_KEYCLOAK_ADMIN_PASSWORD:?required}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${R5_KEYCLOAK_DB_PASSWORD:?required}
+    ports:
+      - '${R5_KEYCLOAK_HTTPS_PORT:-58443}:8443'
+      - '${R5_KEYCLOAK_MANAGEMENT_PORT:-59000}:9000'
+    volumes:
+      - ./.data/certs/server.crt:/opt/keycloak/conf/tls.crt:ro
+      - ./.data/certs/server.key:/opt/keycloak/conf/tls.key:ro
+      - ./.data/realm:/opt/keycloak/data/import:ro

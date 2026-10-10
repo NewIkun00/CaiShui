@@ -1,6 +1,6 @@
 # V1 实施状态
 
-更新日期：2026-10-09
+更新日期：2026-10-10
 
 | 工作项 | 状态 | 说明 |
 |---|---|---|
@@ -11,7 +11,7 @@
 | CI 质量门槛 | 已完成 | Lint、类型、测试、迁移与生产构建 |
 | Redis Worker 基线 | 已完成 | 健康任务与优雅退出 |
 | 本地对象存储 | 已完成 | 私有存储端口、内存预览与服务器目录适配器；MinIO 基础设施已预留 |
-| 生产身份服务 | 进行中 | R5 代码侧已完成 Provider ADR、正式用户与会话、成员生命周期、OIDC Code + PKCE、BFF Cookie、注册/登录/回调/登出、同源代理、用户端/运营端 RBAC、MFA step-up、成员页面及平台角色治理。真实 PostgreSQL 17 空库迁移、Keycloak HTTPS 登录、回调、会话和 OTP 已通过；邮箱验证注册、显式 step-up/登出撤销及正式模式越权矩阵仍是最后验收项 |
+| 生产身份服务 | 进行中 | R5 代码侧已完成 Provider ADR、正式用户与会话、成员生命周期、OIDC Code + PKCE、BFF Cookie、注册/登录/回调/登出、同源代理、用户端/运营端 RBAC、MFA step-up、成员页面及平台角色治理。真实 PostgreSQL 17 空库迁移、Keycloak HTTPS 登录、回调、会话和 OTP 已通过；仓库已增加 PostgreSQL 17 + Keycloak 26.8.0 + Mailpit 的可移植验收工具，但当前机器无 Docker，尚未完成全新环境重放。邮箱验证注册、显式 step-up/登出撤销及正式模式越权矩阵仍是最后验收项 |
 | OpenAPI SDK 自动生成 | 已完成 | 当前 81 条路径/100 个操作全部声明强类型成功响应，53 个 JSON 请求体全部来自运行时 Zod 契约；生成客户端和 CI 漂移门禁已覆盖现有 API，新增接口仍须同步声明 Schema |
 | 建档适用性决策表 | 已完成 | 主体画像、绿黄红分流、结果页与工作台入口 |
 | 资金账户、期初余额与首期 | 已完成 | 绿色准入门槛、事务、审计与工作台进度联动 |
@@ -52,3 +52,4 @@
 - R5 真实 Provider 验收：Keycloak 26.8.0 通过本地受信任 CA 以 HTTPS 运行，Realm 已开启自助注册、邮箱验证、TOTP 和 WebAuthn 策略；Authorization Code + PKCE、JWKS/RS256、首次身份建立、会话恢复和 TOTP 配置均通过。为 Keycloak Browser Flow 的密码、OTP、WebAuthn execution 配置 AMR reference 后，第二次真实登录得到 `pwd + otp`，平台认证方法映射通过。
 - 完整质量门槛：通过。OpenAPI 可重现生成与漂移检查通过（**81 条路径、100 个操作、53 个强类型 JSON 请求体、100 个强类型 JSON 成功响应**，无未覆盖操作）；Lint、严格类型检查、213 项测试和六工作区生产构建全部通过，Web 生成 24 条产品路由。
 - PostgreSQL 真实迁移：通过。使用隔离临时目录中的 PostgreSQL 17.10，在全新 `ledgerly` 数据库顺序执行 `0000`–`0037`，Drizzle 记录 38 个迁移；确认 `0037` 后 `outbox_events.tenant_id` 可空。数据库已正常关闭；临时数据不是可移植的仓库资产。
+- R5 可移植验收工具：仓库新增 `tools/r5-acceptance/`，包含无秘密 Realm 模板、本地测试 CA、PostgreSQL 17/Keycloak 26.8.0/Mailpit Compose、AMR 配置、环境诊断、启停和脱敏 smoke 报告。4 个测试文件、8 项工具测试已接入 `pnpm check` 并通过；本机 `doctor` 正确报告 Docker 不可用和秘密未配置，因此尚无全新环境启动证据，不能把工具就绪等同于 R5 完成。

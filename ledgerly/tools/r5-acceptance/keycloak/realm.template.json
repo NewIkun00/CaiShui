@@ -1,0 +1,94 @@
+{
+  "realm": "ledgerly",
+  "enabled": true,
+  "displayName": "Ledgerly R5 Acceptance",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "verifyEmail": true,
+  "resetPasswordAllowed": true,
+  "sslRequired": "external",
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@ledgerly.example.test",
+    "fromDisplayName": "Ledgerly R5 Acceptance",
+    "auth": "false",
+    "ssl": "false",
+    "starttls": "false"
+  },
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "webAuthnPolicyRpEntityName": "Ledgerly R5 Acceptance",
+  "webAuthnPolicyRpId": "localhost",
+  "clients": [
+    {
+      "clientId": "ledgerly-web",
+      "name": "Ledgerly Web",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:__R5_WEB_PORT__/auth/callback"],
+      "webOrigins": ["http://localhost:__R5_WEB_PORT__"],
+      "attributes": { "pkce.code.challenge.method": "S256" },
+      "protocolMappers": [
+        {
+          "name": "audience-ledgerly-web",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "ledgerly-web",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "authentication-methods",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-amr-mapper",
+          "consentRequired": false,
+          "config": { "id.token.claim": "true", "access.token.claim": "true" }
+        }
+      ]
+    },
+    {
+      "clientId": "ledgerly-session-revoker",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "secret": "__R5_OIDC_ADMIN_CLIENT_SECRET__"
+    }
+  ],
+  "users": [
+    {
+      "username": "__R5_ALICE_EMAIL__",
+      "email": "__R5_ALICE_EMAIL__",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Alice",
+      "lastName": "Acceptance",
+      "credentials": [{ "type": "password", "value": "__R5_ALICE_PASSWORD__", "temporary": false }]
+    },
+    {
+      "username": "__R5_BOB_EMAIL__",
+      "email": "__R5_BOB_EMAIL__",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Bob",
+      "lastName": "Acceptance",
+      "credentials": [{ "type": "password", "value": "__R5_BOB_PASSWORD__", "temporary": false }]
+    },
+    {
+      "username": "service-account-ledgerly-session-revoker",
+      "enabled": true,
+      "serviceAccountClientId": "ledgerly-session-revoker",
+      "clientRoles": { "realm-management": ["manage-users"] }
+    }
+  ]
+}
