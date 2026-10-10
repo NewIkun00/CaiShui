@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   ParseUUIDPipe,
   Post,
@@ -37,7 +38,7 @@ import { RequireStepUp } from './step-up.decorator.js';
 @OperationsAccess('identity')
 @Controller('v1/operations/role-assignments')
 export class OperationsIdentityController {
-  constructor(private readonly identities: IdentityService) {}
+  constructor(@Inject(IdentityService) private readonly identities: IdentityService) {}
 
   @Get()
   @ApiOperation({ summary: '平台管理员查看运营角色分配；不授予企业数据访问权' })

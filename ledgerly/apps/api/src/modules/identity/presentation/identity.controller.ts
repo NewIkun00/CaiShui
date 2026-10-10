@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   ParseUUIDPipe,
   Post,
@@ -40,7 +41,7 @@ import type { SavedTenantMember } from '../application/identity-store.js';
 })
 @Controller('v1')
 export class IdentityController {
-  constructor(private readonly identities: IdentityService) {}
+  constructor(@Inject(IdentityService) private readonly identities: IdentityService) {}
 
   @Post('tenants/:tenantId/invitations')
   @ApiHeader({ name: 'x-tenant-id', required: true, description: '当前租户 UUID' })
