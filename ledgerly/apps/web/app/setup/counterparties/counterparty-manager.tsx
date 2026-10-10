@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/app/lib/api-fetch';
+
 import { counterpartyInputSchema, counterpartyListResponseSchema, counterpartyResponseSchema, type CounterpartyResponse } from '@ledgerly/contracts';
 import Link from 'next/link';
 import { useEffect, useState, type FormEvent } from 'react';
@@ -30,7 +32,7 @@ export function CounterpartyManager() {
   useEffect(() => {
     const current = readContext(); setContext(current);
     if (!current) { setReady(true); return; }
-    void fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/companies/${current.companyId}/counterparties`, {
+    void apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? '/api'}/v1/companies/${current.companyId}/counterparties`, {
       headers: { 'x-user-id': '10000000-0000-4000-8000-000000000001', 'x-tenant-id': current.tenantId },
     }).then((response) => response.json()).then((payload: unknown) => {
       const parsed = counterpartyListResponseSchema.safeParse(payload);
@@ -46,7 +48,7 @@ export function CounterpartyManager() {
     if (!parsed.success) { setMessage('请检查名称、统一社会信用代码和联系电话。'); return; }
     setMessage('正在保存…');
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/companies/${context.companyId}/counterparties`, {
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? '/api'}/v1/companies/${context.companyId}/counterparties`, {
         method: 'POST', headers: { 'content-type': 'application/json', 'x-user-id': '10000000-0000-4000-8000-000000000001', 'x-tenant-id': context.tenantId }, body: JSON.stringify(parsed.data),
       });
       const payload: unknown = await response.json();

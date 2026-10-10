@@ -9,7 +9,17 @@
 3. 运行 `pnpm install`、`pnpm db:migrate`、`pnpm dev`。
 4. 用户 Web：<http://localhost:3020>；API 文档：<http://localhost:3001/docs>。
 
-开发态身份由 `x-user-id` 和 `x-tenant-id` 请求头提供，只能在 `AUTH_MODE=development-headers` 时启用。生产环境启动检查会拒绝该模式。
+开发态身份由 `x-user-id` 和 `x-tenant-id` 请求头提供，只能在 `AUTH_MODE=development-headers`、`STORAGE_MODE=memory` 且非生产环境时启用。生产及 PostgreSQL 模式会拒绝这种组合。
+
+正式身份使用 `AUTH_MODE=oidc`。API 实现 Authorization Code + PKCE、一次性 state、nonce、RS256/JWKS 验签和 HttpOnly BFF 会话 Cookie；浏览器不得保存 Provider 令牌。配置项见 `.env.example`，真实 Keycloak 部署与密钥生命周期在 R6/R7 完成。
+
+平台运营角色与企业成员角色相互独立。首次 `platform_admin` 只能在 PostgreSQL 已完成迁移、目标用户已经通过 OIDC 登录且仍为活动用户后，通过一次性受控命令建立：
+
+```bash
+ALLOW_PLATFORM_ADMIN_BOOTSTRAP=true pnpm identity:seed-admin -- <active-user-uuid>
+```
+
+命令会在事务内获取治理锁、拒绝覆盖既有活动管理员，并写入审计和 Outbox。建立首位管理员后应立即移除该环境开关；后续授权和撤销统一在 `/operations/roles` 中完成，并要求活动 `platform_admin` 会话和 MFA/二次认证。
 
 如果只是预览页面且本机没有 Docker，可使用 `STORAGE_MODE=memory` 启动 API。该模式的数据会在 API 重启时清空，且生产环境会拒绝启动。
 

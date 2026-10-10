@@ -1,4 +1,6 @@
 'use client';
+
+import { apiFetch } from '@/app/lib/api-fetch';
 import {
   counterpartyListResponseSchema, reconciliationCheckIssueSchema, reconciliationCheckRunResponseSchema,
   reconciliationOverviewSchema, reviewCaseCreationResponseSchema, settlementResponseSchema, type CounterpartyResponse,
@@ -8,7 +10,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
 interface WorkspaceContext { tenantId:string; companyId:string }
 function context():WorkspaceContext|null { try { const raw:unknown=JSON.parse(window.localStorage.getItem('ledgerly.context')??'null'); if(typeof raw!=='object'||raw===null)return null; const value=raw as Partial<WorkspaceContext>; return typeof value.tenantId==='string'&&typeof value.companyId==='string'?{tenantId:value.tenantId,companyId:value.companyId}:null } catch { return null } }
-function api(){return process.env.NEXT_PUBLIC_API_URL??'http://localhost:3001'}
+function api(){return process.env.NEXT_PUBLIC_API_URL??'/api'}
 function headers(workspace:WorkspaceContext,json=false){return{'x-user-id':'10000000-0000-4000-8000-000000000001','x-tenant-id':workspace.tenantId,...(json?{'content-type':'application/json'}:{})}}
 const triageLabels={investigating:'调查中',needs_documents:'待补资料',ready_for_recheck:'待重新检查'} as const;
 
@@ -21,9 +23,9 @@ export function ReconciliationManager(){
 
   async function load(workspace:WorkspaceContext){
     const[overviewResponse,partyResponse,checkResponse]=await Promise.all([
-      fetch(`${api()}/v1/companies/${workspace.companyId}/reconciliation`,{headers:headers(workspace)}),
-      fetch(`${api()}/v1/companies/${workspace.companyId}/counterparties`,{headers:headers(workspace)}),
-      fetch(`${api()}/v1/companies/${workspace.companyId}/reconciliation/check-runs/latest`,{headers:headers(workspace)}),
+      apiFetch(`${api()}/v1/companies/${workspace.companyId}/reconciliation`,{headers:headers(workspace)}),
+      apiFetch(`${api()}/v1/companies/${workspace.companyId}/counterparties`,{headers:headers(workspace)}),
+      apiFetch(`${api()}/v1/companies/${workspace.companyId}/reconciliation/check-runs/latest`,{headers:headers(workspace)}),
     ]);
     if(!overviewResponse.ok||!partyResponse.ok)throw new Error('无法读取核销数据');
     setOverview(reconciliationOverviewSchema.parse(await overviewResponse.json()));
@@ -36,10 +38,10 @@ export function ReconciliationManager(){
   function selectInvoice(id:string){setInvoiceId(id);setPaymentId('');setAmount('')}
   function selectPayment(id:string){setPaymentId(id);const payment=payments.find(item=>item.paymentEventId===id);if(invoice&&payment)setAmount(Math.min(Number(invoice.outstandingAmount),Number(payment.unallocatedAmount)).toFixed(2))}
 
-  async function submit(event:FormEvent){event.preventDefault();if(!workspace||!invoiceId||!paymentId)return;setPending(true);setMessage('正在核对双方余额并创建核销…');try{const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/reconciliation/settlements`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({invoiceId,paymentEventId:paymentId,amount})});const payload:unknown=await response.json();if(!response.ok)throw new Error(response.status===409?'核销关系已存在或余额刚刚发生变化。':'金额超过未核销余额，或双方方向、往来单位不一致。');settlementResponseSchema.parse(payload);await load(workspace);setInvoiceId('');setPaymentId('');setAmount('');setMessage('核销成功。请重新运行勾稽检查确认差异是否解除。')}catch(error:unknown){setMessage(error instanceof Error?error.message:'核销失败。')}finally{setPending(false)}}
-  async function runCheck(){if(!workspace)return;setPending(true);setMessage('正在冻结当前数据并运行全部勾稽检查…');try{const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/reconciliation/check-runs`,{method:'POST',headers:headers(workspace)});const payload:unknown=await response.json();if(!response.ok)throw new Error('勾稽检查失败。');const result=reconciliationCheckRunResponseSchema.parse(payload);setCheck(result);setMessage(result.blocksFiling?`发现 ${result.totalIssues} 项待处理差异，当前阻断后续申报。`:'勾稽检查通过，当前没有未解决差异。')}catch(error:unknown){setMessage(error instanceof Error?error.message:'勾稽检查失败。')}finally{setPending(false)}}
-  async function triage(issueId:string,status:keyof typeof triageLabels,note:string,expectedVersion:number){if(!workspace||!check)return;const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/reconciliation/check-runs/${check.id}/issues/${issueId}/triage`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({status,note,expectedVersion})});const payload:unknown=await response.json();if(!response.ok)throw new Error(response.status===409?'处理状态已变化，请刷新后重试。':'无法更新处理状态。');const updated=reconciliationCheckIssueSchema.parse(payload);setCheck({...check,issues:check.issues.map(item=>item.id===updated.id?updated:item)});setMessage('处理状态已记录；只有修复事实并重新检查通过后，申报阻断才会解除。')}
-  async function createReview(issueId:string){if(!workspace)return;const response=await fetch(`${api()}/v1/companies/${workspace.companyId}/review-cases`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({sourceType:'reconciliation_issue',sourceId:issueId})});const payload:unknown=await response.json();if(!response.ok)throw new Error('无法创建人工复核案件。');const result=reviewCaseCreationResponseSchema.parse(payload);setMessage(result.created?'该差异已进入人工复核队列。':'该差异已经存在复核案件，没有重复创建。')}
+  async function submit(event:FormEvent){event.preventDefault();if(!workspace||!invoiceId||!paymentId)return;setPending(true);setMessage('正在核对双方余额并创建核销…');try{const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/reconciliation/settlements`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({invoiceId,paymentEventId:paymentId,amount})});const payload:unknown=await response.json();if(!response.ok)throw new Error(response.status===409?'核销关系已存在或余额刚刚发生变化。':'金额超过未核销余额，或双方方向、往来单位不一致。');settlementResponseSchema.parse(payload);await load(workspace);setInvoiceId('');setPaymentId('');setAmount('');setMessage('核销成功。请重新运行勾稽检查确认差异是否解除。')}catch(error:unknown){setMessage(error instanceof Error?error.message:'核销失败。')}finally{setPending(false)}}
+  async function runCheck(){if(!workspace)return;setPending(true);setMessage('正在冻结当前数据并运行全部勾稽检查…');try{const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/reconciliation/check-runs`,{method:'POST',headers:headers(workspace)});const payload:unknown=await response.json();if(!response.ok)throw new Error('勾稽检查失败。');const result=reconciliationCheckRunResponseSchema.parse(payload);setCheck(result);setMessage(result.blocksFiling?`发现 ${result.totalIssues} 项待处理差异，当前阻断后续申报。`:'勾稽检查通过，当前没有未解决差异。')}catch(error:unknown){setMessage(error instanceof Error?error.message:'勾稽检查失败。')}finally{setPending(false)}}
+  async function triage(issueId:string,status:keyof typeof triageLabels,note:string,expectedVersion:number){if(!workspace||!check)return;const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/reconciliation/check-runs/${check.id}/issues/${issueId}/triage`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({status,note,expectedVersion})});const payload:unknown=await response.json();if(!response.ok)throw new Error(response.status===409?'处理状态已变化，请刷新后重试。':'无法更新处理状态。');const updated=reconciliationCheckIssueSchema.parse(payload);setCheck({...check,issues:check.issues.map(item=>item.id===updated.id?updated:item)});setMessage('处理状态已记录；只有修复事实并重新检查通过后，申报阻断才会解除。')}
+  async function createReview(issueId:string){if(!workspace)return;const response=await apiFetch(`${api()}/v1/companies/${workspace.companyId}/review-cases`,{method:'POST',headers:headers(workspace,true),body:JSON.stringify({sourceType:'reconciliation_issue',sourceId:issueId})});const payload:unknown=await response.json();if(!response.ok)throw new Error('无法创建人工复核案件。');const result=reviewCaseCreationResponseSchema.parse(payload);setMessage(result.created?'该差异已进入人工复核队列。':'该差异已经存在复核案件，没有重复创建。')}
 
   if(!ready)return <section className="reconciliation-workspace"><div className="onboarding-card">正在读取核销数据…</div></section>;
   if(!workspace||!overview)return <section className="reconciliation-workspace"><div className="onboarding-card">请先完成建档、发票和收付款记录。</div></section>;

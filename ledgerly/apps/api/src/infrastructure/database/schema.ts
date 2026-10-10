@@ -50,17 +50,135 @@ export const companies = pgTable(
   ],
 );
 
+export const appUsers = pgTable(
+  'app_users',
+  {
+    id: uuid('id').primaryKey(),
+    status: text('status').notNull(),
+    displayName: text('display_name').notNull(),
+    disabledAt: timestamp('disabled_at', { withTimezone: true }),
+    ...auditColumns,
+  },
+  (table) => [index('app_users_status_idx').on(table.status)],
+);
+
 export const tenantMembers = pgTable(
   'tenant_members',
   {
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id),
-    userId: uuid('user_id').notNull(),
+    userId: uuid('user_id').notNull().references(() => appUsers.id),
+    role: text('role').notNull(),
+    status: text('status').notNull().default('active'),
+    roles: jsonb('roles').notNull().default([]),
+    companyIds: jsonb('company_ids').notNull().default([]),
+    invitedBy: uuid('invited_by'),
+    activatedAt: timestamp('activated_at', { withTimezone: true }),
+    deactivatedAt: timestamp('deactivated_at', { withTimezone: true }),
+    ...auditColumns,
+  },
+  (table) => [
+    uniqueIndex('tenant_members_identity_unique').on(table.tenantId, table.userId),
+    index('tenant_members_status_idx').on(table.tenantId, table.status),
+  ],
+);
+
+export const externalIdentities = pgTable(
+  'external_identities',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id').notNull().references(() => appUsers.id),
+    issuer: text('issuer').notNull(),
+    subject: text('subject').notNull(),
+    identifierHint: text('identifier_hint'),
+    linkedAt: timestamp('linked_at', { withTimezone: true }).notNull(),
+    lastAuthenticatedAt: timestamp('last_authenticated_at', { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('external_identities_issuer_subject_unique').on(table.issuer, table.subject),
+    index('external_identities_user_idx').on(table.userId),
+  ],
+);
+
+export const authSessions = pgTable(
+  'auth_sessions',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id').notNull().references(() => appUsers.id),
+    issuer: text('issuer').notNull(),
+    providerSessionId: text('provider_session_id').notNull(),
+    authMethods: jsonb('auth_methods').notNull().default([]),
+    authenticatedAt: timestamp('authenticated_at', { withTimezone: true }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    revokedBy: uuid('revoked_by'),
+    revocationReason: text('revocation_reason'),
+  },
+  (table) => [
+    uniqueIndex('auth_sessions_provider_unique').on(table.issuer, table.providerSessionId),
+    index('auth_sessions_user_active_idx').on(table.userId, table.revokedAt, table.expiresAt),
+  ],
+);
+
+export const oidcLoginStates = pgTable(
+  'oidc_login_states',
+  {
+    stateHash: text('state_hash').primaryKey(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    traceId: text('trace_id').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [index('oidc_login_states_expiry_idx').on(table.expiresAt, table.consumedAt)],
+);
+
+export const tenantInvitations = pgTable(
+  'tenant_invitations',
+  {
+    id: uuid('id').primaryKey(),
+    tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+    identifierHash: text('identifier_hash').notNull(),
+    identifierHint: text('identifier_hint').notNull(),
+    tokenHash: text('token_hash').notNull(),
+    roles: jsonb('roles').notNull(),
+    companyIds: jsonb('company_ids').notNull().default([]),
+    status: text('status').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+    acceptedBy: uuid('accepted_by').references(() => appUsers.id),
+    ...auditColumns,
+  },
+  (table) => [
+    uniqueIndex('tenant_invitations_token_hash_unique').on(table.tokenHash),
+    index('tenant_invitations_tenant_status_idx').on(table.tenantId, table.status),
+  ],
+);
+
+export const tenantMemberRoles = pgTable(
+  'tenant_member_roles',
+  {
+    tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+    userId: uuid('user_id').notNull().references(() => appUsers.id),
     role: text('role').notNull(),
     ...auditColumns,
   },
-  (table) => [uniqueIndex('tenant_members_identity_unique').on(table.tenantId, table.userId)],
+  (table) => [uniqueIndex('tenant_member_roles_unique').on(table.tenantId, table.userId, table.role)],
+);
+
+export const platformRoleAssignments = pgTable(
+  'platform_role_assignments',
+  {
+    userId: uuid('user_id').notNull().references(() => appUsers.id),
+    role: text('role').notNull(),
+    status: text('status').notNull().default('active'),
+    ...auditColumns,
+  },
+  (table) => [
+    uniqueIndex('platform_role_assignments_unique').on(table.userId, table.role),
+    index('platform_role_assignments_status_idx').on(table.status),
+  ],
 );
 
 export const auditEvents = pgTable(
@@ -84,7 +202,7 @@ export const outboxEvents = pgTable(
   'outbox_events',
   {
     id: uuid('id').primaryKey(),
-    tenantId: uuid('tenant_id').notNull(),
+    tenantId: uuid('tenant_id'),
     eventType: text('event_type').notNull(),
     aggregateType: text('aggregate_type').notNull(),
     aggregateId: uuid('aggregate_id').notNull(),

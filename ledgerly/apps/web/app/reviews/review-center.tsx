@@ -1,4 +1,6 @@
 'use client';
+
+import { apiFetch } from '@/app/lib/api-fetch';
 import{reviewCaseListResponseSchema,reviewCaseResponseSchema,type ReviewCaseResponse}from'@ledgerly/contracts';
 import Link from'next/link';
 import{useCallback,useEffect,useMemo,useState,type FormEvent}from'react';
@@ -7,7 +9,7 @@ const creatorId='10000000-0000-4000-8000-000000000001',reviewerId='20000000-0000
 const statusLabels={open:'待接单',awaiting_documents:'等待补件',in_review:'复核中',approved:'已批准',rejected:'已驳回',cancelled:'已取消'}as const;
 const sourceLabels={reconciliation_issue:'勾稽异常',period_reopen_request:'反结账申请'}as const;
 function workspace():Workspace|null{try{const raw:unknown=JSON.parse(window.localStorage.getItem('ledgerly.context')??'null');if(!raw||typeof raw!=='object')return null;const value=raw as Partial<Workspace>;return typeof value.tenantId==='string'&&typeof value.companyId==='string'?{tenantId:value.tenantId,companyId:value.companyId}:null}catch{return null}}
-function api(){return process.env.NEXT_PUBLIC_API_URL??'http://localhost:3001'}
+function api(){return process.env.NEXT_PUBLIC_API_URL??'/api'}
 function headers(context:Workspace,actorId=creatorId,json=false){return{'x-user-id':actorId,'x-tenant-id':context.tenantId,...(json?{'content-type':'application/json'}:{})}}
 function sourceHref(item:ReviewCaseResponse){return item.sourceType==='reconciliation_issue'?'/reconciliation':'/accounting'}
 async function errorMessage(response:Response,fallback:string){try{const body=await response.json()as{message?:string};return body.message??fallback}catch{return fallback}}
@@ -16,10 +18,10 @@ export function ReviewCenter(){
   const[context,setContext]=useState<Workspace|null>(null),[items,setItems]=useState<ReviewCaseResponse[]>([]),[selectedId,setSelectedId]=useState('');
   const[status,setStatus]=useState(''),[risk,setRisk]=useState(''),[onlyMine,setOnlyMine]=useState(false),[ready,setReady]=useState(false),[pending,setPending]=useState(false),[message,setMessage]=useState<string|null>(null);
   const selected=useMemo(()=>items.find(item=>item.id===selectedId)??items[0]??null,[items,selectedId]);
-  const load=useCallback(async(current:Workspace)=>{const query=new URLSearchParams();if(status)query.set('status',status);if(risk)query.set('riskLevel',risk);if(onlyMine)query.set('assignedTo',reviewerId);const response=await fetch(`${api()}/v1/companies/${current.companyId}/review-cases?${query}`,{headers:headers(current,reviewerId)});if(!response.ok)throw new Error('无法读取人工复核队列。');const result=reviewCaseListResponseSchema.parse(await response.json()).items;setItems(result);setSelectedId(id=>result.some(item=>item.id===id)?id:(result[0]?.id??''))},[status,risk,onlyMine]);
+  const load=useCallback(async(current:Workspace)=>{const query=new URLSearchParams();if(status)query.set('status',status);if(risk)query.set('riskLevel',risk);if(onlyMine)query.set('assignedTo',reviewerId);const response=await apiFetch(`${api()}/v1/companies/${current.companyId}/review-cases?${query}`,{headers:headers(current,reviewerId)});if(!response.ok)throw new Error('无法读取人工复核队列。');const result=reviewCaseListResponseSchema.parse(await response.json()).items;setItems(result);setSelectedId(id=>result.some(item=>item.id===id)?id:(result[0]?.id??''))},[status,risk,onlyMine]);
   useEffect(()=>{const current=workspace();setContext(current);if(!current){setReady(true);return}void load(current).catch(error=>setMessage(error instanceof Error?error.message:'读取失败。')).finally(()=>setReady(true))},[load]);
   function replace(item:ReviewCaseResponse){setItems(current=>current.map(existing=>existing.id===item.id?item:existing))}
-  async function mutate(path:string,body:Record<string,unknown>,actorId?:string){if(!context||!selected)return;setPending(true);setMessage(null);try{const response=await fetch(`${api()}/v1/companies/${context.companyId}/review-cases/${selected.id}/${path}`,{method:'POST',headers:headers(context,actorId??selected.assignedTo??reviewerId,true),body:JSON.stringify(body)});if(!response.ok)throw new Error(await errorMessage(response,response.status===409?'案件状态已经变化，请刷新后重试。':'操作失败。'));replace(reviewCaseResponseSchema.parse(await response.json()));setMessage('操作已保存，案件证据链和版本已经更新。')}catch(error:unknown){setMessage(error instanceof Error?error.message:'操作失败。')}finally{setPending(false)}}
+  async function mutate(path:string,body:Record<string,unknown>,actorId?:string){if(!context||!selected)return;setPending(true);setMessage(null);try{const response=await apiFetch(`${api()}/v1/companies/${context.companyId}/review-cases/${selected.id}/${path}`,{method:'POST',headers:headers(context,actorId??selected.assignedTo??reviewerId,true),body:JSON.stringify(body)});if(!response.ok)throw new Error(await errorMessage(response,response.status===409?'案件状态已经变化，请刷新后重试。':'操作失败。'));replace(reviewCaseResponseSchema.parse(await response.json()));setMessage('操作已保存，案件证据链和版本已经更新。')}catch(error:unknown){setMessage(error instanceof Error?error.message:'操作失败。')}finally{setPending(false)}}
   if(!ready)return <section className="review-shell"><div className="onboarding-card">正在读取复核队列…</div></section>;
   if(!context)return <section className="review-shell"><div className="onboarding-card">请先完成企业建档，再进入人工复核中心。</div></section>;
   return <section className="review-shell">

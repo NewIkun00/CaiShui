@@ -1677,3 +1677,93 @@ export const annualFilingArchiveResponseSchema=z.object({
   files:z.array(z.object({path:z.string(),mediaType:z.string(),sha256:z.string().regex(/^[0-9a-f]{64}$/),contentBase64:z.string()}).strict()),
 }).strict();
 export type AnnualFilingArchiveResponse=z.infer<typeof annualFilingArchiveResponseSchema>;
+
+export const customerRoleSchema = z.enum(['tenant_owner', 'tenant_admin', 'bookkeeper', 'member']);
+export const operationsRoleSchema = z.enum([
+  'support_readonly', 'accounting_reviewer', 'tax_reviewer', 'rule_editor',
+  'rule_approver', 'security_auditor', 'platform_admin',
+]);
+export const tenantInvitationInputSchema = z.object({
+  identifier: z.string().trim().min(3).max(254),
+  roles: z.array(customerRoleSchema).min(1).max(4),
+  companyIds: z.array(z.string().uuid()).max(100).default([]),
+  expiresInHours: z.number().int().min(1).max(168).default(48),
+}).strict();
+export type TenantInvitationInput = z.infer<typeof tenantInvitationInputSchema>;
+export const tenantInvitationAcceptSchema = z.object({ token: z.string().min(32).max(512) }).strict();
+export type TenantInvitationAcceptInput = z.infer<typeof tenantInvitationAcceptSchema>;
+export const tenantMemberDeactivateSchema = z.object({
+  expectedVersion: z.number().int().positive(),
+  reason: z.string().trim().min(5).max(500),
+}).strict();
+export type TenantMemberDeactivateInput = z.infer<typeof tenantMemberDeactivateSchema>;
+export const tenantInvitationResponseSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  identifierHint: z.string(),
+  roles: z.array(customerRoleSchema),
+  companyIds: z.array(z.string().uuid()),
+  status: z.enum(['pending', 'accepted', 'revoked', 'expired']),
+  expiresAt: z.string().datetime(),
+  createdAt: z.string().datetime(),
+  createdBy: z.string().uuid(),
+  developmentToken: z.string().optional(),
+}).strict();
+export const tenantMemberResponseSchema = z.object({
+  tenantId: z.string().uuid(),
+  userId: z.string().uuid(),
+  displayName: z.string(),
+  status: z.enum(['invited', 'active', 'suspended', 'removed']),
+  roles: z.array(customerRoleSchema),
+  companyIds: z.array(z.string().uuid()),
+  version: z.number().int().positive(),
+  activatedAt: z.string().datetime().optional(),
+  deactivatedAt: z.string().datetime().optional(),
+}).strict();
+export const tenantMemberListResponseSchema = z.object({ items: z.array(tenantMemberResponseSchema) }).strict();
+export type TenantInvitationResponse = z.infer<typeof tenantInvitationResponseSchema>;
+export type TenantMemberResponse = z.infer<typeof tenantMemberResponseSchema>;
+
+export const operationsRoleAssignmentInputSchema = z.object({
+  userId: z.string().uuid(), role: operationsRoleSchema,
+}).strict();
+export type OperationsRoleAssignmentInput = z.infer<typeof operationsRoleAssignmentInputSchema>;
+export const operationsRoleRevocationInputSchema = z.object({
+  expectedVersion: z.number().int().positive(), reason: z.string().trim().min(5).max(500),
+}).strict();
+export type OperationsRoleRevocationInput = z.infer<typeof operationsRoleRevocationInputSchema>;
+export const operationsRoleAssignmentResponseSchema = z.object({
+  userId: z.string().uuid(), displayName: z.string(), role: operationsRoleSchema,
+  status: z.enum(['active', 'suspended', 'removed']), version: z.number().int().positive(),
+  createdAt: z.string().datetime(), createdBy: z.string().uuid(),
+  updatedAt: z.string().datetime(), updatedBy: z.string().uuid(),
+}).strict();
+export const operationsRoleAssignmentListResponseSchema = z.object({
+  items: z.array(operationsRoleAssignmentResponseSchema),
+}).strict();
+export type OperationsRoleAssignmentResponse = z.infer<typeof operationsRoleAssignmentResponseSchema>;
+
+export const authLoginInputSchema = z.object({
+  returnTo: z.string().regex(/^\/(?!\/)/).max(500).default('/dashboard'),
+}).strict();
+export type AuthLoginInput = z.infer<typeof authLoginInputSchema>;
+export const authLoginResponseSchema = z.object({
+  authorizationUrl: z.string().url(), expiresAt: z.string().datetime(),
+}).strict();
+export const authCallbackInputSchema = z.object({
+  code: z.string().min(1).max(4096), state: z.string().min(32).max(512),
+}).strict();
+export type AuthCallbackInput = z.infer<typeof authCallbackInputSchema>;
+export const authCurrentResponseSchema = z.object({
+  user: z.object({
+    id: z.string().uuid(), displayName: z.string(), status: z.enum(['pending_identity', 'active', 'disabled']),
+  }).strict(),
+  session: z.object({
+    id: z.string().uuid(), authMethods: z.array(z.enum(['pwd', 'otp', 'webauthn', 'federated'])),
+    authenticatedAt: z.string().datetime(), expiresAt: z.string().datetime(),
+  }).strict(),
+  memberships: z.array(tenantMemberResponseSchema),
+  operationsRoles: z.array(operationsRoleSchema),
+  returnTo: z.string().optional(),
+}).strict();
+export const authLogoutResponseSchema = z.object({ providerRevoked: z.boolean() }).strict();

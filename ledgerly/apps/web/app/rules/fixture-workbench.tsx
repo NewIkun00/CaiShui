@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/app/lib/api-fetch';
+
 import {
   goldenFixtureExecutionResponseSchema,
   goldenFixtureSetInputSchema,
@@ -44,7 +46,7 @@ function fixtureTemplate() {
   })), null, 2);
 }
 
-function api() { return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'; }
+function api() { return process.env.NEXT_PUBLIC_API_URL ?? '/api'; }
 function suggestedVersion() {
   return `${new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()).replaceAll('-', '.')}-1`;
 }
@@ -107,7 +109,7 @@ export function FixtureWorkbench() {
   async function loadPackages(actor = actorId) {
     setMessage('');
     try {
-      const response = await fetch(`${api()}/v1/rule-packages`, { headers: headers(actor) });
+      const response = await apiFetch(`${api()}/v1/rule-packages`, { headers: headers(actor) });
       if (!response.ok) throw new Error(await errorMessage(response, '规则包读取失败。'));
       const result = rulePackageListResponseSchema.parse(await response.json());
       setPackages(result.items);
@@ -121,8 +123,8 @@ export function FixtureWorkbench() {
     setPending(true); setMessage('正在读取规则版本…');
     try {
       const [versionResponse, shadowResponse] = await Promise.all([
-        fetch(`${api()}/v1/rule-packages/${nextPackageId}/versions`, { headers: headers(actorId) }),
-        fetch(`${api()}/v1/rule-packages/${nextPackageId}/shadow-runs`, { headers: headers(actorId) }),
+        apiFetch(`${api()}/v1/rule-packages/${nextPackageId}/versions`, { headers: headers(actorId) }),
+        apiFetch(`${api()}/v1/rule-packages/${nextPackageId}/shadow-runs`, { headers: headers(actorId) }),
       ]);
       if (!versionResponse.ok) throw new Error(await errorMessage(versionResponse, '规则版本读取失败。'));
       if (!shadowResponse.ok) throw new Error(await errorMessage(shadowResponse, '影子记录读取失败。'));
@@ -141,7 +143,7 @@ export function FixtureWorkbench() {
     if (!packageId || !nextVersionId) { setFixtureSets([]); return; }
     setPending(true); setMessage('正在读取签审样本…');
     try {
-      const response = await fetch(`${api()}/v1/rule-packages/${packageId}/versions/${nextVersionId}/fixture-sets`, { headers: headers(actorId) });
+      const response = await apiFetch(`${api()}/v1/rule-packages/${packageId}/versions/${nextVersionId}/fixture-sets`, { headers: headers(actorId) });
       if (!response.ok) throw new Error(await errorMessage(response, '样本集读取失败。'));
       const result = goldenFixtureSetListResponseSchema.parse(await response.json());
       setFixtureSets(result.items); setFixtureSetId(result.items.at(-1)?.id ?? ''); setMessage('');
@@ -166,7 +168,7 @@ export function FixtureWorkbench() {
     if (!parsed.success) { setMessage(parsed.error.issues.map((item) => item.message).join('；')); return; }
     setPending(true); setMessage('正在固化并签署样本集…');
     try {
-      const response = await fetch(`${api()}/v1/rule-packages/${packageId}/versions/${versionId}/fixture-sets`, {
+      const response = await apiFetch(`${api()}/v1/rule-packages/${packageId}/versions/${versionId}/fixture-sets`, {
         method: 'POST', headers: headers(actorId, true), body: JSON.stringify(parsed.data),
       });
       if (!response.ok) throw new Error(await errorMessage(response, '样本签署失败。'));
@@ -179,7 +181,7 @@ export function FixtureWorkbench() {
     if (!packageId || !versionId || !fixtureSetId) return;
     setPending(true); setMessage('正在逐例执行版本化实现…');
     try {
-      const response = await fetch(`${api()}/v1/rule-packages/${packageId}/versions/${versionId}/fixture-sets/${fixtureSetId}/executions`, { method: 'POST', headers: headers(actorId, true), body: '{}' });
+      const response = await apiFetch(`${api()}/v1/rule-packages/${packageId}/versions/${versionId}/fixture-sets/${fixtureSetId}/executions`, { method: 'POST', headers: headers(actorId, true), body: '{}' });
       if (!response.ok) throw new Error(await errorMessage(response, '样本执行失败。'));
       const result = goldenFixtureExecutionResponseSchema.parse(await response.json()); setExecution(result);
       setMessage(result.status === 'passed' ? '全部样本通过，已保存不可变证据。' : '存在未通过样本，不得发布该规则。');
@@ -198,7 +200,7 @@ export function FixtureWorkbench() {
     if (!parsed.success) { setMessage('请填写至少 5 个字的测试签署结论。'); return; }
     setPending(true); setMessage('正在签署全量黄金样本测试证据…');
     try {
-      const response = await fetch(`${api()}/v1/rule-packages/${packageId}/versions/${versionId}/test-evidence`, {
+      const response = await apiFetch(`${api()}/v1/rule-packages/${packageId}/versions/${versionId}/test-evidence`, {
         method: 'POST', headers: headers(actorId, true), body: JSON.stringify(parsed.data),
       });
       if (!response.ok) throw new Error(await errorMessage(response, '测试证据签署失败。'));
@@ -213,7 +215,7 @@ export function FixtureWorkbench() {
     if (!packageId || !baselineId || !candidateId || !fixtureSetId) { setMessage('请选择基准版本、候选版本和样本集。'); return; }
     setPending(true); setMessage('正在对同一签审样本执行新旧版本对比…');
     try {
-      const response = await fetch(`${api()}/v1/rule-packages/${packageId}/shadow-runs`, {
+      const response = await apiFetch(`${api()}/v1/rule-packages/${packageId}/shadow-runs`, {
         method: 'POST', headers: headers(actorId, true), body: JSON.stringify({ baselineRuleVersionId: baselineId, candidateRuleVersionId: candidateId, fixtureSetId }),
       });
       if (!response.ok) throw new Error(await errorMessage(response, '影子分析失败。'));

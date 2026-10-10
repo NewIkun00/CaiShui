@@ -4,6 +4,7 @@ import { ORGANIZATION_STORE } from './application/organization-store.js';
 import { PostgresOrganizationStore } from './infrastructure/postgres-organization.store.js';
 import { MemoryOrganizationStore } from './infrastructure/memory-organization.store.js';
 import { OrganizationController } from './presentation/organization.controller.js';
+import { IdentityModule } from '../identity/identity.module.js';
 
 const storageProviders = process.env['STORAGE_MODE'] === 'memory'
   ? [
@@ -16,6 +17,7 @@ const storageProviders = process.env['STORAGE_MODE'] === 'memory'
     ];
 
 @Module({
+  imports: [IdentityModule],
   controllers: [OrganizationController],
   providers: [
     ...storageProviders,

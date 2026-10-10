@@ -46,9 +46,12 @@ import {
 } from '../../../shared/zod-openapi.js';
 import { PolicyRuleService } from '../application/policy-rule.service.js';
 import type { SavedRuleShadowRun } from '../application/policy-rule-store.js';
+import { OperationsAccess } from '../../identity/presentation/operations-resource.decorator.js';
+import { RequireStepUp } from '../../identity/presentation/step-up.decorator.js';
 
 @ApiTags('policy-rules')
 @ApiHeader({ name: 'x-user-id', required: true })
+@OperationsAccess('policy')
 @Controller('v1')
 export class PolicyRuleController {
   constructor(private readonly service: PolicyRuleService) {}
@@ -223,6 +226,7 @@ export class PolicyRuleController {
   }
 
   @Post('rule-packages/:rulePackageId/versions/:ruleVersionId/approval')
+  @RequireStepUp()
   @ApiOperation({ summary: '由独立审批人批准已通过测试的规则版本' })
   @ApiZodBody(ruleApprovalSchema)
   @ApiZodCreatedResponse(ruleVersionResponseSchema)
@@ -236,6 +240,7 @@ export class PolicyRuleController {
   }
 
   @Post('rule-packages/:rulePackageId/versions/:ruleVersionId/schedule')
+  @RequireStepUp()
   @ApiOperation({ summary: '由审批人安排规则版本的未来激活时间' })
   @ApiZodBody(ruleScheduleSchema)
   @ApiZodCreatedResponse(ruleVersionResponseSchema)
@@ -249,6 +254,7 @@ export class PolicyRuleController {
   }
 
   @Post('rule-packages/:rulePackageId/versions/:ruleVersionId/activation')
+  @RequireStepUp()
   @ApiOperation({ summary: '在计划时间到期后激活规则，并自动替代同规则包的旧活动版本' })
   @ApiZodBody(ruleActivationSchema)
   @ApiZodCreatedResponse(ruleVersionResponseSchema)
@@ -262,6 +268,7 @@ export class PolicyRuleController {
   }
 
   @Post('rule-packages/:rulePackageId/versions/:ruleVersionId/withdrawal')
+  @RequireStepUp()
   @ApiOperation({ summary: '紧急撤回活动规则版本并保留不可变发布记录' })
   @ApiZodBody(ruleWithdrawalSchema)
   @ApiZodCreatedResponse(ruleVersionResponseSchema)

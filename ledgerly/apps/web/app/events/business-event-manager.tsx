@@ -1,5 +1,7 @@
 'use client';
 
+import { apiFetch } from '@/app/lib/api-fetch';
+
 import {
   businessEventInputSchema,
   businessEventListResponseSchema,
@@ -45,8 +47,8 @@ export function BusinessEventManager() {
     if (!current) { setReady(true); return; }
     const headers = { 'x-user-id': '10000000-0000-4000-8000-000000000001', 'x-tenant-id': current.tenantId };
     void Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/companies/${current.companyId}/counterparties`, { headers }).then((response) => response.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/companies/${current.companyId}/business-events`, { headers }).then((response) => response.json()),
+      apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? '/api'}/v1/companies/${current.companyId}/counterparties`, { headers }).then((response) => response.json()),
+      apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? '/api'}/v1/companies/${current.companyId}/business-events`, { headers }).then((response) => response.json()),
     ]).then(([partyPayload, eventPayload]: unknown[]) => {
       const parsedParties = counterpartyListResponseSchema.safeParse(partyPayload);
       const parsedEvents = businessEventListResponseSchema.safeParse(eventPayload);
@@ -83,7 +85,7 @@ export function BusinessEventManager() {
   }
 
   function request(current: WorkspaceContext, suffix: string, init: RequestInit) {
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/v1/companies/${current.companyId}/business-events${suffix}`, {
+    return apiFetch(`${process.env.NEXT_PUBLIC_API_URL ?? '/api'}/v1/companies/${current.companyId}/business-events${suffix}`, {
       ...init, headers: { 'content-type': 'application/json', 'x-user-id': '10000000-0000-4000-8000-000000000001', 'x-tenant-id': current.tenantId },
     });
   }

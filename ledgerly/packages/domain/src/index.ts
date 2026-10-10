@@ -10,6 +10,27 @@ export {
 export type { Company, CompanyRepository, Tenant, TenantRepository } from './tenant.js';
 export { CompanyStatus, createCompany, createTenant } from './tenant.js';
 export {
+  activateAppUser,
+  appUserStatuses,
+  assertRoleDomain,
+  createAppUser,
+  customerRoles,
+  IdentityError,
+  linkExternalIdentity,
+  operationsRoles,
+  revokeAuthSession,
+  tenantMemberStatuses,
+  type AppUser,
+  type AppUserStatus,
+  type AuthMethod,
+  type AuthSession,
+  type CustomerRole,
+  type ExternalIdentity,
+  type OperationsRole,
+  type TenantMembership,
+  type TenantMemberStatus,
+} from './identity.js';
+export {
   evaluateScope,
   ScopeDecision,
   type CompanyProfile,

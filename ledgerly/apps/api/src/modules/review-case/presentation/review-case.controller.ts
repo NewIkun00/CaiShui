@@ -8,9 +8,11 @@ import{ApiZodBody,ApiZodCreatedResponse,ApiZodOkResponse}from'../../../shared/zo
 import{ZodValidationPipe}from'../../../shared/zod-validation.pipe.js';
 import{ReviewCaseService}from'../application/review-case.service.js';
 import type{ReviewCase}from'../application/review-case-store.js';
+import{OperationsAccess}from'../../identity/presentation/operations-resource.decorator.js';
+import{RequireStepUp}from'../../identity/presentation/step-up.decorator.js';
 enum Status{Open='open',AwaitingDocuments='awaiting_documents',InReview='in_review',Approved='approved',Rejected='rejected',Cancelled='cancelled'}
 enum Risk{Yellow='yellow',Red='red'}
-@ApiTags('review-cases')@ApiHeader({name:'x-user-id',required:true})@ApiHeader({name:'x-tenant-id',required:true})
+@ApiTags('review-cases')@ApiHeader({name:'x-user-id',required:true})@ApiHeader({name:'x-tenant-id',required:true})@OperationsAccess('review')
 @Controller('v1/companies/:companyId/review-cases')
 export class ReviewCaseController{
   constructor(private readonly service:ReviewCaseService){}
@@ -26,7 +28,7 @@ export class ReviewCaseController{
   async append(@Param('companyId',new ParseUUIDPipe())companyId:string,@Param('reviewCaseId',new ParseUUIDPipe())id:string,@Body(new ZodValidationPipe(reviewWorkItemInputSchema))input:ReviewWorkItemInput,@Req()request:FastifyRequest){return this.present(await this.service.appendWorkItem(companyId,id,input,requestContext(request,true)));}
   @Post(':reviewCaseId/transitions')@ApiOperation({summary:'开始复核、等待补件、恢复复核或取消'})@ApiZodBody(reviewCaseTransitionSchema)@ApiZodOkResponse(reviewCaseResponseSchema)
   async transition(@Param('companyId',new ParseUUIDPipe())companyId:string,@Param('reviewCaseId',new ParseUUIDPipe())id:string,@Body(new ZodValidationPipe(reviewCaseTransitionSchema))input:ReviewCaseTransition,@Req()request:FastifyRequest){return this.present(await this.service.transition(companyId,id,input,requestContext(request,true)));}
-  @Post(':reviewCaseId/decision')@ApiOperation({summary:'批准或驳回复核案件；创建人与复核人职责分离，且不修改来源事实'})@ApiZodBody(reviewCaseDecisionSchema)@ApiZodOkResponse(reviewCaseResponseSchema)
+  @Post(':reviewCaseId/decision')@RequireStepUp()@ApiOperation({summary:'批准或驳回复核案件；创建人与复核人职责分离，且不修改来源事实'})@ApiZodBody(reviewCaseDecisionSchema)@ApiZodOkResponse(reviewCaseResponseSchema)
   async decide(@Param('companyId',new ParseUUIDPipe())companyId:string,@Param('reviewCaseId',new ParseUUIDPipe())id:string,@Body(new ZodValidationPipe(reviewCaseDecisionSchema))input:ReviewCaseDecisionInput,@Req()request:FastifyRequest){return this.present(await this.service.decide(companyId,id,input,requestContext(request,true)));}
   private present(item:ReviewCase){return{...item,createdAt:item.createdAt.toISOString(),updatedAt:item.updatedAt.toISOString(),items:item.items.map(work=>({...work,documentIds:[...work.documentIds],createdAt:work.createdAt.toISOString()}))};}
 }

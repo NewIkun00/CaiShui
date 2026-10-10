@@ -7,6 +7,7 @@ import{ZodValidationPipe}from'../../../shared/zod-validation.pipe.js';
 import{ApiZodBody,ApiZodCreatedResponse,ApiZodOkResponse}from'../../../shared/zod-openapi.js';
 import{PeriodReopenService}from'../application/period-reopen.service.js';
 import type{PeriodReopenRequest}from'../application/period-reopen-store.js';
+import{RequireStepUp}from'../../identity/presentation/step-up.decorator.js';
 
 @ApiTags('accounting-periods')
 @ApiHeader({name:'x-user-id',required:true})
@@ -20,7 +21,7 @@ export class AccountingPeriodController{
   @Get()@ApiOperation({summary:'列出反结账申请'})
   @ApiZodOkResponse(periodReopenRequestListResponseSchema)
   async list(@Param('companyId',new ParseUUIDPipe())companyId:string,@Req()request:FastifyRequest){return{items:(await this.service.list(companyId,requestContext(request,true))).map(item=>this.present(item))};}
-  @Post(':requestId/decision')@ApiOperation({summary:'专业复核反结账申请；申请人与复核人必须分离，批准后原子解锁期间'})
+  @Post(':requestId/decision')@RequireStepUp()@ApiOperation({summary:'专业复核反结账申请；申请人与复核人必须分离，批准后原子解锁期间'})
   @ApiZodBody(periodReopenDecisionInputSchema)@ApiZodOkResponse(periodReopenRequestResponseSchema)
   async decide(@Param('companyId',new ParseUUIDPipe())companyId:string,@Param('requestId',new ParseUUIDPipe())requestId:string,@Body(new ZodValidationPipe(periodReopenDecisionInputSchema))input:PeriodReopenDecisionInput,@Req()request:FastifyRequest){return this.present(await this.service.decide(companyId,requestId,input,requestContext(request,true)));}
   private present(item:PeriodReopenRequest){return{...item,requestedAt:item.requestedAt.toISOString(),...(item.decidedAt?{decidedAt:item.decidedAt.toISOString()}:{})};}
