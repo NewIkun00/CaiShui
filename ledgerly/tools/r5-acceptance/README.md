@@ -20,10 +20,19 @@
 
 可先运行 `pnpm r5:acceptance:test`，它只验证环境解析、秘密校验、Realm 渲染和报告脱敏，不需要 Docker。
 
+## 无外部服务模拟
+
+执行 `pnpm r5:acceptance:simulate` 会生成一天有效的本地 HTTPS 证书，临时启动模拟 OIDC/邮件服务、内存模式 API 和 3020 Web，并在结束后自动停止。该流程实际通过 API 验证 PKCE、签名 JWT、HttpOnly Cookie、注册邮件 action-token、未验证/重复邮箱、过期链接、OTP step-up、换账号拒绝、旧会话替换、Provider 撤销、跨租户/跨公司/低角色拒绝和成员停用即时失效。
+
+模拟服务只用于开发和 CI，不是生产身份实现，也不能替代 Keycloak/PostgreSQL 真实验收。报告带有 `productionEvidence: false`，生成到 `.data/reports/`。模拟 OTP 固定来自测试环境变量，任何密码、验证码、密钥或 action-token 都不会写入报告。
+
+V1 产品蓝图规定邮件为受控试点所需通道，短信可在试点后接入。短信供应商、实名主体、数据处理条款和存储地域未确定前，本目录不引入供应商 SDK；未来阿里云等服务必须通过 Port/Adapter 接入，业务数据库不得保存短信验证码。
+
 ## 安全与范围边界
 
 - Realm 模板中的用户和密码来自 `.env`，仓库只保留占位符；渲染结果权限应为仅当前用户可读。
 - `ledgerly-session-revoker` 仅授予 `realm-management/manage-users`，不得授予 `realm-admin`。
 - CA 仅用于本机 acceptance；应用通过 `NODE_EXTRA_CA_CERTS` 精确信任该 CA，不允许关闭 TLS 校验。
 - 当前 runner **尚不代表 R5 完成**。邮箱 action-token、OTP step-up、换账号拒绝、登出 Provider 撤销、跨租户/跨公司/低角色矩阵和平台角色治理 E2E 仍须按研发计划 28.22 逐项实现并重新运行。
+- `simulate` 已覆盖上述前四类流程的本地 HTTP 模拟；`run` 仍需在真实 Keycloak/PostgreSQL 栈上重放。平台首位管理员、全局角色治理和 audit/outbox 仍只接受 PostgreSQL 真实证据。
 - 报告会按字段名和 URL 参数脱敏；仍应在提交前人工检查 `.data/reports`，且 `.data/` 永远不得加入 Git。

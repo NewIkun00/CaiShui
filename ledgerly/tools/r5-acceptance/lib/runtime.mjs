@@ -1,6 +1,7 @@
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
+import { get as httpsGet } from 'node:https';
 import { dirname, resolve } from 'node:path';
 import { redact } from './redaction.mjs';
 
@@ -11,14 +12,28 @@ export function commandName(name) {
 }
 
 export function commandInvocation(name, args) {
-  const command = commandName(name);
-  if (process.platform !== 'win32' || !command.endsWith('.cmd')) return { command, args };
+  const command = resolveWindowsCommand(commandName(name));
+  if (process.platform !== 'win32' || !command.toLowerCase().endsWith('.cmd'))
+    return { command, args };
   const commandLine = [command, ...args].map(quoteWindowsCommandArgument).join(' ');
   return {
     command: process.env.ComSpec ?? 'cmd.exe',
     args: ['/d', '/s', '/c', `"${commandLine}"`],
     windowsVerbatimArguments: true,
   };
+}
+
+function resolveWindowsCommand(command) {
+  if (process.platform !== 'win32' || !command.toLowerCase().endsWith('.cmd')) return command;
+  const result = spawnSync('where.exe', [command], { encoding: 'utf8' });
+  const candidates =
+    result.status === 0
+      ? result.stdout
+          .split(/\r?\n/u)
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+  return candidates.find((item) => !/[\\/]node_modules[\\/]\.bin[\\/]/iu.test(item)) ?? command;
 }
 
 export function commandAvailable(name) {
@@ -59,6 +74,17 @@ export async function spawnService(name, args, { cwd, env, logPath }) {
   return child.pid;
 }
 
+export async function terminateProcess(pid) {
+  if (!Number.isInteger(pid)) return;
+  try {
+    process.kill(pid, 0);
+  } catch {
+    return;
+  }
+  if (process.platform === 'win32') await run('taskkill.exe', ['/PID', String(pid), '/T', '/F']);
+  else process.kill(-pid, 'SIGTERM');
+}
+
 function quoteWindowsCommandArgument(value) {
   const text = String(value);
   if (/[\0\r\n"]/u.test(text)) throw new Error('Unsafe character in Windows command argument');
@@ -73,6 +99,30 @@ export async function waitForHttp(url, { timeoutMs = 120_000, expectedStatus = 2
       const response = await fetch(url, { signal: AbortSignal.timeout(3_000) });
       if (response.status === expectedStatus) return response;
       lastError = new Error(`${url} returned ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+    await new Promise((accept) => setTimeout(accept, 1_000));
+  }
+  throw new Error(`Timed out waiting for ${url}: ${lastError?.message ?? 'unknown error'}`);
+}
+
+export async function waitForHttps(url, { caPath, timeoutMs = 120_000, expectedStatus = 200 }) {
+  const ca = await readFile(caPath);
+  const deadline = Date.now() + timeoutMs;
+  let lastError;
+  while (Date.now() < deadline) {
+    try {
+      const status = await new Promise((accept, reject) => {
+        const request = httpsGet(url, { ca, timeout: 3_000 }, (response) => {
+          response.resume();
+          accept(response.statusCode);
+        });
+        request.once('timeout', () => request.destroy(new Error('request timed out')));
+        request.once('error', reject);
+      });
+      if (status === expectedStatus) return;
+      lastError = new Error(`${url} returned ${status}`);
     } catch (error) {
       lastError = error;
     }

@@ -19,6 +19,7 @@
     "db:migrate": "pnpm --filter @ledgerly/api db:migrate",
     "identity:seed-admin": "pnpm --filter @ledgerly/api identity:seed-admin",
     "r5:acceptance:doctor": "node tools/r5-acceptance/cli.mjs doctor",
+    "r5:acceptance:simulate": "node tools/r5-acceptance/cli.mjs simulate",
     "r5:acceptance:start": "node tools/r5-acceptance/cli.mjs start",
     "r5:acceptance:run": "node tools/r5-acceptance/cli.mjs run",
     "r5:acceptance:stop": "node tools/r5-acceptance/cli.mjs stop",

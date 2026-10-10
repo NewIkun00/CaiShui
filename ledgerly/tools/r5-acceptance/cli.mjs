@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import {
   loadAcceptanceEnvironment,
@@ -13,7 +14,9 @@ import {
   readJson,
   run,
   spawnService,
+  terminateProcess,
   waitForHttp,
+  waitForHttps,
   writeJson,
 } from './lib/runtime.mjs';
 
@@ -23,6 +26,7 @@ const command = process.argv[2] ?? 'doctor';
 
 try {
   if (command === 'doctor') await doctor();
+  else if (command === 'simulate') await simulate();
   else if (command === 'start') await start();
   else if (command === 'run') await acceptanceRun();
   else if (command === 'stop') await stop();
@@ -144,6 +148,123 @@ async function start() {
   );
 }
 
+async function simulate() {
+  assertNode();
+  if (!commandAvailable('pnpm')) throw new Error('pnpm is required');
+  if (!commandAvailable('openssl'))
+    throw new Error('OpenSSL is required for the HTTPS simulation provider');
+  const mockPort = Number(process.env.R5_MOCK_OIDC_PORT ?? 58555);
+  const apiPort = Number(process.env.R5_API_PORT ?? 3001);
+  const webPort = Number(process.env.R5_WEB_PORT ?? 3020);
+  const secret = process.env.R5_OIDC_ADMIN_CLIENT_SECRET ?? `simulation-${randomUUID()}`;
+  const simulationCertificate = resolve(paths.data, 'certs/simulation.crt');
+  const simulationKey = resolve(paths.data, 'certs/simulation.key');
+  await mkdir(dirname(simulationCertificate), { recursive: true });
+  await run(
+    'openssl',
+    [
+      'req',
+      '-x509',
+      '-newkey',
+      'rsa:2048',
+      '-sha256',
+      '-days',
+      '1',
+      '-nodes',
+      '-subj',
+      '/CN=localhost',
+      '-addext',
+      'subjectAltName=IP:127.0.0.1,DNS:localhost',
+      '-keyout',
+      simulationKey,
+      '-out',
+      simulationCertificate,
+    ],
+    { cwd: rootDirectory },
+  );
+  const environment = {
+    ...process.env,
+    NODE_ENV: 'development',
+    STORAGE_MODE: 'memory',
+    AUTH_MODE: 'oidc',
+    NEXT_PUBLIC_AUTH_MODE: 'oidc',
+    R5_MOCK_OIDC_PORT: String(mockPort),
+    R5_API_PORT: String(apiPort),
+    R5_WEB_PORT: String(webPort),
+    R5_OIDC_ADMIN_CLIENT_SECRET: secret,
+    R5_ALICE_EMAIL: process.env.R5_ALICE_EMAIL ?? 'alice@example.test',
+    R5_ALICE_PASSWORD: process.env.R5_ALICE_PASSWORD ?? 'alice-password',
+    R5_BOB_EMAIL: process.env.R5_BOB_EMAIL ?? 'bob@example.test',
+    R5_BOB_PASSWORD: process.env.R5_BOB_PASSWORD ?? 'bob-password',
+    R5_MOCK_OTP: process.env.R5_MOCK_OTP ?? '123456',
+    R5_MOCK_TLS_CERT: simulationCertificate,
+    R5_MOCK_TLS_KEY: simulationKey,
+    NODE_EXTRA_CA_CERTS: simulationCertificate,
+    OIDC_ISSUER: `https://127.0.0.1:${mockPort}/realms/ledgerly`,
+    OIDC_CLIENT_ID: 'ledgerly-web',
+    OIDC_ADMIN_CLIENT_ID: 'ledgerly-session-revoker',
+    OIDC_ADMIN_CLIENT_SECRET: secret,
+    OIDC_REDIRECT_URI: `http://localhost:${webPort}/auth/callback`,
+    AUTH_COOKIE_KEY: randomBytes(32).toString('base64'),
+    WEB_ORIGIN: `http://localhost:${webPort}`,
+    API_INTERNAL_URL: `http://127.0.0.1:${apiPort}`,
+    API_PORT: String(apiPort),
+  };
+  const pids = [];
+  try {
+    await run('pnpm', ['--filter', '@ledgerly/domain', 'build'], {
+      cwd: rootDirectory,
+      env: environment,
+    });
+    await run('pnpm', ['--filter', '@ledgerly/contracts', 'build'], {
+      cwd: rootDirectory,
+      env: environment,
+    });
+    await run('pnpm', ['--filter', '@ledgerly/api', 'build'], {
+      cwd: rootDirectory,
+      env: environment,
+    });
+    pids.push(
+      await spawnService(process.execPath, [resolve(paths.tool, 'mock-oidc.mjs')], {
+        cwd: rootDirectory,
+        env: environment,
+        logPath: resolve(paths.data, 'logs/mock-oidc.log'),
+      }),
+    );
+    await waitForHttps(`${environment.OIDC_ISSUER}/.well-known/openid-configuration`, {
+      caPath: simulationCertificate,
+      timeoutMs: 30_000,
+      expectedStatus: 200,
+    });
+    pids.push(
+      await spawnService('pnpm', ['--filter', '@ledgerly/api', 'start'], {
+        cwd: rootDirectory,
+        env: environment,
+        logPath: resolve(paths.data, 'logs/simulated-api.log'),
+      }),
+    );
+    await waitForHttp(`http://127.0.0.1:${apiPort}/docs-json`, { timeoutMs: 60_000 });
+    pids.push(
+      await spawnService(
+        'pnpm',
+        ['--filter', '@ledgerly/web', 'exec', 'next', 'dev', '-p', String(webPort)],
+        {
+          cwd: rootDirectory,
+          env: environment,
+          logPath: resolve(paths.data, 'logs/simulated-web.log'),
+        },
+      ),
+    );
+    await waitForHttp(`http://127.0.0.1:${webPort}/login`, { timeoutMs: 60_000 });
+    await run(process.execPath, [resolve(paths.tool, 'simulated-e2e.mjs')], {
+      cwd: rootDirectory,
+      env: environment,
+    });
+  } finally {
+    for (const pid of pids.reverse()) await terminateProcess(pid);
+  }
+}
+
 async function acceptanceRun() {
   assertNode();
   const loaded = await loadAcceptanceEnvironment(rootDirectory);
@@ -220,7 +341,5 @@ function alive(pid) {
 }
 
 async function terminate(pid) {
-  if (!alive(pid)) return;
-  if (process.platform === 'win32') await run('taskkill.exe', ['/PID', String(pid), '/T', '/F']);
-  else process.kill(-pid, 'SIGTERM');
+  if (alive(pid)) await terminateProcess(pid);
 }

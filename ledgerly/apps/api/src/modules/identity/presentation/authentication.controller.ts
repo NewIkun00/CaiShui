@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   authCallbackInputSchema,
@@ -12,7 +22,11 @@ import {
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { requestContext } from '../../../shared/request-context.js';
 import { cookie } from '../../../shared/authenticated-request.js';
-import { ApiZodBody, ApiZodCreatedResponse, ApiZodOkResponse } from '../../../shared/zod-openapi.js';
+import {
+  ApiZodBody,
+  ApiZodCreatedResponse,
+  ApiZodOkResponse,
+} from '../../../shared/zod-openapi.js';
 import { ZodValidationPipe } from '../../../shared/zod-validation.pipe.js';
 import { AuthenticationService } from '../application/authentication.service.js';
 import type { SavedTenantMember } from '../application/identity-store.js';
@@ -37,7 +51,10 @@ export class AuthenticationController {
   ) {
     const traceId = this.traceId(request);
     const result = await this.authentication.beginLogin(input.returnTo, traceId, 'login');
-    reply.header('set-cookie', this.cookie(OIDC_TRANSACTION_COOKIE, result.transaction, 600, '/v1/auth'));
+    reply.header(
+      'set-cookie',
+      this.cookie(OIDC_TRANSACTION_COOKIE, result.transaction, 600, '/v1/auth'),
+    );
     return { authorizationUrl: result.authorizationUrl, expiresAt: result.expiresAt.toISOString() };
   }
 
@@ -51,8 +68,15 @@ export class AuthenticationController {
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
   ) {
-    const result = await this.authentication.beginLogin(input.returnTo, this.traceId(request), 'register');
-    reply.header('set-cookie', this.cookie(OIDC_TRANSACTION_COOKIE, result.transaction, 600, '/v1/auth'));
+    const result = await this.authentication.beginLogin(
+      input.returnTo,
+      this.traceId(request),
+      'register',
+    );
+    reply.header(
+      'set-cookie',
+      this.cookie(OIDC_TRANSACTION_COOKIE, result.transaction, 600, '/v1/auth'),
+    );
     return { authorizationUrl: result.authorizationUrl, expiresAt: result.expiresAt.toISOString() };
   }
 
@@ -66,13 +90,21 @@ export class AuthenticationController {
     @Res({ passthrough: true }) reply: FastifyReply,
   ) {
     if (!request.authentication) throw new UnauthorizedException('Authenticated session required');
-    const result = await this.authentication.beginStepUp(input.returnTo, request.authentication, this.traceId(request));
-    reply.header('set-cookie', this.cookie(OIDC_TRANSACTION_COOKIE, result.transaction, 600, '/v1/auth'));
+    const result = await this.authentication.beginStepUp(
+      input.returnTo,
+      request.authentication,
+      this.traceId(request),
+    );
+    reply.header(
+      'set-cookie',
+      this.cookie(OIDC_TRANSACTION_COOKIE, result.transaction, 600, '/v1/auth'),
+    );
     return { authorizationUrl: result.authorizationUrl, expiresAt: result.expiresAt.toISOString() };
   }
 
   @PublicAuth()
   @Post('callback')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '完成 OIDC 回调并建立 HttpOnly BFF 会话' })
   @ApiZodBody(authCallbackInputSchema)
   @ApiZodOkResponse(authCurrentResponseSchema)
@@ -83,16 +115,29 @@ export class AuthenticationController {
   ) {
     const transaction = cookie(request, OIDC_TRANSACTION_COOKIE);
     if (!transaction) throw new UnauthorizedException('OIDC transaction cookie required');
-    const result = await this.authentication.completeLogin(input.code, input.state, transaction, this.traceId(request));
-    const maxAge = Math.max(0, Math.floor((result.established.session.expiresAt.getTime() - Date.now()) / 1000));
+    const result = await this.authentication.completeLogin(
+      input.code,
+      input.state,
+      transaction,
+      this.traceId(request),
+    );
+    const maxAge = Math.max(
+      0,
+      Math.floor((result.established.session.expiresAt.getTime() - Date.now()) / 1000),
+    );
     reply.header('set-cookie', [
       this.cookie(SESSION_COOKIE, result.established.session.id, maxAge, '/'),
       this.clearCookie(OIDC_TRANSACTION_COOKIE, '/v1/auth'),
     ]);
     return {
-      user: { id: result.established.user.id, displayName: result.established.user.displayName, status: result.established.user.status },
+      user: {
+        id: result.established.user.id,
+        displayName: result.established.user.displayName,
+        status: result.established.user.status,
+      },
       session: {
-        id: result.established.session.id, authMethods: result.established.session.authMethods,
+        id: result.established.session.id,
+        authMethods: result.established.session.authMethods,
         authenticatedAt: result.established.session.authenticatedAt.toISOString(),
         expiresAt: result.established.session.expiresAt.toISOString(),
       },
@@ -110,10 +155,16 @@ export class AuthenticationController {
     if (!sessionId) throw new UnauthorizedException('Authenticated session required');
     const current = await this.authentication.current(sessionId);
     return {
-      user: { id: current.user.id, displayName: current.user.displayName, status: current.user.status },
+      user: {
+        id: current.user.id,
+        displayName: current.user.displayName,
+        status: current.user.status,
+      },
       session: {
-        id: current.session.id, authMethods: current.session.authMethods,
-        authenticatedAt: current.session.authenticatedAt.toISOString(), expiresAt: current.session.expiresAt.toISOString(),
+        id: current.session.id,
+        authMethods: current.session.authMethods,
+        authenticatedAt: current.session.authenticatedAt.toISOString(),
+        expiresAt: current.session.expiresAt.toISOString(),
       },
       memberships: current.memberships.map((member) => this.presentMember(member)),
       operationsRoles: current.operationsRoles,
@@ -121,23 +172,29 @@ export class AuthenticationController {
   }
 
   @Post('logout')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '撤销本地会话并请求撤销 Provider 会话' })
   @ApiZodOkResponse(authLogoutResponseSchema)
-  async logout(
-    @Req() request: FastifyRequest,
-    @Res({ passthrough: true }) reply: FastifyReply,
-  ) {
+  async logout(@Req() request: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply) {
     const sessionId = cookie(request, SESSION_COOKIE);
     if (!sessionId) throw new UnauthorizedException('Authenticated session required');
-    const result = await this.authentication.logout(sessionId, requestContext(request, false).traceId);
+    const result = await this.authentication.logout(
+      sessionId,
+      requestContext(request, false).traceId,
+    );
     reply.header('set-cookie', this.clearCookie(SESSION_COOKIE, '/'));
     return result;
   }
 
   private presentMember(member: SavedTenantMember) {
     return {
-      tenantId: member.tenantId, userId: member.userId, displayName: member.displayName,
-      status: member.status, roles: member.roles, companyIds: member.companyIds, version: member.version,
+      tenantId: member.tenantId,
+      userId: member.userId,
+      displayName: member.displayName,
+      status: member.status,
+      roles: member.roles,
+      companyIds: member.companyIds,
+      version: member.version,
       ...(member.activatedAt ? { activatedAt: member.activatedAt.toISOString() } : {}),
       ...(member.deactivatedAt ? { deactivatedAt: member.deactivatedAt.toISOString() } : {}),
     };

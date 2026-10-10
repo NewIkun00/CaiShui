@@ -24,7 +24,7 @@ test('uses a non-shell Windows wrapper only for package-manager command files', 
     const pnpm = commandInvocation('pnpm', ['--filter', '@ledgerly/api', 'build']);
     assert.equal(pnpm.command, process.env.ComSpec ?? 'cmd.exe');
     assert.deepEqual(pnpm.args.slice(0, 3), ['/d', '/s', '/c']);
-    assert.match(pnpm.args[3], /^""pnpm\.cmd"/u);
+    assert.match(pnpm.args[3], /pnpm\.cmd"/iu);
     assert.equal(pnpm.windowsVerbatimArguments, true);
   }
 });

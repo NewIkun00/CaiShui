@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   tenantInvitationAcceptSchema,
@@ -13,13 +23,21 @@ import {
 } from '@ledgerly/contracts';
 import type { FastifyRequest } from 'fastify';
 import { requestContext } from '../../../shared/request-context.js';
-import { ApiZodBody, ApiZodCreatedResponse, ApiZodOkResponse } from '../../../shared/zod-openapi.js';
+import {
+  ApiZodBody,
+  ApiZodCreatedResponse,
+  ApiZodOkResponse,
+} from '../../../shared/zod-openapi.js';
 import { ZodValidationPipe } from '../../../shared/zod-validation.pipe.js';
 import { IdentityService } from '../application/identity.service.js';
 import type { SavedTenantMember } from '../application/identity-store.js';
 
 @ApiTags('identity')
-@ApiHeader({ name: 'x-user-id', required: true, description: '开发态用户 UUID；R5 OIDC 接入后由可信会话提供' })
+@ApiHeader({
+  name: 'x-user-id',
+  required: true,
+  description: '开发态用户 UUID；R5 OIDC 接入后由可信会话提供',
+})
 @Controller('v1')
 export class IdentityController {
   constructor(private readonly identities: IdentityService) {}
@@ -34,7 +52,11 @@ export class IdentityController {
     @Body(new ZodValidationPipe(tenantInvitationInputSchema)) input: TenantInvitationInput,
     @Req() request: FastifyRequest,
   ) {
-    const result = await this.identities.inviteMember(tenantId, input, requestContext(request, true));
+    const result = await this.identities.inviteMember(
+      tenantId,
+      input,
+      requestContext(request, true),
+    );
     return {
       id: result.invitation.id,
       tenantId: result.invitation.tenantId,
@@ -50,6 +72,7 @@ export class IdentityController {
   }
 
   @Post('tenant-invitations/accept')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '已验证身份接受租户邀请' })
   @ApiZodBody(tenantInvitationAcceptSchema)
   @ApiZodOkResponse(tenantMemberResponseSchema)
@@ -57,7 +80,9 @@ export class IdentityController {
     @Body(new ZodValidationPipe(tenantInvitationAcceptSchema)) input: TenantInvitationAcceptInput,
     @Req() request: FastifyRequest,
   ) {
-    return this.presentMember(await this.identities.acceptInvitation(input.token, requestContext(request, false)));
+    return this.presentMember(
+      await this.identities.acceptInvitation(input.token, requestContext(request, false)),
+    );
   }
 
   @Get('tenants/:tenantId/members')
@@ -73,6 +98,7 @@ export class IdentityController {
   }
 
   @Post('tenants/:tenantId/members/:userId/deactivate')
+  @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'x-tenant-id', required: true, description: '当前租户 UUID' })
   @ApiOperation({ summary: '租户管理员停用成员' })
   @ApiZodBody(tenantMemberDeactivateSchema)
@@ -83,12 +109,14 @@ export class IdentityController {
     @Body(new ZodValidationPipe(tenantMemberDeactivateSchema)) input: TenantMemberDeactivateInput,
     @Req() request: FastifyRequest,
   ) {
-    return this.presentMember(await this.identities.deactivateMember(
-      tenantId,
-      userId,
-      input,
-      requestContext(request, true),
-    ));
+    return this.presentMember(
+      await this.identities.deactivateMember(
+        tenantId,
+        userId,
+        input,
+        requestContext(request, true),
+      ),
+    );
   }
 
   private presentMember(member: SavedTenantMember) {
