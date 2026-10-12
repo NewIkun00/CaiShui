@@ -1,6 +1,7 @@
 'use client';
 
 import { apiFetch } from '@/app/lib/api-fetch';
+import { safeAuthReturnTo } from '@/app/lib/auth-start-routing';
 import { authLoginResponseSchema } from '@ledgerly/contracts';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -12,21 +13,25 @@ interface AuthStartPanelProps {
   readonly mode: 'login' | 'register';
 }
 
-function safeReturnTo(value: string | null, fallback: string): string {
-  return value && /^\/(?!\/)/.test(value) && value.length <= 500 ? value : fallback;
-}
-
 export function AuthStartPanel({ mode }: AuthStartPanelProps) {
   const query = useSearchParams();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const registering = mode === 'register';
+  const oidcEnabled = process.env.NEXT_PUBLIC_AUTH_MODE === 'oidc';
 
   async function start() {
     setPending(true);
     setMessage(null);
     try {
-      const returnTo = safeReturnTo(query.get('returnTo'), registering ? '/onboarding' : '/dashboard');
+      const returnTo = safeAuthReturnTo(
+        query.get('returnTo'),
+        registering ? '/onboarding' : '/dashboard',
+      );
+      if (!oidcEnabled) {
+        window.location.assign(returnTo);
+        return;
+      }
       const response = await apiFetch(`${api()}/v1/auth/${mode}`, {
         method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ returnTo }),
@@ -43,21 +48,31 @@ export function AuthStartPanel({ mode }: AuthStartPanelProps) {
 
   return <section className="auth-card">
     <div className="auth-mark">账</div>
-    <p className="eyebrow">LEDGERLY IDENTITY</p>
-    <h1>{registering ? '创建账税通账号' : '安全进入财务工作台'}</h1>
-    <p>{registering
+    <p className="eyebrow">{oidcEnabled ? 'LEDGERLY IDENTITY' : 'LOCAL DEMO'}</p>
+    <h1>{registering ? (oidcEnabled ? '创建账税通账号' : '开始本地演示') : '安全进入财务工作台'}</h1>
+    <p>{!oidcEnabled
+      ? '当前是本地内存演示模式，不会连接外部身份服务。你可以直接建立测试企业档案，API 重启后演示数据会清空。'
+      : registering
       ? '先通过企业身份服务创建并验证个人账号，再建立你的第一个企业档案。后续成员通过企业邀请加入。'
       : '使用企业身份服务完成登录。账税通不会接触或保存你的密码、短信验证码、OTP 种子或 WebAuthn 私钥。'}</p>
-    <ul>{registering
+    <ul>{!oidcEnabled
+      ? <><li>固定测试身份，仅限非生产内存模式</li><li>不保存密码、验证码或生产数据</li><li>正式环境仍强制 OIDC 和多因素认证</li></>
+      : registering
       ? <><li>个人身份与企业档案分离</li><li>首位用户建立企业并成为所有者</li><li>其他成员必须通过受控邀请加入</li></>
       : <><li>Authorization Code + PKCE</li><li>HttpOnly 会话 Cookie</li><li>租户与公司权限隔离</li></>}</ul>
     <button type="button" onClick={() => void start()} disabled={pending}>
-      {pending ? '正在连接身份服务…' : registering ? '创建并验证账号' : '使用企业身份登录'}
+      {pending
+        ? (oidcEnabled ? '正在连接身份服务…' : '正在进入演示…')
+        : !oidcEnabled
+          ? (registering ? '开始建立企业档案' : '进入本地演示')
+          : registering ? '创建并验证账号' : '使用企业身份登录'}
     </button>
     {message && <div className="auth-message" role="alert">{message}</div>}
     <p className="auth-switch">{registering ? '已经有账号？' : '第一次使用账税通？'}{' '}
       <Link href={registering ? '/login' : '/register'}>{registering ? '返回登录' : '创建账号'}</Link>
     </p>
-    <small>密码和多因素认证由身份 Provider 安全处理，不进入账税通业务数据库。</small>
+    <small>{oidcEnabled
+      ? '密码和多因素认证由身份 Provider 安全处理，不进入账税通业务数据库。'
+      : '本地演示入口不会在生产或 PostgreSQL 模式启用。'}</small>
   </section>;
 }

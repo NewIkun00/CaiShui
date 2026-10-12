@@ -7,6 +7,7 @@ import {
   validateAcceptanceEnvironment,
 } from './lib/environment.mjs';
 import { renderRealm } from './lib/realm.mjs';
+import { validatePostgresSimulationEnvironment } from './lib/storage-mode.mjs';
 import {
   acceptancePaths,
   commandAvailable,
@@ -27,6 +28,7 @@ const command = process.argv[2] ?? 'doctor';
 try {
   if (command === 'doctor') await doctor();
   else if (command === 'simulate') await simulate();
+  else if (command === 'simulate-postgres') await simulatePostgres();
   else if (command === 'start') await start();
   else if (command === 'run') await acceptanceRun();
   else if (command === 'stop') await stop();
@@ -149,6 +151,15 @@ async function start() {
 }
 
 async function simulate() {
+  await simulateWithStorage('memory');
+}
+
+async function simulatePostgres() {
+  validatePostgresSimulationEnvironment(process.env);
+  await simulateWithStorage('postgres');
+}
+
+async function simulateWithStorage(storageMode) {
   assertNode();
   if (!commandAvailable('pnpm')) throw new Error('pnpm is required');
   if (!commandAvailable('openssl'))
@@ -185,7 +196,7 @@ async function simulate() {
   const environment = {
     ...process.env,
     NODE_ENV: 'development',
-    STORAGE_MODE: 'memory',
+    STORAGE_MODE: storageMode,
     AUTH_MODE: 'oidc',
     NEXT_PUBLIC_AUTH_MODE: 'oidc',
     R5_MOCK_OIDC_PORT: String(mockPort),
@@ -209,6 +220,7 @@ async function simulate() {
     WEB_ORIGIN: `http://localhost:${webPort}`,
     API_INTERNAL_URL: `http://127.0.0.1:${apiPort}`,
     API_PORT: String(apiPort),
+    ...(storageMode === 'postgres' ? { DATABASE_URL: process.env.DATABASE_URL } : {}),
   };
   const pids = [];
   try {
@@ -224,6 +236,9 @@ async function simulate() {
       cwd: rootDirectory,
       env: environment,
     });
+    if (storageMode === 'postgres') {
+      await run('pnpm', ['db:migrate'], { cwd: rootDirectory, env: environment });
+    }
     pids.push(
       await spawnService(process.execPath, [resolve(paths.tool, 'mock-oidc.mjs')], {
         cwd: rootDirectory,
@@ -256,7 +271,8 @@ async function simulate() {
       ),
     );
     await waitForHttp(`http://127.0.0.1:${webPort}/login`, { timeoutMs: 60_000 });
-    await run(process.execPath, [resolve(paths.tool, 'simulated-e2e.mjs')], {
+    const runner = storageMode === 'postgres' ? 'postgres-e2e.mjs' : 'simulated-e2e.mjs';
+    await run(process.execPath, [resolve(paths.tool, runner)], {
       cwd: rootDirectory,
       env: environment,
     });

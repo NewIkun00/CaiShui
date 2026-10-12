@@ -1,6 +1,6 @@
 # V1 实施状态
 
-更新日期：2026-10-10
+更新日期：2026-10-11
 
 | 工作项 | 状态 | 说明 |
 |---|---|---|
@@ -11,7 +11,7 @@
 | CI 质量门槛 | 已完成 | Lint、类型、测试、迁移与生产构建 |
 | Redis Worker 基线 | 已完成 | 健康任务与优雅退出 |
 | 本地对象存储 | 已完成 | 私有存储端口、内存预览与服务器目录适配器；MinIO 基础设施已预留 |
-| 生产身份服务 | 进行中 | R5 代码侧已完成 Provider ADR、正式用户与会话、成员生命周期、OIDC Code + PKCE、BFF Cookie、注册/登录/回调/登出、同源代理、用户端/运营端 RBAC、MFA step-up、成员页面及平台角色治理。真实 PostgreSQL 17 空库迁移、Keycloak HTTPS 登录、回调、会话和 OTP 已通过；仓库已增加 PostgreSQL 17 + Keycloak 26.8.0 + Mailpit 的可移植验收工具，但当前机器无 Docker，尚未完成全新环境重放。邮箱验证、step-up/登出撤销和正式模式越权矩阵已由非生产 HTTPS 模拟覆盖，首位管理员及平台角色 HTTP 边界也有自动测试；最后只剩真实 PostgreSQL/Keycloak/Mailpit 全链重放证据 |
+| 生产身份服务 | 已完成 | R5 已完成 Provider ADR、正式用户/会话、成员生命周期、OIDC Code + PKCE、BFF Cookie、注册/登录/回调/登出、用户端/运营端 RBAC、MFA step-up、页面和平台角色治理。真实 Keycloak HTTPS 登录/回调/会话/OTP 已通过；PostgreSQL 17 实库已通过 38 个迁移、身份持久化、首位管理员、角色授予/撤销、权限即时性、租户隔离及全局 audit/Outbox 验收。邮箱 action-token、step-up、登出撤销和越权矩阵由明确非生产的 HTTPS 模拟覆盖，报告严格区分 PostgreSQL 真实证据与外部服务模拟证据 |
 | OpenAPI SDK 自动生成 | 已完成 | 当前 81 条路径/100 个操作全部声明强类型成功响应，53 个 JSON 请求体全部来自运行时 Zod 契约；生成客户端和 CI 漂移门禁已覆盖现有 API，新增接口仍须同步声明 Schema |
 | 建档适用性决策表 | 已完成 | 主体画像、绿黄红分流、结果页与工作台入口 |
 | 资金账户、期初余额与首期 | 已完成 | 绿色准入门槛、事务、审计与工作台进度联动 |
@@ -52,6 +52,7 @@
 - R5 真实 Provider 验收：Keycloak 26.8.0 通过本地受信任 CA 以 HTTPS 运行，Realm 已开启自助注册、邮箱验证、TOTP 和 WebAuthn 策略；Authorization Code + PKCE、JWKS/RS256、首次身份建立、会话恢复和 TOTP 配置均通过。为 Keycloak Browser Flow 的密码、OTP、WebAuthn execution 配置 AMR reference 后，第二次真实登录得到 `pwd + otp`，平台认证方法映射通过。
 - 完整质量门槛：通过。OpenAPI 可重现生成与漂移检查通过（**81 条路径、100 个操作、53 个强类型 JSON 请求体、100 个强类型 JSON 成功响应**，无未覆盖操作）；Lint、严格类型检查、221 项测试和六工作区生产构建全部通过，Web 生成 24 条产品路由。
 - PostgreSQL 真实迁移：通过。使用隔离临时目录中的 PostgreSQL 17.10，在全新 `ledgerly` 数据库顺序执行 `0000`–`0037`，Drizzle 记录 38 个迁移；确认 `0037` 后 `outbox_events.tenant_id` 可空。数据库已正常关闭；临时数据不是可移植的仓库资产。
-- R5 可移植验收工具：仓库新增 `tools/r5-acceptance/`，包含无秘密 Realm 模板、本地测试 CA、PostgreSQL 17/Keycloak 26.8.0/Mailpit Compose、AMR 配置、环境诊断、启停和脱敏 smoke 报告。4 个测试文件、8 项工具测试已接入 `pnpm check` 并通过；本机 `doctor` 正确报告 Docker 不可用和秘密未配置，因此尚无全新环境启动证据，不能把工具就绪等同于 R5 完成。
-- R5 外部服务模拟验收：新增短期 HTTPS 模拟 OIDC/邮件服务，并实际启动内存 API 与 3020 Web。已通过注册邮件 action-token、未验证/重复邮箱、过期链接、PKCE/签名 JWT、Alice/Bob 登录、跨租户隐藏式 404、跨公司和低角色拒绝、生产模式开发身份头拒绝、OTP step-up、换账号拒绝、旧会话替换、登出 Provider 撤销及成员停用即时失效。报告明确 `productionEvidence: false`；短信按蓝图留到试点后，真实 Keycloak/PostgreSQL 平台角色及 audit/outbox E2E 仍未完成。
-- R5 平台治理自动验收：首位管理员脚本已拆成可测试事务，显式开关、用户 UUID、活动用户、重复引导、顾问锁、提交/回滚、全局 audit/outbox 的 `tenant_id=null` 均有测试。Nest/Fastify HTTP 测试同时覆盖无会话、非管理员、缺少新鲜 MFA、自授权、分配/撤销即时生效，以及平台角色不能访问企业租户；真实 PostgreSQL 写入仍待可移植栈重放。
+- R5 可移植验收工具：`tools/r5-acceptance/` 包含无秘密 Realm 模板、本地测试 CA、PostgreSQL 17/Keycloak 26.8.0/Mailpit Compose、AMR 配置、环境诊断、启停、脱敏报告、内存模拟和 PostgreSQL 实库模拟外部服务两条验收路径。**6 个文件、12 项工具测试**已接入 `pnpm check` 并通过。
+- R5 外部服务模拟验收：短期 HTTPS 模拟 OIDC/邮件服务已通过注册邮件 action-token、未验证/重复邮箱、过期链接、PKCE/签名 JWT、Alice/Bob 登录、跨租户隐藏式 404、跨公司/低角色拒绝、生产模式开发身份头拒绝、OTP step-up、换账号拒绝、旧会话替换、Provider 撤销及成员停用即时失效。报告明确 `productionEvidence: false`，未冒充生产 Provider 证据。
+- R5 PostgreSQL 平台治理验收：仓库外 PostgreSQL 17.10 一次性空库实际通过 38 个迁移、Alice/Bob 身份持久化、首位管理员成功/重复引导拒绝、MFA、自授权/非管理员拒绝、`rule_editor` 即时授予/撤销和企业数据隔离。数据库直接核对 `platform_role.bootstrap/assigned/revoked` 审计及对应 Outbox，确认 `tenant_id=null`、traceId/目标用户一致且不含敏感字段。
+- R5 阶段验收：**已完成，V1 工程进度 94%**。下一唯一执行指针为 R6 真实基础设施适配。未采购的邮件/短信供应商仍按 Port/Adapter 留待试点配置，不回退 R5 已验收的安全和权限边界。

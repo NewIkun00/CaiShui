@@ -26,6 +26,20 @@
 
 模拟服务只用于开发和 CI，不是生产身份实现，也不能替代 Keycloak/PostgreSQL 真实验收。报告带有 `productionEvidence: false`，生成到 `.data/reports/`。模拟 OTP 固定来自测试环境变量，任何密码、验证码、密钥或 action-token 都不会写入报告。
 
+## PostgreSQL 实库 + 外部服务模拟
+
+在没有 Docker/Keycloak 但有隔离 PostgreSQL 17 的机器上，可执行：
+
+```bash
+R5_ACCEPTANCE_CONFIRM_ISOLATED_DATABASE=true \
+DATABASE_URL='postgresql://ledgerly:password@127.0.0.1:55432/ledgerly_r5' \
+pnpm r5:acceptance:simulate-postgres
+```
+
+该命令只接受明确确认的、已完成迁移但没有任何业务数据的一次性验收库；发现用户、平台角色或审计记录时会立即失败，不会清空或覆盖数据。它会运行迁移，通过 HTTPS 模拟 OIDC 登录 Alice/Bob，使用一次性开关引导首位平台管理员，验证 MFA、自授权/非管理员拒绝、`rule_editor` 即时授予/撤销、企业数据隔离，并直接核对 PostgreSQL 中全局 audit/Outbox 的 `tenant_id=null`、traceId、目标用户和敏感字段边界。
+
+报告会分别标记 `externalServicesEvidence: simulated` 与 `databaseEvidence: postgresql`，并保持 `productionEvidence: false`。PostgreSQL 模式不会恢复明文邀请 token HTTP 回传；邀请链仍由内存模拟报告覆盖，不得为便于验收而削弱生产安全边界。
+
 V1 产品蓝图规定邮件为受控试点所需通道，短信可在试点后接入。短信供应商、实名主体、数据处理条款和存储地域未确定前，本目录不引入供应商 SDK；未来阿里云等服务必须通过 Port/Adapter 接入，业务数据库不得保存短信验证码。
 
 首位平台管理员引导继续使用 `pnpm identity:seed-admin <active-user-uuid>`，并且必须显式设置一次性开关 `ALLOW_PLATFORM_ADMIN_BOOTSTRAP=true`。引导在顾问锁保护的单个事务中同时写入角色、全局审计和 `tenant_id=null` 的 Outbox；已有活动管理员、无效用户或任一写入失败都会回滚。自动测试可以验证这些事务边界，但最终验收仍必须在 PostgreSQL 17 中核对真实记录。
@@ -35,6 +49,6 @@ V1 产品蓝图规定邮件为受控试点所需通道，短信可在试点后�
 - Realm 模板中的用户和密码来自 `.env`，仓库只保留占位符；渲染结果权限应为仅当前用户可读。
 - `ledgerly-session-revoker` 仅授予 `realm-management/manage-users`，不得授予 `realm-admin`。
 - CA 仅用于本机 acceptance；应用通过 `NODE_EXTRA_CA_CERTS` 精确信任该 CA，不允许关闭 TLS 校验。
-- 当前 runner **尚不代表 R5 完成**。邮箱 action-token、OTP step-up、换账号拒绝、登出 Provider 撤销、跨租户/跨公司/低角色矩阵和平台角色治理 E2E 仍须按研发计划 28.22 逐项实现并重新运行。
-- `simulate` 已覆盖上述前四类流程的本地 HTTP 模拟；`run` 仍需在真实 Keycloak/PostgreSQL 栈上重放。平台首位管理员、全局角色治理和 audit/outbox 仍只接受 PostgreSQL 真实证据。
+- `simulate` 已覆盖邮箱 action-token、OTP step-up、换账号拒绝、登出 Provider 撤销、跨租户/跨公司/低角色矩阵和成员停用；`simulate-postgres` 覆盖真实持久化、平台角色治理与 audit/outbox。
+- `run` 用于在真实 Keycloak/PostgreSQL/Mailpit 栈上重放 Provider 边界。每份报告必须保留真实/模拟证据标记，不得把外部服务模拟写成生产 Provider 证据。
 - 报告会按字段名和 URL 参数脱敏；仍应在提交前人工检查 `.data/reports`，且 `.data/` 永远不得加入 Git。
