@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import './styles.css';
 import './app-shell.css';
 import './auth.css';
+import './design-system.css';
 import { AppShell } from './ui/app-shell';
 
 export const metadata: Metadata = {

@@ -46,10 +46,21 @@ export function AuthStartPanel({ mode }: AuthStartPanelProps) {
     }
   }
 
-  return <section className="auth-card">
+  return <div className="auth-layout">
+    <aside className="auth-brand-panel">
+      <Link className="auth-brand" href="/login"><span>账</span><strong>账税通</strong><small>ACCOUNTS &amp; TAX</small></Link>
+      <div className="auth-brand-copy">
+        <p>CONTROLLED FINANCE WORKFLOW</p>
+        <h2>{registering ? <>从第一笔业务开始，<br />建立可信账簿。</> : <>公司账税，<br />每一步都清楚。</>}</h2>
+        <span>把流水、发票与申报任务放进同一个可追溯的工作流，关键判断由你确认。</span>
+        <ul><li>系统生成草稿与校验线索，关键判断由你确认</li><li>原始证据、业务事实、凭证与报表互相引用</li><li>高风险事项显式阻断，不生成伪精确的税额</li></ul>
+      </div>
+      <small className="auth-environment">受控试点环境 · 演示数据不构成财税专业意见</small>
+    </aside>
+    <section className="auth-card">
     <div className="auth-mark">账</div>
-    <p className="eyebrow">{oidcEnabled ? 'LEDGERLY IDENTITY' : 'LOCAL DEMO'}</p>
-    <h1>{registering ? (oidcEnabled ? '创建账税通账号' : '开始本地演示') : '安全进入财务工作台'}</h1>
+    <p className="eyebrow">{oidcEnabled ? '安全身份验证' : '本地演示模式'}</p>
+    <h1>{registering ? (oidcEnabled ? '创建账税通账号' : '开始本地演示') : '进入财务工作台'}</h1>
     <p>{!oidcEnabled
       ? '当前是本地内存演示模式，不会连接外部身份服务。你可以直接建立测试企业档案，API 重启后演示数据会清空。'
       : registering
@@ -74,5 +85,6 @@ export function AuthStartPanel({ mode }: AuthStartPanelProps) {
     <small>{oidcEnabled
       ? '密码和多因素认证由身份 Provider 安全处理，不进入账税通业务数据库。'
       : '本地演示入口不会在生产或 PostgreSQL 模式启用。'}</small>
-  </section>;
+    </section>
+  </div>;
 }
